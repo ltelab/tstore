@@ -23,6 +23,10 @@ line-length = 88
 [tool.ruff]
 line-length = 88
 select = ["D", "E", "F", "I"]
+ignore = ["D107",
+          "D203", "D212","D213",
+          "E501",
+          ]
 
 [tool.ruff.isort]
 known-first-party = ["tstore"]
