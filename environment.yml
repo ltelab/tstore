@@ -1,0 +1,16 @@
+name: tstore
+channels:
+- conda-forge
+- bioconda
+dependencies:
+- git
+- ipykernel
+- osmnx
+- papermill
+- pip
+- pre-commit
+- python=3.10
+- snakemake
+- pip:
+  - -e .
+  - agrometeo-geopy>=0.2

@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tstore"
+version = "0.1.0"
+description = "Flexible storage for time series."
+authors = [{ name = "Martí Bosch", email = "marti.bosch@protonmail.com" },
+           { name = "Gionata Ghiggi", email = "gionata.ghiggi@epfl.ch" }]
+readme = "README.md"
+license = { text = "GPL-3.0-only" }
+
+[project.urls]
+Repository = "https://github.com/ltelab/tstore"
+
+[tool.setuptools.packages.find]
+include = ["tstore"]
+
+[tool.black]
+line-length = 88
+
+[tool.ruff]
+line-length = 88
+select = ["D", "E", "F", "I"]
+
+[tool.ruff.isort]
+known-first-party = ["tstore"]
+
+[tool.nbqa.addopts]
+# ignore documentation errors in notebooks
+# also ignore I001, see https://github.com/charliermarsh/ruff/issues/3744
+ruff = ["--ignore=D,I001"]
