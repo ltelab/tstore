@@ -7,7 +7,7 @@ Created on Sun Jun 11 20:56:07 2023.
 """
 import dask.datasets
 
-from tstore.archive.ts import TS
+from tstore import TS
 
 df_dask = dask.datasets.timeseries(
     start="2000-01-01",

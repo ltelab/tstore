@@ -12,8 +12,8 @@ import numpy as np
 import pandas as pd
 from pandas.api.extensions import ExtensionArray
 
-from tstore.archive.ts import TS
 from tstore.tsdf.extensions.ts_dtype import TSDtype
+from tstore.tsdf.ts_class import TS
 
 #### Notes
 # https://pandas.pydata.org/pandas-docs/stable/reference/extensions.html

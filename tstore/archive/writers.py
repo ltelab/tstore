@@ -17,6 +17,8 @@ def write_attributes(df, base_dir):
     """Write static attributes dataframe.
 
     Assume df pandas !
+    TODO: polars, pyarrow does not have index
+    --> Ensure tstore_id column
     """
     fpath = define_attributes_filepath(base_dir)
     df.index = df.index.astype("string[pyarrow]")

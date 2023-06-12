@@ -16,17 +16,17 @@ from tstore import (
     TSArray,
 )
 
-# Define identifiers
-identifiers = np.arange(1, 5)
+# Define tstore_ids
+tstore_ids = np.arange(1, 5)
 
 # Define dataframe with attributes
 data = {"var1": ["A", "B", "C", "D"], "var2": [1.0, 2.0, 3.0, 4.0]}
-df_attrs = pd.DataFrame(data, index=identifiers)
+df_attrs = pd.DataFrame(data, index=tstore_ids)
 
 
 # Create TSArray
 ts_dict = {}
-for identifier in identifiers:
+for tstore_id in tstore_ids:
     df_dask = dask.datasets.timeseries(
         start="2000-01-01",
         end="2000-01-31",
@@ -35,7 +35,7 @@ for identifier in identifiers:
         dtypes=None,
         seed=None,
     )
-    ts_dict[identifier] = TS(df_dask)
+    ts_dict[tstore_id] = TS(df_dask)
 
 
 ts_dict
@@ -47,7 +47,7 @@ print(ts_arr)
 repr(ts_arr)
 
 # Create Series with TS Dtype
-df_series = pd.Series(ts_arr, index=identifiers)
+df_series = pd.Series(ts_arr, index=tstore_ids)
 df_series  # dtype: TS[dask.DataFrame]  ...  pandas/polars/pyarrow
 df_series.dtype  # TSDtype
 df_series.values  # TSArray
@@ -59,8 +59,8 @@ df_series.to_numpy()  # object dtype
 pd.concat((df_series, df_series))
 
 # Join to df_attrs
-ts_var = "precipitation"
-df_attrs[ts_var] = df_series
+ts_variable = "precipitation"
+df_attrs[ts_variable] = df_series
 
 # Create TSDF
 tsdf = TSDF(df_attrs)

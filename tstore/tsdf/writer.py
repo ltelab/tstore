@@ -15,20 +15,20 @@ from tstore.archive.io import (
 from tstore.tsdf.extensions.ts_dtype import TSDtype
 
 
-def _get_tsarray_columns(df):
+def _get_ts_variables(df):
     """Get list of TSArray columns."""
     columns = np.array(list(df.columns))
-    tsarray_columns = columns[
+    ts_variables = columns[
         [isinstance(df[column].dtype, TSDtype) for column in columns]
     ].tolist()
-    return tsarray_columns
+    return ts_variables
 
 
 def _get_static_columns(df):
     """Get list of non-TSArray columns."""
     columns = list(df.columns)
-    tsarray_columns = _get_tsarray_columns(df)
-    static_columns = list(set(columns).symmetric_difference(tsarray_columns))
+    ts_variables = _get_ts_variables(df)
+    static_columns = list(set(columns).symmetric_difference(ts_variables))
     return static_columns
 
 
@@ -37,19 +37,21 @@ def _write_attributes(df, base_dir):
     from tstore.archive.writers import write_attributes
 
     static_columns = _get_static_columns(df)
-    write_attributes(df=df[static_columns], base_dir=base_dir)
+    df_attributes = df[static_columns]
+    df_attributes.index.name = "tstore_id"
+    write_attributes(df=df_attributes, base_dir=base_dir)
 
 
 def _write_ts_series(ts_series, base_dir, tstore_structure):
     """Write TSDF TSArray."""
-    var = ts_series.name
-    identifiers = ts_series.index.array.astype(str)
-    for identifier, ts in zip(identifiers, ts_series):
+    ts_variable = ts_series.name
+    tstore_ids = ts_series.index.array.astype(str)
+    for tstore_id, ts in zip(tstore_ids, ts_series):
         if ts:  # not empty
             ts_fpath = define_tsarray_filepath(
                 base_dir=base_dir,
-                identifier=identifier,
-                var=var,
+                tstore_id=tstore_id,
+                ts_variable=ts_variable,
                 tstore_structure=tstore_structure,
             )
             ts.to_disk(ts_fpath)
@@ -57,7 +59,7 @@ def _write_ts_series(ts_series, base_dir, tstore_structure):
 
 def _write_tsarrays(df, base_dir, tstore_structure):
     """Write TSDF TSArrays."""
-    tsarray_columns = _get_tsarray_columns(df)
+    tsarray_columns = _get_ts_variables(df)
     for column in tsarray_columns:
         _write_ts_series(
             ts_series=df[column], base_dir=base_dir, tstore_structure=tstore_structure
@@ -65,10 +67,10 @@ def _write_tsarrays(df, base_dir, tstore_structure):
 
 
 def _write_metadata(df, base_dir, tstore_structure):
-    """Write TSTORE metadata."""
+    """Write TStore metadata."""
     from tstore.archive.writers import write_metadata
 
-    ts_variables = _get_tsarray_columns(df)
+    ts_variables = _get_ts_variables(df)
     write_metadata(
         base_dir=base_dir, ts_variables=ts_variables, tstore_structure=tstore_structure
     )
@@ -77,7 +79,7 @@ def _write_metadata(df, base_dir, tstore_structure):
 def write_tstore(
     df, base_dir, partition_str=None, tstore_structure="id-var", overwrite=True
 ):
-    """Write TSTORE from TSDF object."""
+    """Write TStore from TSDF object."""
     # Checks
     tstore_structure = check_tstore_structure(tstore_structure)
     base_dir = check_tstore_directory(base_dir, overwrite=overwrite)

@@ -13,7 +13,7 @@ from pandas.api.extensions import (
     register_extension_dtype,
 )
 
-from tstore.archive.ts import TS
+from tstore.tsdf.ts_class import TS
 
 #### Notes
 # https://pandas.pydata.org/pandas-docs/stable/reference/extensions.html

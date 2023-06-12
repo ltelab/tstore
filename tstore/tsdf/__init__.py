@@ -11,10 +11,10 @@ class TSDF(pd.DataFrame):
     def to_tstore(
         self, base_dir, partition_str=None, tstore_structure="id-var", overwrite=True
     ):
-        """Write TSTORE from TSDF object."""
+        """Write TStore from TSDF object."""
         from tstore.tsdf.writer import write_tstore
 
-        write_tstore(
+        _ = write_tstore(
             self,
             base_dir=base_dir,
             partition_str=partition_str,
