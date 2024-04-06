@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Created on Mon Jun 12 16:23:54 2023.
 
@@ -91,7 +90,7 @@ class TSDtype(ExtensionDtype):
 
         Example:
         -------
-        >>> TSDtype.construct_from_string('TS[pandas]')
+        >>> TSDtype.construct_from_string("TS[pandas]")
         TS['pandas']
         """
         if not isinstance(string, str):

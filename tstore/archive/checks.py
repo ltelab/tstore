@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Created on Mon Jun 12 21:32:37 2023.
 
@@ -36,14 +35,12 @@ def check_ts_variables(ts_variables, base_dir):
     if isinstance(ts_variables, type(None)):
         ts_variables = available_ts_variables
     ts_variables = np.array(ts_variables)
-    unvalid_ts_variables = ts_variables[
-        np.isin(ts_variables, available_ts_variables, invert=True)
-    ]
+    unvalid_ts_variables = ts_variables[np.isin(ts_variables, available_ts_variables, invert=True)]
     ts_variables = ts_variables.tolist()
     unvalid_ts_variables = unvalid_ts_variables.tolist()
     if len(unvalid_ts_variables) > 0:
         raise ValueError(
-            f"Valid ts_variables are {ts_variables}. Unvalid: {unvalid_ts_variables}."
+            f"Valid ts_variables are {ts_variables}. Invalid: {unvalid_ts_variables}.",
         )
     return ts_variables
 
@@ -76,13 +73,13 @@ def check_time(time):
         datetime.datetime object.
 
     """
-    # TODO: adapt to return the more approriate object !!!
+    # TODO: adapt to return the more appropriate object !!!
     if not isinstance(
-        time, (datetime.datetime, datetime.date, np.datetime64, np.ndarray, str)
+        time,
+        (datetime.datetime, datetime.date, np.datetime64, np.ndarray, str),
     ):
         raise TypeError(
-            "Specify time with datetime.datetime objects or a "
-            "string of format 'YYYY-MM-DD hh:mm:ss'."
+            "Specify time with datetime.datetime objects or a " "string of format 'YYYY-MM-DD hh:mm:ss'.",
         )
     # If numpy array with datetime64 (and size=1)
     if isinstance(time, np.ndarray):
@@ -117,5 +114,5 @@ def check_start_end_time(start_time, end_time):
     # Check start_time and end_time are chronological
     if start_time is not None and end_time is not None:
         if start_time > end_time:
-            raise ValueError("Provide start_time occuring before of end_time")
+            raise ValueError("Provide start_time occurring before of end_time")
     return (start_time, end_time)

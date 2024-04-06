@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Created on Mon Jun 12 17:57:14 2023.
 
@@ -81,7 +80,9 @@ def _join_tables(left_table, right_table):
     """Joining functions of pyarrow tables."""
     # TODO: update keys to 'time'
     return left_table.join(
-        right_table, keys=["timestamp", "tstore_id"], join_type="full outer"
+        right_table,
+        keys=["timestamp", "tstore_id"],
+        join_type="full outer",
     )
 
 

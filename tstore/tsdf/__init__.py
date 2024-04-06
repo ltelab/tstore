@@ -1,4 +1,5 @@
 """TSDF."""
+
 import pandas as pd
 
 
@@ -9,7 +10,11 @@ class TSDF(pd.DataFrame):
         super().__init__(*args, **kwargs)
 
     def to_tstore(
-        self, base_dir, partition_str=None, tstore_structure="id-var", overwrite=True
+        self,
+        base_dir,
+        partition_str=None,
+        tstore_structure="id-var",
+        overwrite=True,
     ):
         """Write TStore from TSDF object."""
         from tstore.tsdf.writer import write_tstore

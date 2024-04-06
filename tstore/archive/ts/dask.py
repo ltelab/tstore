@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Created on Mon Jun 12 22:24:07 2023.
 
@@ -29,14 +28,14 @@ def open_ts(
 
     # Define Apache Arrow settings
     arrow_to_pandas = {
-        "zero_copy_only": False,  # Default is False. If True, raise error if doing copys
+        "zero_copy_only": False,  # Default is False. If True, raise error if doing copies
         "strings_to_categorical": False,
         "date_as_object": False,  # Default is True. If False convert to datetime64[ns]
         "timestamp_as_object": False,  # Default is True. If False convert to np.datetime64[ns]
         "use_threads": True,  #  parallelize the conversion using multiple threads.
         "safe": True,
         "split_blocks": False,
-        "ignore_metadata": False,  # Default False. If False, use the ‘pandas’ metadata to get the Index
+        "ignore_metadata": False,  # Default False. If False, use the 'pandas' metadata to get the Index
         "types_mapper": pd.ArrowDtype,  # Ensure pandas is created with Arrow dtype
     }
 

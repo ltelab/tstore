@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Created on Sun Jun 11 22:47:54 2023.
 
@@ -27,6 +26,7 @@ from tstore.tsdf.ts_class import TS
 # https://stackoverflow.com/questions/68893521/simple-example-of-pandas-extensionarray
 
 # https://itnext.io/guide-to-pandas-extension-types-and-how-to-create-your-own-3b213d689c86
+
 
 ####--------------------------------------------------------------------------.
 def get_tabular_object_type(obj):
@@ -73,7 +73,7 @@ class TSArray(ExtensionArray):
         return str(self._data)
 
     def __repr__(self):
-        """repr representation."""
+        """Repr representation."""
         n = len(self._data)
         return f"TSArray composed of {n} TS objects."
 
@@ -173,6 +173,9 @@ class TSArray(ExtensionArray):
             fill_value = self.dtype.na_value
 
         result = pd.core.algorithms.take(
-            self._data, indices, allow_fill=allow_fill, fill_value=fill_value
+            self._data,
+            indices,
+            allow_fill=allow_fill,
+            fill_value=fill_value,
         )
         return self._from_sequence(result)

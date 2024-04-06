@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Created on Mon Jun 12 15:49:54 2023.
 
@@ -18,9 +17,7 @@ from tstore.tsdf.extensions.ts_dtype import TSDtype
 def _get_ts_variables(df):
     """Get list of TSArray columns."""
     columns = np.array(list(df.columns))
-    ts_variables = columns[
-        [isinstance(df[column].dtype, TSDtype) for column in columns]
-    ].tolist()
+    ts_variables = columns[[isinstance(df[column].dtype, TSDtype) for column in columns]].tolist()
     return ts_variables
 
 
@@ -62,7 +59,9 @@ def _write_tsarrays(df, base_dir, tstore_structure):
     tsarray_columns = _get_ts_variables(df)
     for column in tsarray_columns:
         _write_ts_series(
-            ts_series=df[column], base_dir=base_dir, tstore_structure=tstore_structure
+            ts_series=df[column],
+            base_dir=base_dir,
+            tstore_structure=tstore_structure,
         )
 
 
@@ -72,12 +71,18 @@ def _write_metadata(df, base_dir, tstore_structure):
 
     ts_variables = _get_ts_variables(df)
     write_metadata(
-        base_dir=base_dir, ts_variables=ts_variables, tstore_structure=tstore_structure
+        base_dir=base_dir,
+        ts_variables=ts_variables,
+        tstore_structure=tstore_structure,
     )
 
 
 def write_tstore(
-    df, base_dir, partition_str=None, tstore_structure="id-var", overwrite=True
+    df,
+    base_dir,
+    partition_str=None,
+    tstore_structure="id-var",
+    overwrite=True,
 ):
     """Write TStore from TSDF object."""
     # Checks

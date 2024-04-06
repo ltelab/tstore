@@ -1,4 +1,7 @@
 """tstore."""
+import contextlib
+from importlib.metadata import PackageNotFoundError, version
+
 from tstore.tsdf import TSDF
 from tstore.tsdf.extensions.array import TSArray
 from tstore.tsdf.extensions.ts_dtype import TSDtype
@@ -12,3 +15,7 @@ __all__ = [
     "TS",
     "TSDF",
 ]
+
+# Get version
+with contextlib.suppress(PackageNotFoundError):
+    __version__ = version("tstore")

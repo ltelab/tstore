@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Created on Mon Jun 12 15:48:39 2023.
 
@@ -31,10 +30,7 @@ def _read_tsarray(base_dir, ts_variable):
 def _read_tsarrays(base_dir, metadata):
     """Read list of TSArrays."""
     ts_variables = metadata["ts_variables"]
-    list_ts_series = [
-        _read_tsarray(base_dir=base_dir, ts_variable=ts_variable)
-        for ts_variable in ts_variables
-    ]
+    list_ts_series = [_read_tsarray(base_dir=base_dir, ts_variable=ts_variable) for ts_variable in ts_variables]
     return list_ts_series
 
 
