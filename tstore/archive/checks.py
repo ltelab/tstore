@@ -112,7 +112,6 @@ def check_start_end_time(start_time, end_time):
     if end_time is not None:
         end_time = check_time(end_time)
     # Check start_time and end_time are chronological
-    if start_time is not None and end_time is not None:
-        if start_time > end_time:
-            raise ValueError("Provide start_time occurring before of end_time")
+    if start_time is not None and end_time is not None and start_time > end_time:
+        raise ValueError("Provide start_time occurring before of end_time")
     return (start_time, end_time)

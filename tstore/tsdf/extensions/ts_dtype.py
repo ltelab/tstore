@@ -66,8 +66,7 @@ class TSDtype(ExtensionDtype):
         """Test TS equality."""
         if isinstance(other, str):
             return self.name == other
-        else:
-            return isinstance(other, type(self)) and self.ts_class == other.ts_class
+        return isinstance(other, type(self)) and self.ts_class == other.ts_class
 
     # Required for pickle compat (see GH26067)
     def __setstate__(self, state) -> None:

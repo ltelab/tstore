@@ -28,6 +28,7 @@ dependencies = [
     "distributed",
     "polars",
     "geopandas",
+    "pyyaml",
 ]
 dynamic = ["version"]
 

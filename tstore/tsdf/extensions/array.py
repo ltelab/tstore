@@ -33,14 +33,13 @@ def get_tabular_object_type(obj):
     """Get inner class of the TS object."""
     if isinstance(obj, dd.DataFrame):
         return "dask.DataFrame"
-    elif isinstance(obj, pd.DataFrame):
+    if isinstance(obj, pd.DataFrame):
         return "dask.Series"
-    elif isinstance(obj, pd.DataFrame):
+    if isinstance(obj, pd.DataFrame):
         return "pandas.DataFrame"
-    elif isinstance(obj, pd.Series):
+    if isinstance(obj, pd.Series):
         return "pandas.Series"
-    else:
-        return type(obj).__name__
+    return type(obj).__name__
 
 
 class TSArray(ExtensionArray):
@@ -82,10 +81,9 @@ class TSArray(ExtensionArray):
         """Select a subset of self."""
         if isinstance(index, int):
             return self._data[index]
-        else:
-            # Check index for TestGetitemTests
-            index = pd.core.indexers.check_array_indexer(self, index)
-            return type(self)(self._data[index])
+        # Check index for TestGetitemTests
+        index = pd.core.indexers.check_array_indexer(self, index)
+        return type(self)(self._data[index])
 
     # TestSetitemTests
     def __setitem__(self, index: int, value: TS) -> None:
@@ -124,8 +122,7 @@ class TSArray(ExtensionArray):
         if not isinstance(dtype, TSDtype):
             msg = f"'{cls.__name__}' only supports 'TSDtype' dtype"
             raise ValueError(msg)
-        else:
-            return cls(data, copy=copy)
+        return cls(data, copy=copy)
 
     # Required for all ExtensionArray subclasses
     @classmethod

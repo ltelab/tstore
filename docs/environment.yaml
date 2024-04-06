@@ -2,17 +2,23 @@ name: build-doc-tstore
 channels:
 - conda-forge
 dependencies:
+- dask
+- distributed
 - docutils
 - jupyter
 - nbsphinx==0.9.3
+- numpy
+- pandas
 - pandoc
 - pip
+- polars
+- pyarrow
 - python>=3.9
+- pyyaml
 - sphinx-book-theme==1.1.0
 - sphinx-gallery
 - sphinx-mdinclude==0.5.3
 - sphinx==7.2.6
 - sphinxcontrib-youtube
-- ts-store
 - pip:
   - ts-store
