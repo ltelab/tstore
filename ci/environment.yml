@@ -1,17 +1,13 @@
 name: ts-store
 channels:
-  - conda-forge
+- conda-forge
 dependencies:
-  - pandas
-  - pyarrow
-  - polars
-  - dask
-  - distributed
-  - dask
-  - distributed
-  # testing
-  - pytest
-  - pytest-cov
-  - pytest-mock
-  - pytest-sugar
-
+- dask
+- distributed
+- pandas
+- polars
+- pyarrow
+- pytest
+- pytest-cov
+- pytest-mock
+- pytest-sugar

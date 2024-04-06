@@ -14,7 +14,7 @@ Concepts are introduced in a progressive manner, but feel free to skip to the se
 
 TSLONG
 ---------------
- 
+
 TODO
 
 .. _tsdf:
@@ -30,5 +30,3 @@ TSArray
 ~~~~~~~~
 
 TODO
-
-
