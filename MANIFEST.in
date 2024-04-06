@@ -1,0 +1,6 @@
+prune .github
+prune data
+prune ci
+prune docs
+prune tstore/tests
+prune tutorials

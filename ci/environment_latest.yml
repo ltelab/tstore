@@ -1,0 +1,16 @@
+name: ts-store-latest
+channels:
+  - conda-forge
+dependencies:
+  - pandas
+  - pyarrow
+  - polars
+  - dask
+  - distributed
+  - dask
+  - distributed
+  # testing
+  - pytest
+  - pytest-cov
+  - pytest-mock
+  - pytest-sugar
