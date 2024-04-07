@@ -32,9 +32,9 @@ repos:
     - id: codespell
       types_or: [python, markdown]
       additional_dependencies: [tomli]
-  
+
   # Cause
-  # # - warnings for line length 
+  # # - warnings for line length
   # - repo: https://github.com/adrienverge/yamllint.git
   #   rev: v1.26.3
   #   hooks:
@@ -42,7 +42,7 @@ repos:
   #       args: ["-d relaxed"]
 
   # Cause
-  # # - wrongly reformat md issue template files ! 
+  # # - wrongly reformat md issue template files !
   # - repo: https://github.com/executablebooks/mdformat
   #   rev: 0.7.14 # Use the ref you want to point at
   #   hooks:

@@ -96,9 +96,7 @@ tswide = tstore.open_tswide(base_dir, ts_variable="precipitation", ts_subset="na
 # --> DataTree
 
 # -----------------------------------------------------------------------------.
-# Write TSLONG 
+# Write TSLONG
 
-
- 
 
 ####--------------------------------------------------------------------------.
