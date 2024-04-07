@@ -18,8 +18,8 @@ def add_partitioning_columns(df, partitioning_str):
     """Add partitioning columns to the dataframe."""
     # TODO: as function of TS_partitioning_string (YYYY/MM/DD) or (YY/DOY/HH)
     # dayofyear, dayofweek, hour,  minute, ...
-    df["month"] = df.index.dt.month.to_numpy()
-    df["year"] = df.index.dt.year.to_numpy()
+    df["month"] = df.index.dt.month.values
+    df["year"] = df.index.dt.year.values
     partition_on = ["year", "month"]
     return df, partition_on
 

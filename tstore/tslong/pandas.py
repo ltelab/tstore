@@ -4,7 +4,7 @@ Created on Mon Jun 12 17:57:40 2023.
 
 @author: ghiggi
 """
-import tstore.tslong.pyarrow
+from tstore.tslong.pyarrow import open_tslong as pyarrow_reader
 
 
 def open_tslong(
@@ -20,7 +20,7 @@ def open_tslong(
     """Open TStore into long-format into pandas.DataFrame."""
     # Read exploiting pyarrow
     # - We use pyarrow to avoid pandas copies at concatenation and join operations !
-    tslong_pyarrow = tstore.tslong.pyarrow.open_tslong(
+    tslong_pyarrow = pyarrow_reader(
         base_dir,
         ts_variables=ts_variables,
         start_time=start_time,

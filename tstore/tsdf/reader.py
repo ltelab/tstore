@@ -22,7 +22,7 @@ def _read_tsarray(base_dir, ts_variable):
     list_ts = [TS.from_file(fpath) for fpath in ts_fpaths]
 
     # Create the TSArray Series
-    tstore_ids = pd.Index(tstore_ids, dtype="string[pyarrow]", name="tstore_id")
+    tstore_ids = pd.Index(tstore_ids, dtype="string[pyarrow]", name="tstore_id") # TODO: generalize
     ts_series = pd.Series(TSArray(list_ts), index=tstore_ids, name=ts_variable)
     return ts_series
 
