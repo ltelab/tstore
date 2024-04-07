@@ -121,4 +121,3 @@ pre-commit install --hook-type commit-msg
 ## Acknowledgments
 
 - Based on the [cookiecutter-data-snake :snake:](https://github.com/martibosch/cookiecutter-data-snake) template for reproducible data science.
-

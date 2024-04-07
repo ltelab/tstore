@@ -49,7 +49,7 @@ repr(ts_arr)
 df_series = pd.Series(ts_arr, index=tstore_ids)
 df_series  # dtype: TS[dask.DataFrame]  ...  pandas/polars/pyarrow
 df_series.dtype  # TSDtype
-df_series.values  # TSArray # noqa
+df_series.values  # TSArray
 df_series.array  # TSArray # zero-copy reference to the data !
 df_series.to_numpy()  # object dtype
 

@@ -53,7 +53,7 @@ TStore major releases aims to move the community forward, focusing on specificat
 TStore minor releases will be backwards compatible.
 We strongly recommend adopting the latest release of TStore into production within 6 months for major releases, and 4 months for minor releases.
 
-The maintaners do their best but does not guarantee any period of support or maintenance.
+The maintainers do their best but does not guarantee any period of support or maintenance.
 
 Releases that are 2 years or older may be considered as deprecated.
 
@@ -165,7 +165,7 @@ Finally, create a new tag to trigger the release process.
 On GitHub, edit the release description to add the list of changes from the ``CHANGELOG.md`` file.
 
 
-Reviewing process
+Reviewing Process
 ============================
 
 
@@ -212,4 +212,6 @@ The table below summarizes the software tools utilized in our CI pipeline, descr
 | `CodeScene <https://codescene.com/>`__                                                             | Automated code review and analysis tools                         | `TStore  <https://codescene.io/projects/41868/>`__                                           |
 +----------------------------------------------------------------------------------------------------+------------------------------------------------------------------+----------------------------------------------------------------------------------------------+
 | `CodeFactor <https://www.codefactor.io/>`__                                                        | Automated code review and analysis tools                         | `TStore <https://www.codefactor.io/repository/github/ltelab/tstore>`__                       |
++----------------------------------------------------------------------------------------------------+------------------------------------------------------------------+----------------------------------------------------------------------------------------------+
+| `Codacy      <https://www.codacy.com/>`__                                                           | Automated code review and analysis tools                         | `TStore <https://app.codacy.com/gh/ltelab/tstore/dashboard>`__                              |
 +----------------------------------------------------------------------------------------------------+------------------------------------------------------------------+----------------------------------------------------------------------------------------------+

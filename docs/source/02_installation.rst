@@ -137,7 +137,7 @@ You can create a conda environment (i.e. with python 3.11) with:
 	conda create --name tstore-dev-py311 python=3.11 --no-default-packages
 	conda activate tstore-dev-py311
 
-Install the TStore package dependencies
+Install the package dependencies
 ............................................
 
 .. code-block:: bash
@@ -145,7 +145,7 @@ Install the TStore package dependencies
 	conda install --only-deps ts-store
 
 
-Install the TStore package in editable mode
+Install the package in editable mode
 ................................................
 
 Install the TStore package in editable mode by executing the following command in the TStore repository's root:
@@ -155,7 +155,7 @@ Install the TStore package in editable mode by executing the following command i
 	pip install -e ".[dev]"
 
 
-Install pre-commit code quality checks
+Install code quality checks
 ..............................................
 
 Install the pre-commit hook by executing the following command in the TStore repository's root:
