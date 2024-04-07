@@ -33,23 +33,24 @@ repos:
       types_or: [python, markdown]
       additional_dependencies: [tomli]
   
-  # Cause various problems 
+  # Cause
   # # - warnings for line length 
-  # # - reformat md issue template files in wrong way ! 
   # - repo: https://github.com/adrienverge/yamllint.git
   #   rev: v1.26.3
   #   hooks:
   #     - id: yamllint
   #       args: ["-d relaxed"]
 
-  - repo: https://github.com/executablebooks/mdformat
-    rev: 0.7.14 # Use the ref you want to point at
-    hooks:
-      - id: mdformat
-        # Optionally add plugins
-        additional_dependencies:
-          - mdformat-gfm
-          - mdformat-black
+  # Cause
+  # # - wrongly reformat md issue template files ! 
+  # - repo: https://github.com/executablebooks/mdformat
+  #   rev: 0.7.14 # Use the ref you want to point at
+  #   hooks:
+  #     - id: mdformat
+  #       # Optionally add plugins
+  #       additional_dependencies:
+  #         - mdformat-gfm
+  #         - mdformat-black
 
   - repo: https://github.com/MarcoGorelli/madforhooks
     rev: 0.3.0
