@@ -4,7 +4,6 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ts-store"
-version = "0.0.1"
 description = "Flexible storage for time series."
 authors = [{ name = "Martí Bosch", email = "marti.bosch@protonmail.com" },
            { name = "Gionata Ghiggi", email = "gionata.ghiggi@epfl.ch" }]
@@ -30,7 +29,7 @@ dependencies = [
     "geopandas",
     "pyyaml",
 ]
-# dynamic = ["version"]
+dynamic = ["version"]
 
 [project.optional-dependencies]
 dev = [
