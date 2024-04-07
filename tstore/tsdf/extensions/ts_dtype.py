@@ -88,7 +88,7 @@ class TSDtype(ExtensionDtype):
         Construct an TSDtype from a string.
 
         Example:
-        -------
+        ---------
         >>> TSDtype.construct_from_string("TS[pandas]")
         TS['pandas']
         """
