@@ -173,6 +173,7 @@ ignore = [
     "B904",
 	"RET504",
     "PD901",
+    "PD011", # often erroneous suggestions to_numpy()
     # Docstyle Rules
     "D107", # docstring of __init__ methods
     "D203", # Blanck line between class and docstring
