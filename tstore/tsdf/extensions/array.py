@@ -4,7 +4,6 @@ Created on Sun Jun 11 22:47:54 2023.
 
 @author: ghiggi
 """
-from typing import Any
 
 import dask.dataframe as dd
 import numpy as np
@@ -77,7 +76,7 @@ class TSArray(ExtensionArray):
         return f"TSArray composed of {n} TS objects."
 
     # Required for all ExtensionArray subclasses
-    def __getitem__(self, index: int) -> "TSArray" | Any:
+    def __getitem__(self, index: int):
         """Select a subset of self."""
         if isinstance(index, int):
             return self._data[index]

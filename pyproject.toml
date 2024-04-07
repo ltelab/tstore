@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "tstore"
-version = "0.1.0"
+version = "0.0.1"
 description = "Flexible storage for time series."
 authors = [{ name = "Martí Bosch", email = "marti.bosch@protonmail.com" },
            { name = "Gionata Ghiggi", email = "gionata.ghiggi@epfl.ch" }]
@@ -30,7 +30,7 @@ dependencies = [
     "geopandas",
     "pyyaml",
 ]
-dynamic = ["version"]
+# dynamic = ["version"]
 
 [project.optional-dependencies]
 dev = [
@@ -208,9 +208,6 @@ convention = "numpy"
 
 "setup.py" = ["D100"]
 "*__init__.py" = ["D104"]
-
-[tool.ruff.isort]
-known-first-party = ["tstore"]
 
 [tool.codespell]
 ignore-words-list = "nd,mis"
