@@ -66,9 +66,7 @@ def to_tstore(
     tstore_structure="id-var",
     overwrite=True,
 ):
-    """
-    TSLONG.to_tstore()
-    """
+    """TSLONG.to_tstore()."""
     # If index time, remove
     df = df.reset_index(names=time_var)
 
@@ -97,7 +95,7 @@ def to_tstore(
     # - TODO: add flag to check if are actual duplicates !
     df_attrs = df[[id_var, *static_variables]]
     df_attrs = df_attrs.drop_duplicates(subset=id_var)
-    df_attrs.reset_index(drop=True, inplace=True)
+    df_attrs = df_attrs.reset_index(drop=True)
 
     # Write static attributes
     # --> Need to test that save id_var as large_string !
@@ -128,8 +126,8 @@ def to_tstore(
                 columns = [ts_variable]
 
             # Retrieve TS object
-            df_ts = df_group[columns + [time_var]].copy()
-            df_ts.reset_index(drop=True, inplace=True)
+            df_ts = df_group[[*columns, time_var]].copy()
+            df_ts = df_ts.reset_index(drop=True)
 
             # Check time is sorted ?
             # TODO

@@ -78,10 +78,7 @@ def get_partitions(base_dir, ts_variable):
 
     metadata = read_tstore_metadata(base_dir=base_dir)
     partitioning = metadata["partitioning"][ts_variable]
-    if partitioning is not None:
-        partitions = partitioning.split("/")
-    else:
-        partitions = []
+    partitions = partitioning.split("/") if partitioning is not None else []
     return partitions
 
 

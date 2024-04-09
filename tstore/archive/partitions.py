@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Created on Mon Apr  8 17:05:26 2024
+Created on Mon Apr  8 17:05:26 2024.
 
 @author: ghiggi
 """
@@ -44,10 +44,15 @@ def get_partitioning_mapping_dict(time_var, backend="pandas"):
 
 
 def get_valid_partitions():
+    """Get valid partitioning components."""
     return list(get_partitioning_mapping_dict(time_var="dummy"))
 
 
 def check_partitions(partitioning_str):
+    """Check partitioning components of partitinoning string.
+
+    Return the partitioning components.
+    """
     if partitioning_str is None:
         return None
 

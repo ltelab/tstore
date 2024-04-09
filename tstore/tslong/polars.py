@@ -1,3 +1,5 @@
+"""TSLONG Polars implementation."""
+
 import pandas as pd
 import polars as pl
 
@@ -60,9 +62,7 @@ def to_tstore(
     tstore_structure="id-var",
     overwrite=True,
 ):
-    """
-    TSLONG.to_tstore()
-    """
+    """TSLONG.to_tstore()."""
     # Check inputs
     tstore_structure = check_tstore_structure(tstore_structure)
     base_dir = check_tstore_directory(base_dir, overwrite=overwrite)
@@ -77,7 +77,7 @@ def to_tstore(
     # Check which columns remains (not specified at class init)
     # TODO
 
-    # Checck partitioning
+    # Check partitioning
     partitioning = check_partitioning(partitioning, ts_variables=list(ts_variables))
 
     # Identify static dataframe (attributes)
@@ -120,12 +120,12 @@ def to_tstore(
                 columns = [ts_variable]
 
             # Retrieve TS object
-            df_ts = df_group[columns + [time_var]]
+            df_ts = df_group[[*columns, time_var]]
 
             # Check time is sorted ?
             # TODO
 
-            # Add partioning columns
+            # Add partitioning columns
             partitioning_str = partitioning[ts_variable]
             df_ts, partitions = add_partitioning_columns(
                 df_ts,
@@ -142,6 +142,7 @@ def to_tstore(
                 tstore_structure=tstore_structure,
             )
 
+            # TODO; Maybe create TS object and use TS.to_parquet() once implemented
             # Retrieve pyarrow Table
             table = df_ts.to_arrow()
 
