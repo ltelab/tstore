@@ -23,7 +23,7 @@ def check_tstore_directory(base_dir, overwrite):
     # Create directory
     os.makedirs(base_dir, exist_ok=True)
     return base_dir
-
+       
 
 def define_attributes_filepath(base_dir):
     """Define filepath of TStore attributes."""
@@ -50,10 +50,38 @@ def define_metadata_filepath(base_dir):
 
 def get_tstore_structure(base_dir):
     """Get TStore structure."""
-    from tstore.archive.readers import read_metadata
+    from tstore.archive.metadata.readers import read_tstore_metadata
 
-    metadata = read_metadata(base_dir=base_dir)
+    metadata = read_tstore_metadata(base_dir=base_dir)
     return metadata["tstore_structure"]
+
+
+def get_time_var(base_dir):
+    """Get TStore time variable."""
+    from tstore.archive.metadata.readers import read_tstore_metadata
+    
+    metadata = read_tstore_metadata(base_dir=base_dir)
+    return metadata["time_var"]
+    
+
+def get_id_var(base_dir):
+    """Get TStore ID variable."""
+    from tstore.archive.metadata.readers import read_tstore_metadata
+    
+    metadata = read_tstore_metadata(base_dir=base_dir)
+    return metadata["id_var"]
+    
+def get_partitions(base_dir, ts_variable):
+    """Get TStore time series partitioning."""
+    from tstore.archive.metadata.readers import read_tstore_metadata
+    
+    metadata = read_tstore_metadata(base_dir=base_dir)
+    partitioning = metadata["partitioning"][ts_variable]
+    if partitioning is not None:
+        partitions = partitioning.split("/")
+    else: 
+        partitions = []
+    return partitions
 
 
 def get_ts_info(base_dir, ts_variable):
@@ -67,4 +95,5 @@ def get_ts_info(base_dir, ts_variable):
         tstore_ids = [os.path.basename(fpath) for fpath in fpaths]
     else:
         raise ValueError("Valid tstore_structure are 'id-var' and 'var-id'.")
-    return fpaths, tstore_ids
+    partitions = get_partitions(base_dir, ts_variable)
+    return fpaths, tstore_ids, partitions

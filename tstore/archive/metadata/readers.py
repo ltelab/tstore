@@ -16,7 +16,7 @@ def _read_yaml_metadata(fpath):
     return metadata
 
 
-def read_metadata(base_dir):
+def read_tstore_metadata(base_dir):
     """Read TStore metadata."""
     metadata_fpath = define_metadata_filepath(base_dir)
     metadata = _read_yaml_metadata(metadata_fpath)

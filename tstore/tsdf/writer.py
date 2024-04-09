@@ -12,7 +12,7 @@ from tstore.archive.io import (
     define_tsarray_filepath,
 )
 from tstore.tsdf.extensions.ts_dtype import TSDtype
-
+from tstore.archive.partitions import check_partitioning
 
 def _get_ts_variables(df):
     """Get list of TSArray columns."""
@@ -31,7 +31,7 @@ def _get_static_columns(df):
 
 def _write_attributes(df, base_dir):
     """Write TSDF static attributes."""
-    from tstore.archive.writers import write_attributes
+    from tstore.archive.attributes.pandas import write_attributes
 
     static_columns = _get_static_columns(df)
     df_attributes = df[static_columns]
@@ -65,22 +65,28 @@ def _write_tsarrays(df, base_dir, tstore_structure):
         )
 
 
-def _write_metadata(df, base_dir, tstore_structure):
+def _write_metadata(base_dir, tstore_structure, id_var, time_var, ts_variables,
+                    partitioning):
     """Write TStore metadata."""
-    from tstore.archive.writers import write_metadata
+    from tstore.archive.metadata.writers import write_tstore_metadata
 
-    ts_variables = _get_ts_variables(df)
-    write_metadata(
+
+    write_tstore_metadata(
         base_dir=base_dir,
+        id_var=id_var,
+        time_var=time_var,
         ts_variables=ts_variables,
         tstore_structure=tstore_structure,
+        partitioning=partitioning,
     )
 
 
 def write_tstore(
     df,
     base_dir,
-    partition_str=None,
+    id_var,
+    time_var, # maybe not needed for TSDF?
+    partitioning,
     tstore_structure="id-var",
     overwrite=True,
 ):
@@ -88,7 +94,10 @@ def write_tstore(
     # Checks
     tstore_structure = check_tstore_structure(tstore_structure)
     base_dir = check_tstore_directory(base_dir, overwrite=overwrite)
-
+    
+    ts_variables = _get_ts_variables(df)
+    partitioning = check_partitioning(partitioning, ts_variables=ts_variables)
+ 
     # Write static attributes
     _write_attributes(df, base_dir=base_dir)
 
@@ -96,4 +105,9 @@ def write_tstore(
     _write_tsarrays(df, base_dir=base_dir, tstore_structure=tstore_structure)
 
     # Write TSArrays metadata
-    _write_metadata(df, base_dir=base_dir, tstore_structure=tstore_structure)
+    ts_variables = _get_ts_variables(df)
+    _write_metadata(base_dir=base_dir, 
+                    tstore_structure=tstore_structure,
+                    ts_variables=ts_variables,
+                    id_var=id_var, time_var=time_var, 
+                    partitioning=partitioning)

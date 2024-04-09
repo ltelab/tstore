@@ -7,21 +7,12 @@ Created on Mon Jun 12 22:17:59 2023.
 
 import dask.dataframe as dd
 import pandas as pd
+from tstore.archive.partitions import add_partitioning_columns
 
 
 def check_time_index(df):
     """Check pandas/dask index is datetime."""
     return pd.api.types.is_datetime64_any_dtype(df.index.dtype)
-
-
-def add_partitioning_columns(df, partitioning_str):
-    """Add partitioning columns to the dataframe."""
-    # TODO: as function of TS_partitioning_string (YYYY/MM/DD) or (YY/DOY/HH)
-    # dayofyear, dayofweek, hour,  minute, ...
-    df["month"] = df.index.dt.month.values
-    df["year"] = df.index.dt.year.values
-    partition_on = ["year", "month"]
-    return df, partition_on
 
 
 def ensure_is_dask_dataframe(data):
@@ -47,6 +38,7 @@ class TS:
 
     def from_file(
         fpath,
+        partitions,
         columns=None,
         start_time=None,
         end_time=None,
@@ -58,10 +50,11 @@ class TS:
     ):
         """Read a time series from disk into a Dask.DataFrame."""
         # TODO: generalize to pyarrow, pandas, dask, polars
-        from tstore.archive.ts.dask import open_ts
-
+        from tstore.archive.ts.readers.dask import open_ts
+           
         df = open_ts(
             fpath,
+            partitions=partitions,
             columns=columns,
             start_time=start_time,
             end_time=end_time,
@@ -77,21 +70,26 @@ class TS:
 
     def to_disk(self, fpath, partitioning_str=None):
         """Write TS object to disk."""
+        # TODO
+        # - Should be based on tstore.archive.ts.writers 
+        # --> All code should exploit the arrow write_partitioned_dataset() function 
+        
         # Ensure is a dask dataframe
         df = ensure_is_dask_dataframe(self.data)
 
         # Check the index is datetime
         check_time_index(df)
 
-        # Check known divisions ?
+        # Check known dask divisions ?
         # - TODO: behaviour to determine
-        if df.known_divisions:
-            pass
+        # if df.known_divisions:
+        #     pass
 
         # Check time is sorted ?
-
+        # TODO 
+        
         # Add partition columns
-        df, partition_on = add_partitioning_columns(df, partitioning_str)
+        df, partition_on = add_partitioning_columns(df, partitioning_str, time_var="time", backend="pandas")
 
         # Write to Parquet
         df.to_parquet(

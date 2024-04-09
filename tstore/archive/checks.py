@@ -9,19 +9,22 @@ import datetime
 import numpy as np
 
 
-def get_available_ts_variables(base_dir):
-    """Get available TStore timeseries."""
-    from tstore.archive.readers import read_metadata
-
-    metadata = read_metadata(base_dir=base_dir)
-    return metadata["ts_variables"]
-
 
 def check_is_tstore(base_dir):
     """Check is a TStore."""
     # TODO
     pass
     return base_dir
+
+
+def get_available_ts_variables(base_dir):
+    """Get available TStore timeseries."""
+    from tstore.archive.metadata.readers import read_tstore_metadata
+
+    metadata = read_tstore_metadata(base_dir=base_dir)
+    return metadata["ts_variables"]
+
+
 
 
 def check_ts_variables(ts_variables, base_dir):
@@ -40,7 +43,7 @@ def check_ts_variables(ts_variables, base_dir):
     unvalid_ts_variables = unvalid_ts_variables.tolist()
     if len(unvalid_ts_variables) > 0:
         raise ValueError(
-            f"Valid ts_variables are {ts_variables}. Invalid: {unvalid_ts_variables}.",
+            f"Valid ts_variables are {available_ts_variables}. Invalid: {unvalid_ts_variables}.",
         )
     return ts_variables
 
@@ -50,6 +53,7 @@ def check_tstore_ids(tstore_ids, base_dir):
 
     If tstore_ids=None, return None.
     """
+    # get_available_ts_store_ids(base_dir) # look into disk (based on tstore_structure)
     # TODO:
     pass
     return tstore_ids

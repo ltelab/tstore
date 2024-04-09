@@ -23,3 +23,21 @@ def read_attributes(base_dir, tstore_ids=None):
     # Subset tstore_ids
     # TODO: maybe possible to pass filters to pd.read_parquet
     return df
+
+
+def write_attributes(df, base_dir):
+    """Write static attributes dataframe.
+
+    Assume df pandas !
+    TODO: polars, pyarrow does not have index
+    --> Ensure tstore_id column
+    """
+    fpath = define_attributes_filepath(base_dir)
+    df.index = df.index.astype("string[pyarrow]")
+    df.to_parquet(
+        fpath,
+        engine="pyarrow",
+        compression="snappy",
+        index=True,
+    )
+

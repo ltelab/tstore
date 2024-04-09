@@ -5,13 +5,12 @@ Created on Mon Jun 12 22:19:51 2023.
 @author: ghiggi
 """
 import pyarrow.parquet as pq
-
-from tstore.archive.ts.filtering import get_time_filters
-from tstore.archive.ts.partitioning import get_dataset_partitioning_columns
-
+from tstore.archive.ts.utility import get_time_filters
+ 
 
 def open_ts(
     fpath,
+    partitions,
     start_time=None,
     end_time=None,
     columns=None,
@@ -52,6 +51,5 @@ def open_ts(
     # )
 
     # Remove partitioning columns
-    partitioning_columns = get_dataset_partitioning_columns(fpath)
-    table = table.drop(partitioning_columns)
+    table = table.drop(partitions)
     return table

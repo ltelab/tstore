@@ -16,13 +16,15 @@ from tstore.archive.checks import (
     check_ts_variables,
     check_tstore_ids,
 )
-from tstore.archive.io import get_ts_info
-from tstore.archive.ts.pyarrow import open_ts
+from tstore.archive.io import get_ts_info, get_id_var, get_time_var
+from tstore.archive.ts.readers.pyarrow import open_ts
 
 
 def _read_ts(
     fpath,
     tstore_id,
+    partitions,
+    id_var,
     start_time=None,
     end_time=None,
     columns=None,
@@ -33,21 +35,23 @@ def _read_ts(
     # Read TS in pyarrow long format
     table = open_ts(
         fpath=fpath,
+        partitions=partitions,
         start_time=start_time,
         end_time=end_time,
         columns=columns,
         filesystem=filesystem,
         use_threads=use_threads,
     )
-    # Add tstore_id
+    # Add tstore_id (as large_string dtype to avoid join errors)
     tstore_id = str(tstore_id)
-    tstore_id = pa.array(np.repeat(tstore_id, len(table)), type=pa.string())
-    table = table.add_column(0, "tstore_id", tstore_id)
+    tstore_id = pa.array(np.repeat(tstore_id, len(table)), type=pa.string()).cast(pa.large_string())
+    table = table.add_column(0, id_var, tstore_id)
     return table
 
 
 def _read_ts_variable(
     base_dir,
+    id_var,
     ts_variable,
     start_time=None,
     end_time=None,
@@ -57,12 +61,14 @@ def _read_ts_variable(
 ):
     """Read a TStore ts_variable into pyarrow long-format."""
     # Find TS and associated TStore IDs
-    fpaths, tstore_ids = get_ts_info(base_dir=base_dir, ts_variable=ts_variable)
+    fpaths, tstore_ids, partitions = get_ts_info(base_dir=base_dir, ts_variable=ts_variable)
     # Read each TS
     list_tables = [
         _read_ts(
             fpath=fpath,
+            partitions=partitions,
             tstore_id=tstore_id,
+            id_var=id_var,
             start_time=start_time,
             end_time=end_time,
             columns=columns,
@@ -76,18 +82,19 @@ def _read_ts_variable(
     return table
 
 
-def _join_tables(left_table, right_table):
+def _join_tables(left_table, right_table, id_var, time_var):
     """Joining functions of pyarrow tables."""
-    # TODO: update keys to 'time'
     return left_table.join(
         right_table,
-        keys=["timestamp", "tstore_id"],
+        keys=[time_var, id_var],
         join_type="full outer",
     )
 
 
 def _read_ts_variables(
     base_dir,
+    id_var,
+    time_var,
     ts_variables,
     start_time=None,
     end_time=None,
@@ -96,12 +103,12 @@ def _read_ts_variables(
     use_threads=True,
 ):
     """Read TStore ts_variables into pyarrow long-format."""
-    # TODO: columns must be a dictionary {ts_variable: [...]}
 
     # Read TS of all ts_variables in long-format
     list_tables = [
         _read_ts_variable(
             base_dir=base_dir,
+            id_var=id_var,
             ts_variable=ts_variable,
             start_time=start_time,
             end_time=end_time,
@@ -120,10 +127,12 @@ def _read_ts_variables(
     # TODO:
 
     # Iteratively join the tables
-    table = reduce(_join_tables, list_tables)
+    table = reduce(lambda left, right: _join_tables(left, right, id_var=id_var, time_var=time_var), list_tables)
 
     return table
 
+
+# TSLong.from_file(engine="pyarrow")
 
 def open_tslong(
     base_dir,
@@ -136,18 +145,19 @@ def open_tslong(
     use_threads=True,
 ):
     """Open TStore into long-format into pyarrow.Table."""
-    # TODO: columns must be a dictionary {ts_variable: [...]}
-    # --> Preprocess in dictionary {ts_variable: None ... }
-
     # Checks
     base_dir = check_is_tstore(base_dir)
     ts_variables = check_ts_variables(ts_variables, base_dir=base_dir)
     tstore_ids = check_tstore_ids(tstore_ids, base_dir=base_dir)
     start_time, end_time = check_start_end_time(start_time, end_time)
-
+    id_var = get_id_var(base_dir)
+    time_var = get_time_var(base_dir)
+    
     # Get list of tslong for each ts_variable
     table = _read_ts_variables(
         base_dir=base_dir,
+        id_var=id_var,
+        time_var=time_var,
         ts_variables=ts_variables,
         start_time=start_time,
         end_time=end_time,
@@ -163,9 +173,10 @@ def open_tslong(
         filesystem=filesystem,
         use_threads=use_threads,
     )
+    
     # Join (duplicate) table_attrs on table
-    tslong = table.join(table_attrs, keys=["tstore_id"], join_type="full outer")
+    tslong = table.join(table_attrs, keys=[id_var], join_type="full outer")
 
-    # Return tslong
+    # Return TSLong
     # TODO: add class ?
     return tslong
