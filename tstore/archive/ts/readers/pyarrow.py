@@ -5,8 +5,9 @@ Created on Mon Jun 12 22:19:51 2023.
 @author: ghiggi
 """
 import pyarrow.parquet as pq
+
 from tstore.archive.ts.utility import get_time_filters
- 
+
 
 def open_ts(
     fpath,

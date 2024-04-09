@@ -14,9 +14,9 @@ class TSDF(pd.DataFrame):
         base_dir,
         id_var,
         time_var,  # likely not needed !
-        partitioning=None,  
+        partitioning=None,
         tstore_structure="id-var",
-        overwrite=True,  # append functionality? 
+        overwrite=True,  # append functionality?
         # geometry
     ):
         """Write TStore from TSDF object."""
@@ -31,14 +31,14 @@ class TSDF(pd.DataFrame):
             tstore_structure=tstore_structure,
             overwrite=overwrite,
         )
-    
-    # Method that return identifier column 
-    
+
+    # Method that return identifier column
+
     # Method that return the timeseries columns  (TSArrays)
-    
-    # Add compute method 
-    
+
+    # Add compute method
+
     # Add wrappers to methods iloc, loc or join to return TSDF class
-       
-    # Remove methods that are not supported by TSArray 
-    # --> min, ... 
+
+    # Remove methods that are not supported by TSArray
+    # --> min, ...

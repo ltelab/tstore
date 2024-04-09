@@ -40,4 +40,3 @@ def write_attributes(df, base_dir):
         compression="snappy",
         index=True,
     )
-

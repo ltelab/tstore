@@ -23,7 +23,7 @@ def check_tstore_directory(base_dir, overwrite):
     # Create directory
     os.makedirs(base_dir, exist_ok=True)
     return base_dir
-       
+
 
 def define_attributes_filepath(base_dir):
     """Define filepath of TStore attributes."""
@@ -59,27 +59,28 @@ def get_tstore_structure(base_dir):
 def get_time_var(base_dir):
     """Get TStore time variable."""
     from tstore.archive.metadata.readers import read_tstore_metadata
-    
+
     metadata = read_tstore_metadata(base_dir=base_dir)
     return metadata["time_var"]
-    
+
 
 def get_id_var(base_dir):
     """Get TStore ID variable."""
     from tstore.archive.metadata.readers import read_tstore_metadata
-    
+
     metadata = read_tstore_metadata(base_dir=base_dir)
     return metadata["id_var"]
-    
+
+
 def get_partitions(base_dir, ts_variable):
     """Get TStore time series partitioning."""
     from tstore.archive.metadata.readers import read_tstore_metadata
-    
+
     metadata = read_tstore_metadata(base_dir=base_dir)
     partitioning = metadata["partitioning"][ts_variable]
     if partitioning is not None:
         partitions = partitioning.split("/")
-    else: 
+    else:
         partitions = []
     return partitions
 

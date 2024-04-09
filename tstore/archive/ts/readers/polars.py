@@ -14,45 +14,48 @@ def open_ts(
     end_time=None,
     # Options
     rechunk=True,
-    use_statistics=True, 
+    use_statistics=True,
     hive_partitioning=True,
     storage_options=None,
     low_memory=False,
     # lazy option
-    lazy = True,
+    lazy=True,
     # in-memory only options
     columns=None,
     use_pyarrow=False,
     parallel=True,
 ):
-    """Open a TS into a polars Frame."""    
-    # https://docs.pola.rs/py-polars/html/reference/api/polars.read_parquet.html 
+    """Open a TS into a polars Frame."""
+    # https://docs.pola.rs/py-polars/html/reference/api/polars.read_parquet.html
     # https://docs.pola.rs/py-polars/html/reference/api/polars.scan_parquet.html
     if lazy:
-        df_pl = pl.scan_parquet(fpath,
-                                rechunk=rechunk,
-                                storage_options=storage_options,
-                                hive_partitioning=hive_partitioning, 
-                                use_statistics=use_statistics,
-                                low_memory=low_memory,
-                                )
+        df_pl = pl.scan_parquet(
+            fpath,
+            rechunk=rechunk,
+            storage_options=storage_options,
+            hive_partitioning=hive_partitioning,
+            use_statistics=use_statistics,
+            low_memory=low_memory,
+        )
         # Filter columns if not None
     else:
-        df_pl = pl.read_parquet(fpath,
-                                rechunk=rechunk,
-                                storage_options=storage_options,
-                                hive_partitioning=hive_partitioning, 
-                                use_statistics=use_statistics,
-                                low_memory=low_memory,
-                                # Others
-                                columns=columns, 
-                                use_pyarrow=use_pyarrow,
-                                parallel=parallel)
-        
-    # Filter by start_time and end_time 
+        df_pl = pl.read_parquet(
+            fpath,
+            rechunk=rechunk,
+            storage_options=storage_options,
+            hive_partitioning=hive_partitioning,
+            use_statistics=use_statistics,
+            low_memory=low_memory,
+            # Others
+            columns=columns,
+            use_pyarrow=use_pyarrow,
+            parallel=parallel,
+        )
+
+    # Filter by start_time and end_time
     # - TODO
-    
+
     # Remove partitioning columns
     df_pl = df_pl.drop(partitions)
-     
+
     return df_pl

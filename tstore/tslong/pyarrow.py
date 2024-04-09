@@ -16,7 +16,7 @@ from tstore.archive.checks import (
     check_ts_variables,
     check_tstore_ids,
 )
-from tstore.archive.io import get_ts_info, get_id_var, get_time_var
+from tstore.archive.io import get_id_var, get_time_var, get_ts_info
 from tstore.archive.ts.readers.pyarrow import open_ts
 
 
@@ -103,7 +103,6 @@ def _read_ts_variables(
     use_threads=True,
 ):
     """Read TStore ts_variables into pyarrow long-format."""
-
     # Read TS of all ts_variables in long-format
     list_tables = [
         _read_ts_variable(
@@ -134,6 +133,7 @@ def _read_ts_variables(
 
 # TSLong.from_file(engine="pyarrow")
 
+
 def open_tslong(
     base_dir,
     ts_variables=None,
@@ -152,7 +152,7 @@ def open_tslong(
     start_time, end_time = check_start_end_time(start_time, end_time)
     id_var = get_id_var(base_dir)
     time_var = get_time_var(base_dir)
-    
+
     # Get list of tslong for each ts_variable
     table = _read_ts_variables(
         base_dir=base_dir,
@@ -173,7 +173,7 @@ def open_tslong(
         filesystem=filesystem,
         use_threads=use_threads,
     )
-    
+
     # Join (duplicate) table_attrs on table
     tslong = table.join(table_attrs, keys=[id_var], join_type="full outer")
 

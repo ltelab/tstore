@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Created on Mon Apr  8 17:24:09 2024
 
 @author: ghiggi
 """
 import yaml
+
 from tstore.archive.io import define_metadata_filepath
 
 
@@ -15,11 +15,7 @@ def _write_yaml_metadata(metadata, fpath):
         yaml.dump(metadata, file)
 
 
-def write_tstore_metadata(base_dir, 
-                          ts_variables, 
-                          id_var, 
-                          time_var,
-                          tstore_structure, partitioning):
+def write_tstore_metadata(base_dir, ts_variables, id_var, time_var, tstore_structure, partitioning):
     """Write TStore metadata file."""
     metadata_fpath = define_metadata_filepath(base_dir)
     metadata = {}

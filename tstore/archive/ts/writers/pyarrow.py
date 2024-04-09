@@ -1,20 +1,20 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Created on Mon Apr  8 17:26:02 2024
 
 @author: ghiggi
 """
-import os
 import math
-import pandas as pd 
-import pyarrow as pa 
+import os
+
+import pandas as pd
+import pyarrow as pa
 import pyarrow.parquet as pq
 
 
 def write_partitioned_dataset(
-    base_dir, 
-    table, 
+    base_dir,
+    table,
     partitioning=None,
     row_group_size="400MB",
     max_file_size="2GB",
@@ -23,10 +23,10 @@ def write_partitioned_dataset(
     # Computing options
     max_open_files=0,
     use_threads=True,
-    ):
+):
     """Write partitioned Parquet Dataset.
-    
-    https://arrow.apache.org/docs/python/generated/pyarrow.dataset.write_dataset.html 
+
+    https://arrow.apache.org/docs/python/generated/pyarrow.dataset.write_dataset.html
     """
     # row_group_size="400MB"
     # max_file_size="2GB"
@@ -35,28 +35,28 @@ def write_partitioned_dataset(
     # # Computing options
     # max_open_files=0
     # use_threads=True
-    
-    if partitioning is None: 
-        partitioning = [] 
-        
+
+    if partitioning is None:
+        partitioning = []
+
     # Estimate row_group_size (in number of rows)
     if isinstance(row_group_size, str):  # "200 MB"
         row_group_size = estimate_row_group_size(table, size=row_group_size)
         max_rows_per_group = row_group_size
         min_rows_per_group = row_group_size
-    
+
     # Estimate maximum number of file row (in number of rows)
     max_rows_per_file = estimate_row_group_size(table, size=max_file_size)
-    
+
     # Define table schema (without partitioning columns)
     table_schema = table.drop_columns(partitioning).schema
-     
+
     # Define file visitor for metadata collection
     metadata_collector = []
 
     def file_visitor(written_file):
         metadata_collector.append(written_file.metadata)
-    
+
     # Define file options
     file_options = {}
     file_options["compression"] = compression
@@ -72,7 +72,7 @@ def write_partitioned_dataset(
         base_dir=base_dir,
         format="parquet",
         partitioning=partitioning,
-        partitioning_flavor="hive", # TODO: maybe enable DirectoryPartitioning and store info on metadata.yaml file
+        partitioning_flavor="hive",  # TODO: maybe enable DirectoryPartitioning and store info on metadata.yaml file
         # Directory options
         create_dir=True,
         existing_data_behavior="overwrite_or_ignore",
@@ -87,9 +87,9 @@ def write_partitioned_dataset(
         # Options to control open connections
         max_open_files=max_open_files,
     )
-    
-    # Maybe only to write if partitioning is not None? 
-    
+
+    # Maybe only to write if partitioning is not None?
+
     # Write the ``_common_metadata`` parquet file without row groups statistics
     pq.write_metadata(table_schema, os.path.join(base_dir, "_common_metadata"))
 
@@ -98,7 +98,7 @@ def write_partitioned_dataset(
         table_schema,
         os.path.join(base_dir, "_metadata"),
         metadata_collector=metadata_collector,
-    )   
+    )
 
 
 def convert_size_to_bytes(size):

@@ -7,6 +7,7 @@ Created on Mon Jun 12 22:17:59 2023.
 
 import dask.dataframe as dd
 import pandas as pd
+
 from tstore.archive.partitions import add_partitioning_columns
 
 
@@ -51,7 +52,7 @@ class TS:
         """Read a time series from disk into a Dask.DataFrame."""
         # TODO: generalize to pyarrow, pandas, dask, polars
         from tstore.archive.ts.readers.dask import open_ts
-           
+
         df = open_ts(
             fpath,
             partitions=partitions,
@@ -71,9 +72,9 @@ class TS:
     def to_disk(self, fpath, partitioning_str=None):
         """Write TS object to disk."""
         # TODO
-        # - Should be based on tstore.archive.ts.writers 
-        # --> All code should exploit the arrow write_partitioned_dataset() function 
-        
+        # - Should be based on tstore.archive.ts.writers
+        # --> All code should exploit the arrow write_partitioned_dataset() function
+
         # Ensure is a dask dataframe
         df = ensure_is_dask_dataframe(self.data)
 
@@ -86,8 +87,8 @@ class TS:
         #     pass
 
         # Check time is sorted ?
-        # TODO 
-        
+        # TODO
+
         # Add partition columns
         df, partition_on = add_partitioning_columns(df, partitioning_str, time_var="time", backend="pandas")
 

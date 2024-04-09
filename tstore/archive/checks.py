@@ -9,7 +9,6 @@ import datetime
 import numpy as np
 
 
-
 def check_is_tstore(base_dir):
     """Check is a TStore."""
     # TODO
@@ -23,8 +22,6 @@ def get_available_ts_variables(base_dir):
 
     metadata = read_tstore_metadata(base_dir=base_dir)
     return metadata["ts_variables"]
-
-
 
 
 def check_ts_variables(ts_variables, base_dir):

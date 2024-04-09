@@ -6,8 +6,8 @@ Created on Mon Jun 12 22:24:07 2023.
 """
 import dask.dataframe as dd
 import pandas as pd
-from tstore.archive.ts.utility import get_time_filters
 
+from tstore.archive.ts.utility import get_time_filters
 
 
 def open_ts(
