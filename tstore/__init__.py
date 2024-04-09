@@ -12,6 +12,7 @@ from tstore.tslong.pandas import open_tslong
 
 __all__ = [
     "open_tsdf",
+    "open_tslong",
     "TSArray",
     "TSDtype",
     "TS",
