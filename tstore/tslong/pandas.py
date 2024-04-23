@@ -61,7 +61,7 @@ def to_tstore(
     id_var,
     time_var,
     ts_variables,
-    static_variables,
+    static_variables=None,
     # TSTORE options
     partitioning=None,
     tstore_structure="id-var",
@@ -69,7 +69,8 @@ def to_tstore(
 ):
     """TSLONG.to_tstore()."""
     # If index time, remove
-    df = df.reset_index(names=time_var)
+    if time_var not in df.columns:
+        df = df.reset_index(names=time_var)
 
     # Set identifier as pyarrow large_string !
     # - Very important to join attrs at read time !
@@ -93,8 +94,11 @@ def to_tstore(
     partitioning = check_partitioning(partitioning, ts_variables=list(ts_variables))
 
     # Identify static dataframe (attributes)
+    attr_cols = [id_var]
+    if static_variables is not None:
+        attr_cols += static_variables
     # - TODO: add flag to check if are actual duplicates !
-    df_attrs = df[[id_var, *static_variables]]
+    df_attrs = df[attr_cols]
     df_attrs = df_attrs.drop_duplicates(subset=id_var)
     df_attrs = df_attrs.reset_index(drop=True)
 
