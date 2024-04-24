@@ -69,7 +69,7 @@ Feel free to also open a [GitHub Issue](https://github.com/ltelab/tstore/issues)
 
 If you are using TStore in your publication please cite our Zenodo repository:
 
-> Ghiggi Gionata. ltelab/tstore. Zenodo. [![https://doi.org/10.5281/zenodo.7753488](https://zenodo.org/badge/286664485.svg?style=flat)](https://doi.org/10.5281/zenodo.7753488)
+> Ghiggi Gionata. ltelab/tstore. Zenodo. [![<https://doi.org/10.5281/zenodo.7753488>](https://zenodo.org/badge/286664485.svg?style=flat)](https://doi.org/10.5281/zenodo.7753488)
 
 If you want to cite a specific software version, have a look at the [Zenodo site](https://doi.org/10.5281/zenodo.7753488).
 
