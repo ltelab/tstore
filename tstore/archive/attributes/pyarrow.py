@@ -4,13 +4,16 @@ Created on Mon Jun 12 23:22:16 2023.
 
 @author: ghiggi
 """
+
 import pyarrow.parquet as pq
 
 from tstore.archive.checks import check_is_tstore, check_tstore_ids
 from tstore.archive.io import define_attributes_filepath
 
 
-def get_tstore_ids_filters(tstore_ids=None):
+def get_tstore_ids_filters(
+    tstore_ids=None,  # noqa: ARG001
+):
     """Define filters for Parquet Dataset subsetting at read-time."""
     # TODO implement logic
     filters = None

@@ -4,6 +4,7 @@ Created on Mon Jun 12 17:57:14 2023.
 
 @author: ghiggi
 """
+
 from functools import reduce
 
 import numpy as np

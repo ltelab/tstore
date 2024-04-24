@@ -114,7 +114,6 @@ def to_tstore(
     # Write to disk per identifier
     for tstore_id, df_group in df.groupby(id_var):
         for ts_variable, columns in ts_variables.items():
-
             # Retrieve columns of the TS object
             if columns is None:
                 columns = [ts_variable]

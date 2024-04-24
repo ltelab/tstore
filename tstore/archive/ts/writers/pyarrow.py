@@ -4,6 +4,7 @@ Created on Mon Apr  8 17:26:02 2024.
 
 @author: ghiggi
 """
+
 import math
 import os
 
@@ -102,6 +103,7 @@ def write_partitioned_dataset(
 
 
 def convert_size_to_bytes(size):
+    """Convert size to bytes."""
     if not isinstance(size, (str, int)):
         raise TypeError("Expecting a string (i.e. 200MB) or the integer number of bytes.")
     if isinstance(size, int):

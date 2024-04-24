@@ -4,6 +4,7 @@ Created on Sun Jun 11 22:21:38 2023.
 
 @author: ghiggi
 """
+
 import dask.datasets
 import numpy as np
 import pandas as pd
@@ -97,7 +98,8 @@ tsdf.min()
 
 # If class inherit pandas.DataFrame or geopandas.DataFrame
 # --> Need to redefine methods to returns TSDF (similar concept applies to TSLONG, ...)
-# Or we avoid inheritance from *.DataFrame and we re-implement the relevant methods calling internally the *.DataFrame.<methods>
+# Or we avoid inheritance from *.DataFrame and we re-implement the relevant methods calling internally the
+# *.DataFrame.<methods>
 
 
 #### TSDF - Write TStore
@@ -167,21 +169,23 @@ tslong
 ####--------------------------------------------------------------------------.
 #### IMPLEMENTATIONS / THOUGHTS
 # - Arrow/Pyarrow allows for zero-copy conversion between pandas/(dask)/polars. We should exploit that !
-# - Pyarrow.Table object is difficult to manipulate (I would use it only for conversion across backend and reading/writing to/from disk)
+# - Pyarrow.Table object is difficult to manipulate (I would use it only for conversion across backend and
+#   reading/writing to/from disk)
 # - ID should be always stored as string (pyarrow.large_string), so to have some dtype when doing join/merge operations
-# - I would suggest to first start implement the I/O and conversion with pandas and polars (with data in memory) (and eventually dask dataframe)
+# - I would suggest to first start implement the I/O and conversion with pandas and polars (with data in memory) (and
+#   eventually dask dataframe)
 # - When this is set (and eventually tested), we can implement the lazy reading of TSDF
 #   - dask.delayed for pandas and polars backends
 #   - dask.dataframe for dask backend
 #   - lazy polars for lazy_polars backend ...
-# - I would expect that we enable to define a series of lazy operations (which can change the backend of the TS during computations),
-#   we must have something to control / enforce the final backend of the data to be written to disk. Because the dask delayed object does not
-#   know what will be the dtype of the TS.data
+# - I would expect that we enable to define a series of lazy operations (which can change the backend of the TS during
+#   computations), we must have something to control / enforce the final backend of the data to be written to disk.
+#   Because the dask delayed object does not know what will be the dtype of the TS.data
 # - A tool to switch TS object from an backend to another should be implemented
 # - A method to .compute() data in memory should be also implemented
 
 # - Ideally one should be able to apply functions to many TSArray etc, and the actual execution
-#  only taking place when writing to disk the timeseries (id per id),  loading data into memory only at that moment and freeing the memory
-#  when the id is processed.
+#  only taking place when writing to disk the timeseries (id per id),  loading data into memory only at that moment and
+#  freeing the memory when the id is processed.
 
 ####--------------------------------------------------------------------------.

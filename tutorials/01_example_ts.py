@@ -4,6 +4,7 @@ Created on Sun Jun 11 20:56:07 2023.
 
 @author: ghiggi
 """
+
 import dask.datasets
 import pandas as pd
 import polars as pl
@@ -52,7 +53,8 @@ dir(ts_dask)
 # - Should be based on tstore.archive.ts.writers
 # --> All code should likely exploit the pyarrow write_partitioned_dataset() function
 # --> Maybe we should call the method TS.to_parquet()
-# --> Also when writing TSLONG to TStore, we could create a TS to then write to disk (see comment in tstore.tslong.pandas/polars)
+# --> Also when writing TSLONG to TStore, we could create a TS to then write to disk (see comment in
+#     tstore.tslong.pandas/polars)
 
 # Write to disk
 fpath = "/tmp/ts_dask.parquet"
@@ -69,7 +71,8 @@ ts_dask.to_disk(fpath)
 #### Read TS from disk
 # --> Pandas, Polars and pyarrow <read_parquet> functions loads data into memory !
 # --> Should we exploit only the pyarrow read function and then convert to the backend of choice?
-# --> Should we wrap the reading with dask.delayed to enable lazy reading (not actually read data into memory till needed ?)
+# --> Should we wrap the reading with dask.delayed to enable lazy reading (not actually read data into memory till
+#     needed ?)
 # --> Dask (dd.read_parquet) and LazyPolars (scan_parquet) functions allow direct lazy reads
 
 # Dask code

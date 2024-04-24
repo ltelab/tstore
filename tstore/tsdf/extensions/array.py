@@ -154,7 +154,7 @@ class TSArray(ExtensionArray):
     # Required for all ExtensionArray subclasses
     def isna(self):
         """A 1-D array indicating if the TS is missing."""
-        return pd.isnull(self._data)
+        return pd.isna(self._data)
 
     # Required for all ExtensionArray subclasses
     def copy(self):
