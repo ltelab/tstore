@@ -7,6 +7,7 @@ Created on Mon Apr  8 17:05:26 2024.
 
 
 def get_partitioning_mapping_dict(time_var, backend="pandas"):
+    """Get partitioning mapping dict."""
     # Mapping of partitioning components to corresponding pandas attributes
     if backend == "pandas":
         partitioning_mapping = {

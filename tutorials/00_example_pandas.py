@@ -4,6 +4,7 @@ Created on Sun Apr  7 21:10:05 2024.
 
 @author: ghiggi
 """
+# ruff: noqa: E402
 
 import dask.datasets
 import numpy as np

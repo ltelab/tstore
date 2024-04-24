@@ -7,4 +7,4 @@ Created on Sun Apr  7 11:04:41 2024.
 
 
 def test_dummy():
-    assert 1 == 1
+    assert 1 == 1  # noqa: PLR0133

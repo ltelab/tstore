@@ -4,6 +4,7 @@ Created on Mon Jun 12 22:19:51 2023.
 
 @author: ghiggi
 """
+
 import pyarrow.parquet as pq
 
 from tstore.archive.ts.utility import get_time_filters
@@ -15,7 +16,7 @@ def open_ts(
     start_time=None,
     end_time=None,
     columns=None,
-    split_row_groups=False,
+    split_row_groups=False,  # noqa: ARG001
     # pyarrow-specific
     filesystem=None,
     use_threads=True,

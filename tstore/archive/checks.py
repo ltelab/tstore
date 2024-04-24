@@ -4,6 +4,7 @@ Created on Mon Jun 12 21:32:37 2023.
 
 @author: ghiggi
 """
+
 import datetime
 
 import numpy as np
@@ -45,7 +46,10 @@ def check_ts_variables(ts_variables, base_dir):
     return ts_variables
 
 
-def check_tstore_ids(tstore_ids, base_dir):
+def check_tstore_ids(
+    tstore_ids,
+    base_dir,  # noqa: ARG001
+):
     """Check valid tstore_ids.
 
     If tstore_ids=None, return None.

@@ -4,14 +4,15 @@ Created on Mon Jun 12 22:19:51 2023.
 
 @author: ghiggi
 """
+
 import polars as pl
 
 
 def open_ts(
     fpath,
     partitions,
-    start_time=None,
-    end_time=None,
+    start_time=None,  # noqa: ARG001
+    end_time=None,  # noqa: ARG001
     # Options
     rechunk=True,
     use_statistics=True,
