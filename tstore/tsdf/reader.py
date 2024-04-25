@@ -9,9 +9,9 @@ import pandas as pd
 
 from tstore.archive.io import get_ts_info
 from tstore.archive.metadata.readers import read_tstore_metadata
+from tstore.ts_class import TS
 from tstore.tsdf import TSDF
 from tstore.tsdf.extensions.array import TSArray
-from tstore.tsdf.ts_class import TS
 
 
 def _read_tsarray(base_dir, ts_variable):
