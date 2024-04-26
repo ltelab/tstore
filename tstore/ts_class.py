@@ -113,3 +113,8 @@ class TS:
             ignore_divisions=False,
             compute=True,
         )
+
+    def __repr__(self):
+        """Print TS object."""
+        # return self.data.__repr__()
+        return f"TS[shape={self.data.shape},start={self.data.index.min()},end={self.data.index.max()}]"
