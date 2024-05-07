@@ -138,8 +138,6 @@ def tstore_path(tmp_path: Path, pandas_long_dataframe: pd.DataFrame) -> Path:
     # Group multiple timeseries into one TS object
     ts_variables = {"precipitation": ["name", "id", "x", "y"]}
 
-    print(pandas_long_dataframe.shape)
-
     to_tstore(
         pandas_long_dataframe,
         # TSTORE options
@@ -180,14 +178,12 @@ def pandas_long_dataframe(helpers) -> pd.DataFrame:
 
 
 @pytest.fixture()
-def arrow_long_dataframe(pandas_long_dataframe: pd.DataFrame) -> pa.Table:
-    """Create a long Arrow Table."""
-    df_arrow = pa.Table.from_pandas(pandas_long_dataframe)
-    return df_arrow
-
-
-@pytest.fixture()
-def polars_long_dataframe(arrow_long_dataframe: pa.Table) -> pl.DataFrame:
+def polars_long_dataframe(pandas_long_dataframe: pd.DataFrame) -> pl.DataFrame:
     """Create a long Polars DataFrame."""
-    df_pl = pl.from_arrow(arrow_long_dataframe)
+    df_pl = pl.from_pandas(pandas_long_dataframe, include_index=True)
+
+    # TODO: Should these be necessary?
+    df_pl = df_pl.rename({"timestamp": "time"})
+    df_pl = df_pl.with_columns(pl.col("store_id").cast(str))
+
     return df_pl
