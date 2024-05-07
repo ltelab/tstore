@@ -101,6 +101,7 @@ class TestLoad:
         tslong = tstore.open_tslong(tstore_path, ts_variables=["precipitation"])
         assert type(tslong) is pd.DataFrame
         assert tslong.shape == (192, 7)
+        # TODO: dataframe should be wrapped in a TSLong object
         # TODO: time column is counted
         # TODO: line order is not preserved
         # TODO: column order is not preserved
@@ -113,5 +114,7 @@ class TestLoad:
         tslong = open_tslong_pl(tstore_path, ts_variables=["precipitation"])
         assert type(tslong) is pl.DataFrame
         assert tslong.shape == (192, 7)
+        # TODO: dataframe should be wrapped in a TSLong object
         # TODO: time column is counted
+        # TODO: line order is not preserved
         # TODO: column order is not preserved
