@@ -116,5 +116,7 @@ class TS:
 
     def __repr__(self):
         """Print TS object."""
-        # return self.data.__repr__()
-        return f"TS[shape={self.data.shape},start={self.data.index.min()},end={self.data.index.max()}]"
+        try:
+            return f"TS[shape={self.data.shape},start={self.data.index.min()},end={self.data.index.max()}]"
+        except Exception:
+            return self.data.__repr__()
