@@ -76,3 +76,9 @@ class TSWrapper(ABC):
         """Return a string representation of the object and the wrapped dataframe."""
         dtype_path = f"{self._dtype.__module__}.{self._dtype.__qualname__}"
         return f"{self.__class__.__name__} wrapping a {dtype_path}:\n{self._df!s}"
+
+    def __dir__(self):
+        """Return the attributes of the object and the wrapped dataframe."""
+        own_attrs = set(dir(type(self))) | set(self.__dict__.keys())
+        df_attrs = set(dir(self._df))
+        return list(own_attrs | df_attrs)
