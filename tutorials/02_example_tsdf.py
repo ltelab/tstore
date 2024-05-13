@@ -94,7 +94,7 @@ tsdf1
 type(tsdf1)  # WARNING: this returns a pd.DataFrame --> should be TSDF ... must be wrapped !
 
 # Remove unsupported methods (or just add the one supported ?)
-tsdf.min()
+# tsdf.min()
 
 # If class inherit pandas.DataFrame or geopandas.DataFrame
 # --> Need to redefine methods to returns TSDF (similar concept applies to TSLONG, ...)

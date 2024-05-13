@@ -1,44 +1,26 @@
-"""TSDF."""
+"""TSDF package."""
 
-import pandas as pd
+from pathlib import Path
+from typing import Union
+
+from tstore.backend import Backend
+from tstore.tsdf.pandas import TSDFPandas
+from tstore.tsdf.tsdf import TSDF
 
 
-class TSDF(pd.DataFrame):
-    """A dataframe class with additional functionality for TSArray data."""
+def open_tsdf(base_dir: Union[str, Path], *args, backend: Backend = "pandas", **kwargs):
+    """Read a TStore file structure as a TSDF object."""
+    tsdf_classes = {
+        "pandas": TSDFPandas,
+    }
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    if backend not in tsdf_classes:
+        raise ValueError(f'Backend "{backend}" is not supported.')
 
-    def to_tstore(
-        self,
-        base_dir,
-        id_var,
-        time_var,  # likely not needed !
-        partitioning=None,
-        tstore_structure="id-var",
-        overwrite=True,  # append functionality?
-        # geometry
-    ):
-        """Write TStore from TSDF object."""
-        from tstore.tsdf.writer import write_tstore
+    return tsdf_classes[backend].from_tstore(base_dir, *args, **kwargs)
 
-        _ = write_tstore(
-            self,
-            base_dir=base_dir,
-            id_var=id_var,
-            time_var=time_var,
-            partitioning=partitioning,
-            tstore_structure=tstore_structure,
-            overwrite=overwrite,
-        )
 
-    # Method that return identifier column
-
-    # Method that return the timeseries columns  (TSArrays)
-
-    # Add compute method
-
-    # Add wrappers to methods iloc, loc or join to return TSDF class
-
-    # Remove methods that are not supported by TSArray
-    # --> min, ...
+__all__ = [
+    "open_tsdf",
+    "TSDF",
+]

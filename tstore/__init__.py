@@ -3,20 +3,20 @@
 import contextlib
 from importlib.metadata import PackageNotFoundError, version
 
-from tstore.ts_class import TS
-from tstore.tsdf import TSDF
-from tstore.tsdf.extensions.array import TSArray
-from tstore.tsdf.extensions.ts_dtype import TSDtype
-from tstore.tsdf.reader import open_tsdf
-from tstore.tslong.pandas import open_tslong
+from tstore.tsdf import TSDF, open_tsdf
+from tstore.tsdf.ts_class import TS
+from tstore.tsdf.ts_dtype import TSDtype
+from tstore.tsdf.tsarray import TSArray
+from tstore.tslong import TSLong, open_tslong
 
 __all__ = [
     "open_tsdf",
     "open_tslong",
-    "TSArray",
-    "TSDtype",
     "TS",
+    "TSArray",
     "TSDF",
+    "TSDtype",
+    "TSLong",
 ]
 
 # Get version

@@ -13,7 +13,7 @@ from tstore.archive.io import (
     define_tsarray_filepath,
 )
 from tstore.archive.partitions import check_partitioning
-from tstore.tsdf.extensions.ts_dtype import TSDtype
+from tstore.tsdf.ts_dtype import TSDtype
 
 
 def _get_ts_variables(df):
