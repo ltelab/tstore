@@ -7,7 +7,7 @@ import pandas as pd
 import polars as pl
 import pytest
 
-from tstore.ts_class import TS
+from tstore.tsdf.ts_class import TS
 
 # Imported fixtures from conftest.py:
 # - dask_dataframe

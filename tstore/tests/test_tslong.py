@@ -1,24 +1,15 @@
 """Test the tslong subpackage."""
 
 import os
-from functools import partial
 from pathlib import Path
-from typing import Callable
 
 import pandas as pd
 import polars as pl
 import pytest
 
 import tstore
-from tstore.tslong.pandas import (
-    to_tstore as to_tstore_pd,
-)
-from tstore.tslong.polars import (
-    open_tslong as open_tslong_pl,
-)
-from tstore.tslong.polars import (
-    to_tstore as to_tstore_pl,
-)
+from tstore.tslong.pandas import TSLongPandas
+from tstore.tslong.polars import TSLongPolars
 
 # Imported fixtures from conftest.py:
 # - pandas_long_dataframe
@@ -28,7 +19,7 @@ from tstore.tslong.polars import (
 # Functions ####################################################################
 
 
-def store_long_dataframe(to_tstore_func: Callable, df: pd.DataFrame, dirpath: str) -> None:
+def store_tslong(tslong: tstore.TSLong, dirpath: str) -> None:
     tstore_structure = "id-var"
     overwrite = True
     id_var = "store_id"
@@ -46,8 +37,7 @@ def store_long_dataframe(to_tstore_func: Callable, df: pd.DataFrame, dirpath: st
     # Group multiple timeseries into one TS object
     ts_variables = {"precipitation": ["name", "id", "x", "y"]}
 
-    to_tstore_func(
-        df,
+    tslong.to_tstore(
         # TSTORE options
         dirpath,
         # DFLONG attributes
@@ -62,30 +52,26 @@ def store_long_dataframe(to_tstore_func: Callable, df: pd.DataFrame, dirpath: st
     )
 
 
-store_pandas_long_dataframe = partial(store_long_dataframe, to_tstore_pd)
-store_polars_long_dataframe = partial(store_long_dataframe, to_tstore_pl)
-
-
 # Tests ########################################################################
 
 
 @pytest.mark.parametrize(
-    ("dataframe_fixture_name", "store_long_dataframe_func"),
+    "dataframe_fixture_name",
     [
-        ("pandas_long_dataframe", store_pandas_long_dataframe),
-        ("polars_long_dataframe", store_polars_long_dataframe),
+        "pandas_long_dataframe",
+        "polars_long_dataframe",
     ],
 )
 def test_store(
     tmp_path: Path,
     dataframe_fixture_name: str,
-    store_long_dataframe_func,
     request,
 ) -> None:
     """Test the to_tstore function."""
     df = request.getfixturevalue(dataframe_fixture_name)
+    tslong = tstore.TSLong.wrap(df)
     dirpath = tmp_path / "test_tstore"
-    store_long_dataframe_func(df, str(dirpath))
+    store_tslong(tslong, str(dirpath))
 
     # Check that the tstore is created
     assert dirpath.is_dir()
@@ -103,8 +89,9 @@ class TestLoad:
         tstore_path: Path,
     ) -> None:
         """Test loading as a Pandas DataFrame."""
-        tslong = tstore.open_tslong(tstore_path, ts_variables=["precipitation"])
-        assert type(tslong) is pd.DataFrame
+        tslong = tstore.open_tslong(tstore_path, backend="pandas", ts_variables=["precipitation"])
+        assert type(tslong) is TSLongPandas
+        assert type(tslong._df) is pd.DataFrame
         assert tslong.shape == (192, 7)
         # TODO: dataframe should be wrapped in a TSLong object
         # TODO: time column is counted
@@ -116,8 +103,9 @@ class TestLoad:
         tstore_path: Path,
     ) -> None:
         """Test loading as a Polars DataFrame."""
-        tslong = open_tslong_pl(tstore_path, ts_variables=["precipitation"])
-        assert type(tslong) is pl.DataFrame
+        tslong = tstore.open_tslong(tstore_path, backend="polars", ts_variables=["precipitation"])
+        assert type(tslong) is TSLongPolars
+        assert type(tslong._df) is pl.DataFrame
         assert tslong.shape == (192, 7)
         # TODO: dataframe should be wrapped in a TSLong object
         # TODO: time column is counted

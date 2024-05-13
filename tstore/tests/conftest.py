@@ -121,7 +121,7 @@ def parquet_timeseries(tmp_path: Path, dask_dataframe: DaskDataFrame) -> Path:
 def tstore_path(tmp_path: Path, pandas_long_dataframe: pd.DataFrame) -> Path:
     """Store a Pandas long DataFrame as a TStore."""
     # TODO: Rewrite without using tstore to not depend on implementation
-    from tstore.tslong.pandas import to_tstore
+    from tstore.tslong.pandas import TSLongPandas
 
     dirpath = tmp_path / "test_tstore"
     tstore_structure = "id-var"
@@ -141,8 +141,8 @@ def tstore_path(tmp_path: Path, pandas_long_dataframe: pd.DataFrame) -> Path:
     # Group multiple timeseries into one TS object
     ts_variables = {"precipitation": ["name", "id", "x", "y"]}
 
-    to_tstore(
-        pandas_long_dataframe,
+    tslong = TSLongPandas(pandas_long_dataframe)
+    tslong.to_tstore(
         # TSTORE options
         str(dirpath),
         # DFLONG attributes
@@ -240,5 +240,5 @@ def pandas_tsdf(pandas_series_of_ts: pd.Series) -> tstore.TSDF:
     df[id_var] = [1, 2, 3, 4]
     df[id_var] = df[id_var].astype("large_string[pyarrow]")
 
-    tsdf = tstore.TSDF(df)
+    tsdf = tstore.TSDF.wrap(df)
     return tsdf
