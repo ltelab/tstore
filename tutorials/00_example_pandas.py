@@ -40,9 +40,6 @@ df["static_var"] = df["store_id"].copy()
 
 df.shape  # 345_600
 
-#### PANDAS TSLONG.to_tstore()
-from tstore.tslong.pandas import to_tstore
-
 base_dir = "/tmp/dummy_tstore"
 tstore_structure = "id-var"
 overwrite = True
@@ -61,8 +58,8 @@ ts_variables = ["name", "id", "x", "y"]
 # Group multiple timeseries into one TS object
 ts_variables = {"precipitation": ["name", "id", "x", "y"]}
 
-to_tstore(
-    df,
+tslong = tstore.TSLong.wrap(df)
+tslong.to_tstore(
     # TSTORE options
     base_dir,
     # DFLONG attributes
@@ -96,16 +93,12 @@ tslong
 
 ####--------------------------------------------------------------------.
 #### Load TSTORE as POLARS TSLONG
-from tstore.tslong.polars import open_tslong as open_tslong_pl
-
-tslong_pl = open_tslong_pl(base_dir, ts_variables=["precipitation"])
+tslong_pl = tstore.open_tslong(base_dir, backend="polars", ts_variables=["precipitation"])
 
 tslong_pl
 
 ####--------------------------------------------------------------------.
 ### POLARS TSLONG.to_tstore()
-from tstore.tslong.polars import to_tstore as to_tstore_from_polars
-
 base_dir = "/tmp/dummy_tstore_polars"
 tstore_structure = "id-var"
 overwrite = True
@@ -124,8 +117,7 @@ ts_variables = ["name", "id", "x", "y"]
 # Group multiple timeseries into one TS object
 ts_variables = {"precipitation": ["name", "id", "x", "y"]}
 
-to_tstore_from_polars(
-    tslong_pl,
+tslong_pl.to_tstore(
     # TSTORE options
     base_dir,
     # DFLONG attributes
@@ -142,7 +134,7 @@ to_tstore_from_polars(
 
 # ####--------------------------------------------------------------------.
 # # Check equality
-tslong_pl1 = open_tslong_pl(base_dir, ts_variables=["precipitation"])
+tslong_pl1 = tstore.open_tslong(base_dir, backend="polars", ts_variables=["precipitation"])
 
 # Currently the row order varies !
 tslong_pl
