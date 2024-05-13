@@ -23,7 +23,7 @@ def test_pandas_series_of_ts_creation(pandas_series_of_ts: pd.Series) -> None:
     """Test the Pandas Series wrapper on a TSArray."""
     assert isinstance(pandas_series_of_ts, pd.Series)
     assert pandas_series_of_ts.shape == (4,)
-    assert isinstance(pandas_series_of_ts[0], tstore.TS)
+    assert isinstance(pandas_series_of_ts[1], tstore.TS)
     assert isinstance(pandas_series_of_ts.dtype, tstore.TSDtype)
     assert isinstance(pandas_series_of_ts.values, tstore.TSArray)
     assert pandas_series_of_ts.values is pandas_series_of_ts.array  # zero-copy reference to the data
