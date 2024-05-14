@@ -8,7 +8,7 @@ from tstore.tswide.dask import TSWideDask
 from tstore.tswide.pandas import TSWidePandas
 from tstore.tswide.polars import TSWidePolars
 from tstore.tswide.pyarrow import TSWidePyArrow
-from tstore.tswide.tslong import TSWide
+from tstore.tswide.tswide import TSWide
 
 
 def open_tswide(base_dir: Union[str, Path], *args, backend: Backend = "pandas", **kwargs):
