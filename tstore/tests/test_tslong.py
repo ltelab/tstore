@@ -8,12 +8,23 @@ import polars as pl
 import pytest
 
 import tstore
+from tstore.backend import Backend
+from tstore.tslong.dask import TSLongDask
 from tstore.tslong.pandas import TSLongPandas
 from tstore.tslong.polars import TSLongPolars
+from tstore.tslong.pyarrow import TSLongPyArrow
 
 # Imported fixtures from conftest.py:
 # - pandas_long_dataframe
 # - polars_long_dataframe
+
+
+tslong_classes = {
+    "dask": TSLongDask,
+    "pandas": TSLongPandas,
+    "polars": TSLongPolars,
+    "pyarrow": TSLongPyArrow,
+}
 
 
 # Functions ####################################################################
@@ -53,6 +64,19 @@ def store_tslong(tslong: tstore.TSLong, dirpath: str) -> None:
 
 
 # Tests ########################################################################
+
+
+@pytest.mark.parametrize("backend", ["pandas", "polars"])
+def test_creation(
+    backend: Backend,
+    request,
+) -> None:
+    """Test the creation of a TSLong object."""
+    dataframe_fixture_name = f"{backend}_long_dataframe"
+    df = request.getfixturevalue(dataframe_fixture_name)
+    tslong = tstore.TSLong.wrap(df)
+    assert isinstance(tslong, tslong_classes[backend])
+    assert tslong.shape == df.shape
 
 
 @pytest.mark.parametrize(
@@ -121,3 +145,18 @@ class TestLoad:
         assert type(tslong) is TSLongPolars
         assert type(tslong._df) is pl.DataFrame
         assert tslong.shape == (192, 7)
+
+
+@pytest.mark.parametrize("backend_to", ["dask", "pandas", "polars", "pyarrow"])
+@pytest.mark.parametrize("backend_from", ["pandas", "polars"])
+def test_change_backend(
+    backend_from: Backend,
+    backend_to: Backend,
+    request,
+) -> None:
+    """Test the change_backend method."""
+    dataframe_fixture_name = f"{backend_from}_long_dataframe"
+    df = request.getfixturevalue(dataframe_fixture_name)
+    tslong = tstore.TSLong.wrap(df)
+    tslong_new = tslong.change_backend(new_backend=backend_to)
+    assert isinstance(tslong_new, tslong_classes[backend_to])
