@@ -1,9 +1,4 @@
-#!/usr/bin/env python3
-"""
-Created on Mon Jun 12 17:57:14 2023.
-
-@author: ghiggi
-"""
+"""Module defining the TSLongPyArrow wrapper."""
 
 from functools import reduce
 
@@ -19,6 +14,61 @@ from tstore.archive.checks import (
 )
 from tstore.archive.io import get_id_var, get_time_var, get_ts_info
 from tstore.archive.ts.readers.pyarrow import open_ts
+from tstore.tslong.tslong import TSLong
+
+
+class TSLongPyArrow(TSLong):
+    """Wrapper for a long-form PyArrow timeseries dataframe."""
+
+    def to_tstore(self) -> None:
+        """Write the wrapped dataframe as a TStore structure."""
+        raise NotImplementedError("Method not implemented yet.")
+
+    @staticmethod
+    def from_tstore(
+        base_dir,
+        ts_variables=None,
+        start_time=None,
+        end_time=None,
+        tstore_ids=None,
+        columns=None,
+        filesystem=None,
+        use_threads=True,
+    ) -> "TSLongPyArrow":
+        """Open a TStore file structure as a TSLongPyArrow wrapper around a Pandas long dataframe."""
+        # Checks
+        base_dir = check_is_tstore(base_dir)
+        ts_variables = check_ts_variables(ts_variables, base_dir=base_dir)
+        tstore_ids = check_tstore_ids(tstore_ids, base_dir=base_dir)
+        start_time, end_time = check_start_end_time(start_time, end_time)
+        id_var = get_id_var(base_dir)
+        time_var = get_time_var(base_dir)
+
+        # Get list of tslong for each ts_variable
+        table = _read_ts_variables(
+            base_dir=base_dir,
+            id_var=id_var,
+            time_var=time_var,
+            ts_variables=ts_variables,
+            start_time=start_time,
+            end_time=end_time,
+            columns=columns,
+            filesystem=filesystem,
+            use_threads=use_threads,
+        )
+
+        # Read TStore attributes
+        table_attrs = read_attributes(
+            base_dir=base_dir,
+            tstore_ids=tstore_ids,
+            filesystem=filesystem,
+            use_threads=use_threads,
+        )
+
+        # Join (duplicate) table_attrs on table
+        tslong = table.join(table_attrs, keys=[id_var], join_type="full outer")
+
+        return TSLongPyArrow(tslong)
 
 
 def _read_ts(
@@ -130,54 +180,3 @@ def _read_ts_variables(
     table = reduce(lambda left, right: _join_tables(left, right, id_var=id_var, time_var=time_var), list_tables)
 
     return table
-
-
-# TSLong.from_file(engine="pyarrow")
-
-
-def open_tslong(
-    base_dir,
-    ts_variables=None,
-    start_time=None,
-    end_time=None,
-    tstore_ids=None,
-    columns=None,
-    filesystem=None,
-    use_threads=True,
-):
-    """Open TStore into long-format into pyarrow.Table."""
-    # Checks
-    base_dir = check_is_tstore(base_dir)
-    ts_variables = check_ts_variables(ts_variables, base_dir=base_dir)
-    tstore_ids = check_tstore_ids(tstore_ids, base_dir=base_dir)
-    start_time, end_time = check_start_end_time(start_time, end_time)
-    id_var = get_id_var(base_dir)
-    time_var = get_time_var(base_dir)
-
-    # Get list of tslong for each ts_variable
-    table = _read_ts_variables(
-        base_dir=base_dir,
-        id_var=id_var,
-        time_var=time_var,
-        ts_variables=ts_variables,
-        start_time=start_time,
-        end_time=end_time,
-        columns=columns,
-        filesystem=filesystem,
-        use_threads=use_threads,
-    )
-
-    # Read TStore attributes
-    table_attrs = read_attributes(
-        base_dir=base_dir,
-        tstore_ids=tstore_ids,
-        filesystem=filesystem,
-        use_threads=use_threads,
-    )
-
-    # Join (duplicate) table_attrs on table
-    tslong = table.join(table_attrs, keys=[id_var], join_type="full outer")
-
-    # Return TSLong
-    # TODO: add class ?
-    return tslong
