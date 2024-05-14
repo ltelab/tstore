@@ -65,23 +65,23 @@ def pandas_dataframe(dask_dataframe: DaskDataFrame) -> pd.DataFrame:
 
 
 @pytest.fixture()
-def arrow_dataframe(pandas_dataframe: pd.DataFrame) -> pa.Table:
-    """Create an Arrow Table with a dummy time series."""
-    df_arrow = pa.Table.from_pandas(pandas_dataframe)
-    return df_arrow
+def pyarrow_dataframe(pandas_dataframe: pd.DataFrame) -> pa.Table:
+    """Create an PyArrow Table with a dummy time series."""
+    df_pyarrow = pa.Table.from_pandas(pandas_dataframe)
+    return df_pyarrow
 
 
 @pytest.fixture()
-def polars_dataframe(arrow_dataframe: pa.Table) -> pl.DataFrame:
+def polars_dataframe(pyarrow_dataframe: pa.Table) -> pl.DataFrame:
     """Create a Polars DataFrame with a dummy time series."""
-    df_pl = pl.from_arrow(arrow_dataframe)
+    df_pl = pl.from_arrow(pyarrow_dataframe)
     return df_pl
 
 
 @pytest.fixture()
-def pandas_dataframe_arrow_dtypes(arrow_dataframe: pa.Table) -> pd.DataFrame:
+def pandas_dataframe_arrow_dtypes(pyarrow_dataframe: pa.Table) -> pd.DataFrame:
     """Create a Pandas DataFrame with Arrow dtypes."""
-    df_pd = arrow_dataframe.to_pandas(types_mapper=pd.ArrowDtype)
+    df_pd = pyarrow_dataframe.to_pandas(types_mapper=pd.ArrowDtype)
     return df_pd
 
 
