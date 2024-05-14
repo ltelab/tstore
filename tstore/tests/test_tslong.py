@@ -111,3 +111,13 @@ class TestLoad:
         # TODO: time column is counted
         # TODO: line order is not preserved
         # TODO: column order is not preserved
+
+    def test_pyarrow(
+        self,
+        tstore_path: Path,
+    ) -> None:
+        """Test loading as a PyArrow Table."""
+        tslong = tstore.open_tslong(tstore_path, backend="polars", ts_variables=["precipitation"])
+        assert type(tslong) is TSLongPolars
+        assert type(tslong._df) is pl.DataFrame
+        assert tslong.shape == (192, 7)

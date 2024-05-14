@@ -1,4 +1,4 @@
-"""TSLONG Polars implementation."""
+"""Module defining the TSLongPolars wrapper."""
 
 import pandas as pd
 import polars as pl
@@ -12,6 +12,7 @@ from tstore.archive.io import (
 from tstore.archive.metadata.writers import write_tstore_metadata
 from tstore.archive.partitions import add_partitioning_columns, check_partitioning
 from tstore.archive.ts.writers.pyarrow import write_partitioned_dataset
+from tstore.tslong.pyarrow import TSLongPyArrow
 from tstore.tslong.tslong import TSLong
 
 
@@ -141,11 +142,9 @@ class TSLongPolars(TSLong):
         use_threads=True,
     ) -> "TSLongPolars":
         """Open a TStore file structure as a TSLongPolar wrapper around a Polar long dataframe."""
-        from tstore.tslong.pyarrow import open_tslong as pyarrow_reader
-
         # Read exploiting pyarrow
         # - We use pyarrow to avoid pandas copies at concatenation and join operations !
-        tslong_pyarrow = pyarrow_reader(
+        tslong_pyarrow = TSLongPyArrow.from_tstore(
             base_dir,
             ts_variables=ts_variables,
             start_time=start_time,
@@ -154,7 +153,7 @@ class TSLongPolars(TSLong):
             columns=columns,
             filesystem=filesystem,
             use_threads=use_threads,
-        )
+        )._df
 
         # Conversion to polars
         tslong_pl = pl.from_arrow(tslong_pyarrow)

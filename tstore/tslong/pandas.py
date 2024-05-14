@@ -12,7 +12,7 @@ from tstore.archive.io import (
 from tstore.archive.metadata.writers import write_tstore_metadata
 from tstore.archive.partitions import add_partitioning_columns, check_partitioning
 from tstore.archive.ts.writers.pyarrow import write_partitioned_dataset
-from tstore.tslong.pyarrow import open_tslong as pyarrow_reader
+from tstore.tslong.pyarrow import TSLongPyArrow
 from tstore.tslong.tslong import TSLong
 
 
@@ -151,7 +151,7 @@ class TSLongPandas(TSLong):
         """Open a TStore file structure as a TSLongPandas wrapper around a Pandas long dataframe."""
         # Read exploiting pyarrow
         # - We use pyarrow to avoid pandas copies at concatenation and join operations !
-        tslong_pyarrow = pyarrow_reader(
+        tslong_pyarrow = TSLongPyArrow.from_tstore(
             base_dir,
             ts_variables=ts_variables,
             start_time=start_time,
@@ -160,7 +160,7 @@ class TSLongPandas(TSLong):
             columns=columns,
             filesystem=filesystem,
             use_threads=use_threads,
-        )
+        )._df
 
         # Conversion to pandas
         tslong_pandas = tslong_pyarrow.to_pandas(types_mapper=pd.ArrowDtype)
