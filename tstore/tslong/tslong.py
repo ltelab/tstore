@@ -1,6 +1,6 @@
 """Module defining the TSLong abstract wrapper."""
 
-from tstore.backend import DataFrame, PandasDataFrame, PolarsDataFrame, PyArrowDataFrame
+from tstore.backend import DaskDataFrame, DataFrame, PandasDataFrame, PolarsDataFrame, PyArrowDataFrame
 from tstore.tswrapper.tswrapper import TSWrapper
 
 
@@ -19,9 +19,13 @@ class TSLong(TSWrapper):
     def wrap(df: DataFrame) -> "TSLong":
         """Wrap a DataFrame in the appropriate TSLong subclass."""
         # Lazy import to avoid circular imports
+        from tstore.tslong.dask import TSLongDask
         from tstore.tslong.pandas import TSLongPandas
         from tstore.tslong.polars import TSLongPolars
         from tstore.tslong.pyarrow import TSLongPyArrow
+
+        if isinstance(df, DaskDataFrame):
+            return TSLongDask(df)
 
         if isinstance(df, PandasDataFrame):
             return TSLongPandas(df)
