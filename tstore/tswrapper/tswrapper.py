@@ -5,7 +5,7 @@ from pathlib import Path
 from types import MethodType
 from typing import Callable, Union
 
-from tstore.backend import DataFrame
+from tstore.backend import Backend, DataFrame, change_backend
 
 
 class TSWrapper(ABC):
@@ -24,6 +24,11 @@ class TSWrapper(ABC):
     @abstractmethod
     def from_tstore(base_dir: Union[str, Path], *args, **kwargs) -> "TSWrapper":
         """Read a TStore file structure as a TSWrapper around a dataframe."""
+
+    def change_backend(self, new_backend: Backend) -> "TSWrapper":
+        """Return a new wrapper with the dataframe converted to a different backend."""
+        new_df = change_backend(self._df, new_backend)
+        return self.wrap(new_df)
 
     @classmethod
     def wrap(cls, df: DataFrame):

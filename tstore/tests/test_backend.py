@@ -45,7 +45,7 @@ def test_change_backend(
     df = request.getfixturevalue(dataframe_fixture_name)
     assert isinstance(df, dataframe_types[backend_from])
 
-    df_new = backend.change_backend(df, backend_to)
+    df_new = backend.change_backend(df=df, new_backend=backend_to)
     assert isinstance(df_new, dataframe_types[backend_to])
 
     size = df.shape[0]
