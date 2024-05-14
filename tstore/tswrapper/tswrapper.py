@@ -2,21 +2,10 @@
 
 from abc import ABC, abstractmethod
 from pathlib import Path
+from types import MethodType
 from typing import Callable, Union
 
 from tstore.backend import DataFrame
-
-
-def rewrap(func: Callable) -> Callable:
-    """Decorator to rewrap the output of a method call if it is a dataframe."""
-
-    def wrapper(self, *args, **kwargs):
-        result = func(self, *args, **kwargs)
-        if isinstance(result, self._dtype):
-            return self.__class__(result)
-        return result
-
-    return wrapper
 
 
 class TSWrapper(ABC):
@@ -36,13 +25,17 @@ class TSWrapper(ABC):
     def from_tstore(base_dir: Union[str, Path], *args, **kwargs) -> "TSWrapper":
         """Read a TStore file structure as a TSWrapper around a dataframe."""
 
-    @rewrap
+    @classmethod
+    def wrap(cls, df: DataFrame):
+        """Wrap a DataFrame in the appropriate TSWrapper subclass."""
+        return cls(df)
+
     def __getattr__(self, key):
         """Delegate attribute access to the wrapped dataframe."""
         if key in self.__dict__:
             return self.__dict__[key]
 
-        return getattr(self._df, key)
+        return rewrap_result(getattr(self._df, key), self)
 
     def __setattr__(self, key, value):
         """Delegate attribute setting to the wrapped dataframe."""
@@ -59,10 +52,9 @@ class TSWrapper(ABC):
 
         delattr(self._df, key)
 
-    @rewrap
     def __getitem__(self, key):
         """Delegate item access to the wrapped dataframe."""
-        return self._df[key]
+        return rewrap_result(self._df[key], self)
 
     def __setitem__(self, key, value):
         """Delegate item setting to the wrapped dataframe."""
@@ -82,3 +74,64 @@ class TSWrapper(ABC):
         own_attrs = set(dir(type(self))) | set(self.__dict__.keys())
         df_attrs = set(dir(self._df))
         return list(own_attrs | df_attrs)
+
+
+def rewrap_result(obj, tswrapper: TSWrapper):
+    """Rewrap the output of a method call if it is a dataframe."""
+    if isinstance(obj, tswrapper._dtype):
+        return tswrapper.__class__(obj)
+
+    if hasattr(obj, "__getitem__"):
+        obj = wrap_indexable_result(obj, tswrapper)
+
+    if isinstance(obj, MethodType):
+        obj = wrap_method_result(obj, tswrapper)
+
+    elif callable(obj):
+        obj = wrap_callable_result(obj, tswrapper)
+
+    return obj
+
+
+def wrap_indexable_result(obj, tswrapper: TSWrapper) -> Callable:
+    """Wrap the output of __getitem__ if it is a dataframe."""
+
+    class Wrapped(type(obj)):
+        def __getitem__(self, key):
+            result = super().__getitem__(key)
+            return rewrap_result(result, tswrapper)
+
+    try:
+        obj.__class__ = Wrapped
+    except TypeError:
+        # If class cannot be reassigned, create a new instance
+        obj = Wrapped(obj)
+
+    return obj
+
+
+def wrap_method_result(obj, tswrapper: TSWrapper) -> Callable:
+    """Wrap the output of a method if it is a dataframe."""
+
+    def wrapped_method(*args, **kwargs):
+        result = obj(*args, **kwargs)
+        return rewrap_result(result, tswrapper)
+
+    return wrapped_method
+
+
+def wrap_callable_result(obj: Callable, tswrapper: TSWrapper) -> Callable:
+    """Wrap the output of a callable if it is a dataframe."""
+
+    class Wrapped(type(obj)):  # Does not work for methods
+        def __call__(self, *args, **kwargs):
+            result = super().__call__(*args, **kwargs)
+            return rewrap_result(result, tswrapper)
+
+    try:
+        obj.__class__ = Wrapped
+    except TypeError:
+        # If class cannot be reassigned, create a new instance
+        obj = Wrapped(obj)
+
+    return obj
