@@ -10,6 +10,7 @@ import os
 
 import pandas as pd
 import pyarrow as pa
+import pyarrow.dataset as ds
 import pyarrow.parquet as pq
 
 
@@ -64,11 +65,11 @@ def write_partitioned_dataset(
     file_options["compression_level"] = compression_level
     file_options["write_statistics"] = True
 
-    parquet_format = pa.dataset.ParquetFileFormat()
+    parquet_format = ds.ParquetFileFormat()
     file_options = parquet_format.make_write_options(**file_options)
 
     # Rewrite dataset
-    pa.dataset.write_dataset(
+    ds.write_dataset(
         table,
         base_dir=base_dir,
         format="parquet",
