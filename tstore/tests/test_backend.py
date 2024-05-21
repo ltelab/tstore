@@ -48,12 +48,36 @@ def test_change_backend(
     df_new = backend.change_backend(df=df, new_backend=backend_to)
     assert isinstance(df_new, dataframe_types[backend_to])
 
-    size = df.shape[0]
-    if not isinstance(size, int):
-        size = size.compute()
+    if backend_from == "dask":
+        df = df.compute()
 
-    size_new = df_new.shape[0]
-    if not isinstance(size_new, int):
-        size_new = size_new.compute()
+    if backend_to == "dask":
+        df_new = df_new.compute()
 
-    assert size == size_new
+    # Check size
+    assert df.shape[0] == df_new.shape[0]
+
+
+@pytest.mark.parametrize("backend_to", backend_names)
+@pytest.mark.parametrize("backend_from", backend_names)
+def test_change_backend_to_and_fro(
+    backend_from: backend.Backend,
+    backend_to: backend.Backend,
+    request,
+) -> None:
+    """Test the change_backend function with A -> B -> A and check for equality."""
+    dataframe_fixture_name = f"{backend_from}_dataframe"
+    df = request.getfixturevalue(dataframe_fixture_name)
+    df_temp = backend.change_backend(df=df, new_backend=backend_to)
+    df_new = backend.change_backend(df=df_temp, new_backend=backend_from)
+
+    if backend_from == "dask":
+        df = df.compute()
+        df_new = df_new.compute()
+
+    # Check shape
+    assert df.shape == df_new.shape
+
+    # Check values
+    # TODO: Polars and PyArrow don't keep the index column
+    assert df.equals(df_new)
