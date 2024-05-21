@@ -23,10 +23,10 @@ class Helpers:
         """Create a Dask DataFrame with a dummy time series.
 
         The columns are:
-            - name: str
-            - id: int
-            - x: float
-            - y: float
+            - ts_var1: str
+            - ts_var2: int
+            - ts_var3: float
+            - ts_var4: float
         """
         df_dask = dask.datasets.timeseries(
             start="2000-01-01",
@@ -36,6 +36,10 @@ class Helpers:
             dtypes=None,
             seed=None,
         )
+
+        column_names = df_dask.columns
+        new_column_names = [f"ts_var{i + 1}" for i in range(len(column_names))]
+        df_dask = df_dask.rename(columns=dict(zip(column_names, new_column_names)))
 
         return df_dask
 
@@ -134,12 +138,12 @@ def tstore_path(tmp_path: Path, pandas_long_dataframe: pd.DataFrame) -> Path:
     # Same partitioning for all TS
     partitioning = "year/month"
     # Partitioning specific to each TS
-    partitioning = {"precipitation": "year/month"}
+    partitioning = {"variable": "year/month"}
 
     # Each timeseries is a TS object
-    ts_variables = ["name", "id", "x", "y"]
+    ts_variables = ["ts_var1", "ts_var2", "ts_var3", "ts_var4"]
     # Group multiple timeseries into one TS object
-    ts_variables = {"precipitation": ["name", "id", "x", "y"]}
+    ts_variables = {"variable": ts_variables}
 
     tslong = TSLongPandas(pandas_long_dataframe)
     tslong.to_tstore(
