@@ -10,7 +10,7 @@ The tutorials are available in the `tutorials <https://github.com/ltelab/tstore/
 .. toctree::
    :maxdepth: 1
 
-   tutorials/tutorial_intro
+   tutorials/01-your-first-tstore
 
 
 .. warning::

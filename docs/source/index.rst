@@ -6,15 +6,15 @@
 Welcome to the TStore documentation!
 ======================================
 
-The **TStore** is a Python package designed to make your life easier, whether you aim TODO.
-Our goal is to empower you to focus more on what you can discover and create with the data, rather than getting bogged down by the process of handling it.
+The **TStore** is a Python package designed to make your life easier when dealing with time series data. Our goal is to empower you to focus more on what you can discover and create with the data, rather than getting bogged down by the process of handling it.
 
-With our software, you can:
+With **TStore**, you can:
 
-1. **TODO**: Quickly search and download the data you need.
+1. Efficiently **store and read** *(probably almost) any form* time series data to disk. Thanks to its hierarchically-structured approach based on `Apache Parquet <https://parquet.apache.org>`__ and `GeoParquet <https://github.com/opengeospatial/geoparquet>`__, you can choose how samples and variables are stored and temporally partitioned.
 
-2. **TODO**: Find the downloaded files on your local storage without digging through folders.
+2. Process complex time series data structures thanks to the `TSDF` object, which by encapsulating univariate or multivariate time series data into an `Apache Arrow structure <https://arrow.apache.org/docs/python/data.html>`__ `TS` (which can be *zero-copy transformed* into pandas and polars objects), allows you to organize heterogeneous time series across samples and variables using a data frame object.
 
+See the :ref:`key concepts <key_concepts>` page for more details on the TStore's core functionalities, and/or jump in to explore the various :ref:`tutorials <tutorials>` available in the documentation.
 
 We're excited to see how you'll use this tool to push the boundaries of what's possible, all while making your workflow smoother, enjoyable, and more productive.
 
@@ -26,20 +26,18 @@ It's a great place to connect with others and get support.
 
 Let's get started and unlock the full potential of the GPM data archive together!
 
-
 Documentation
 =============
 
 .. toctree::
    :maxdepth: 2
 
-   00_introduction
-   02_installation
-   03_quickstart
-   04_tutorials
-   06_contributors_guidelines
-   07_maintainers_guidelines
-   08_authors
+   01_key_concepts
+   02_quickstart
+   03_tutorials
+   04_contributors_guidelines
+   05_maintainers_guidelines
+   06_authors
 
 
 API Reference

@@ -27,14 +27,18 @@ author = "Gionata Ghiggi"
 
 
 # -- Copy Jupyter Notebook Tutorials------------------------------------------
-# root_path = os.path.dirname(os.path.dirname(os.getcwd()))
-# filenames = [
-#     "tutorial_02_IMERG.ipynb",
-# ]
-# for filename in filenames:
-#     in_path = os.path.join(root_path, "tutorials", filename)
-#     out_path = os.path.join(os.getcwd(), "tutorials", filename)
-#     shutil.copyfile(in_path, out_path)
+root_path = os.path.dirname(os.path.dirname(os.getcwd()))
+filenames = [
+    # "00-key-concepts.ipynb",
+    "01-your-first-tstore.ipynb",
+]
+out_dir = os.path.join(os.getcwd(), "tutorials")
+if not os.path.exists(out_dir):
+    os.makedirs(out_dir)
+for filename in filenames:
+    in_path = os.path.join(root_path, "tutorials", filename)
+    out_path = os.path.join(out_dir, filename)
+    shutil.copyfile(in_path, out_path)
 
 
 # -- General configuration ---------------------------------------------------
