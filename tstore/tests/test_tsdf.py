@@ -99,4 +99,4 @@ def test_store(
         "part.0.parquet",
         "part.1.parquet",
     ]
-    assert sorted(os.listdir(dirpath)) == ["1", "2", "3", "4", "_attributes.parquet", "tstore_metadata.yml"]
+    assert sorted(os.listdir(dirpath)) == ["1", "2", "3", "4", "_attributes.parquet", "tstore_metadata.yaml"]

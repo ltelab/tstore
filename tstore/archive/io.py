@@ -44,7 +44,7 @@ def define_tsarray_filepath(base_dir, tstore_id, ts_variable, tstore_structure):
 
 def define_metadata_filepath(base_dir):
     """Define TStore metadata filepath."""
-    metadata_fpath = os.path.join(base_dir, "tstore_metadata.yml")
+    metadata_fpath = os.path.join(base_dir, "tstore_metadata.yaml")
     return metadata_fpath
 
 
