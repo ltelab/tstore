@@ -1,11 +1,13 @@
 """Test the tsdf subpackage."""
 
 import os
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
 import tstore
+from tstore.tsdf.pandas import TSDFPandas
 
 # Imported fixtures from conftest.py:
 # - pandas_tsarray
@@ -101,3 +103,17 @@ def test_store(
         "part.1.parquet",
     ]
     assert sorted(os.listdir(dirpath)) == ["1", "2", "3", "4", "_attributes.parquet", "tstore_metadata.yaml"]
+
+
+class TestLoad:
+    """Test the from_tstore function."""
+
+    def test_pandas(
+        self,
+        tstore_path: Path,
+    ) -> None:
+        """Test loading as a Pandas TSDF."""
+        tsdf = tstore.open_tsdf(tstore_path, backend="pandas")
+        assert type(tsdf) is TSDFPandas
+        assert type(tsdf._df) is pd.DataFrame
+        assert tsdf.shape == (4, 3)
