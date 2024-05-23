@@ -10,6 +10,7 @@ import tstore
 # Imported fixtures from conftest.py:
 # - pandas_tsarray
 # - pandas_series_of_ts
+# - pandas_tsdf
 
 
 def test_tsarray_creation(pandas_tsarray: tstore.TSArray) -> None:
@@ -41,7 +42,7 @@ def test_pandas_series_concatenation(pandas_series_of_ts: pd.Series) -> None:
 def test_pandas_tsdf_creation(pandas_tsdf: tstore.TSDF) -> None:
     """Test the TSDF wrapper."""
     assert isinstance(pandas_tsdf, tstore.TSDF)
-    assert isinstance(pandas_tsdf["variable"], pd.Series)
+    assert isinstance(pandas_tsdf["ts_variable"], pd.Series)
     np.testing.assert_array_equal(pandas_tsdf["tstore_id"], ["1", "2", "3", "4"])
     np.testing.assert_array_equal(pandas_tsdf["attribute_1"], ["A", "B", "C", "D"])
     np.testing.assert_array_equal(pandas_tsdf["attribute_2"], [1.0, 2.0, 3.0, 4.0])
@@ -60,8 +61,8 @@ def test_add(
 
 def test_drop(pandas_tsdf: tstore.TSDF) -> None:
     """Test dropping a variable."""
-    pandas_tsdf = pandas_tsdf.drop(columns=["variable"])
-    assert "variable" not in pandas_tsdf.columns
+    pandas_tsdf = pandas_tsdf.drop(columns=["ts_variable"])
+    assert "ts_variable" not in pandas_tsdf.columns
     assert isinstance(pandas_tsdf, tstore.TSDF)
 
 
@@ -93,7 +94,7 @@ def test_store(
     assert dirpath.is_dir()
 
     # Check directory content
-    assert sorted(os.listdir(dirpath / "1" / "variable")) == [
+    assert sorted(os.listdir(dirpath / "1" / "ts_variable")) == [
         "_common_metadata",
         "_metadata",
         "part.0.parquet",

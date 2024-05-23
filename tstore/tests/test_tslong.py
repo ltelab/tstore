@@ -41,12 +41,12 @@ def store_tslong(tslong: tstore.TSLong, dirpath: str) -> None:
     # Same partitioning for all TS
     partitioning = "year/month"
     # Partitioning specific to each TS
-    partitioning = {"variable": "year/month"}
+    partitioning = {"ts_variable": "year/month"}
 
     # Each timeseries is a TS object
     ts_variables = ["ts_var1", "ts_var2", "ts_var3", "ts_var4"]
     # Group multiple timeseries into one TS object
-    ts_variables = {"variable": ts_variables}
+    ts_variables = {"ts_variable": ts_variables}
 
     tslong.to_tstore(
         # TSTORE options
@@ -102,7 +102,7 @@ def test_store(
 
     # Check directory content
     assert sorted(os.listdir(dirpath)) == ["1", "2", "3", "4", "_attributes.parquet", "tstore_metadata.yaml"]
-    assert os.listdir(dirpath / "1" / "variable" / "year=2000" / "month=1") == ["part-0.parquet"]
+    assert os.listdir(dirpath / "1" / "ts_variable" / "year=2000" / "month=1") == ["part-0.parquet"]
 
 
 class TestLoad:
@@ -113,7 +113,7 @@ class TestLoad:
         tstore_path: Path,
     ) -> None:
         """Test loading as a Pandas DataFrame."""
-        tslong = tstore.open_tslong(tstore_path, backend="pandas", ts_variables=["variable"])
+        tslong = tstore.open_tslong(tstore_path, backend="pandas", ts_variables=["ts_variable"])
         assert type(tslong) is TSLongPandas
         assert type(tslong._df) is pd.DataFrame
         assert tslong.shape == (192, 7)
@@ -127,7 +127,7 @@ class TestLoad:
         tstore_path: Path,
     ) -> None:
         """Test loading as a Polars DataFrame."""
-        tslong = tstore.open_tslong(tstore_path, backend="polars", ts_variables=["variable"])
+        tslong = tstore.open_tslong(tstore_path, backend="polars", ts_variables=["ts_variable"])
         assert type(tslong) is TSLongPolars
         assert type(tslong._df) is pl.DataFrame
         assert tslong.shape == (192, 7)
@@ -141,7 +141,7 @@ class TestLoad:
         tstore_path: Path,
     ) -> None:
         """Test loading as a PyArrow Table."""
-        tslong = tstore.open_tslong(tstore_path, backend="polars", ts_variables=["variable"])
+        tslong = tstore.open_tslong(tstore_path, backend="polars", ts_variables=["ts_variable"])
         assert type(tslong) is TSLongPolars
         assert type(tslong._df) is pl.DataFrame
         assert tslong.shape == (192, 7)
