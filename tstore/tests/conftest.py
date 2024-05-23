@@ -138,12 +138,12 @@ def tstore_path(tmp_path: Path, pandas_long_dataframe: pd.DataFrame) -> Path:
     # Same partitioning for all TS
     partitioning = "year/month"
     # Partitioning specific to each TS
-    partitioning = {"variable": "year/month"}
+    partitioning = {"ts_variable": "year/month"}
 
     # Each timeseries is a TS object
     ts_variables = ["ts_var1", "ts_var2", "ts_var3", "ts_var4"]
     # Group multiple timeseries into one TS object
-    ts_variables = {"variable": ts_variables}
+    ts_variables = {"ts_variable": ts_variables}
 
     tslong = TSLongPandas(pandas_long_dataframe)
     tslong.to_tstore(
@@ -230,7 +230,7 @@ def pandas_series_of_ts(pandas_tsarray: tstore.TSArray) -> pd.Series:
 @pytest.fixture()
 def pandas_tsdf(pandas_series_of_ts: pd.Series) -> tstore.TSDF:
     """Create a TSDF object."""
-    ts_variable = "variable"
+    ts_variable = "ts_variable"
     id_var = "tstore_id"
 
     tstore_ids = pandas_series_of_ts.index  # TODO: why id_var also needed?
