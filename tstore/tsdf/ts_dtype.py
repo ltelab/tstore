@@ -78,7 +78,7 @@ class TSDtype(ExtensionDtype):
     @classmethod
     def construct_array_type(cls):
         """Return the array type associated with this dtype."""
-        from tstore.tsdf.extensions.array import TSArray
+        from tstore.tsdf.tsarray import TSArray
 
         return TSArray
 
