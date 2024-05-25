@@ -42,7 +42,7 @@ class TSDFPandas(TSDF):
         metadata = read_tstore_metadata(base_dir=base_dir)
 
         # Read TStore attributes
-        df = read_attributes(base_dir)
+        df = read_attributes(base_dir).set_index(metadata["id_var"])
 
         # Get list of TSArrays
         list_ts_series = _read_tsarrays(base_dir, metadata)
