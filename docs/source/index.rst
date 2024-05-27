@@ -24,7 +24,8 @@ We're excited to see how you'll use this tool to push the boundaries of what's p
 Consider joining our `Slack Workspace <https://join.slack.com/t/tstore-workspace/shared_invite/zt-2g8uanpgm-dYrL6rxk5pEpAKCYn~QQ5Q>`__ to say hi or ask questions.
 It's a great place to connect with others and get support.
 
-Let's get started and unlock the full potential of the GPM data archive together!
+Let's get started and unlock the full potential of TSTORE archiving together!
+
 
 Documentation
 =============
