@@ -6,7 +6,7 @@ Key Concepts
 Time series
 -----------
 
-A time series is a sequence of data indexed by timestamps, which can be univariate or multivariate as long as the index is shared across variables. In TStore, a time series is represented by a `TS` object.
+A time series is a sequence of data indexed by timestamps, which can be univariate or multivariate as long as the index is shared across variables. In the `TStore` specification, a time series is represented by a `TS` object.
 
 -------
 TSArray
