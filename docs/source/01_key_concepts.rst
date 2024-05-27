@@ -18,7 +18,7 @@ A `TSArray` is an array of `TS` objects. It is actually [a pandas `ExtensionArra
 TSDF
 ----
 
-A `TSDF` is a table-like object where each column is a `TSArray`. It is a convenient way to map multiple time series (e.g., multiple variables) to a common index (e.g., a given station). The following diagram illustrates how a `TSDF` object is composed of `TSArray` objects, which are themselves composed of `TS` objects:
+A `TSDF` is a table-like object where multiple columns can be of type `TSArray`. It is a convenient table-format to map multiple time series (e.g., multiple variables) to a common index (e.g., a given station). The following diagram illustrates how a `TSDF` object is composed of `TSArray` objects, which are themselves composed of `TS` objects:
 
 .. image:: static/tsdf.svg
   :width: 400
