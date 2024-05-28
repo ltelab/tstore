@@ -23,7 +23,7 @@ tstore is a library for flexible storage and processing of time series data.
 
 #### ✨ Features
 
-- **efficient storage**: hierarchically-structured specification to efficiently store geospatial time series data based on [Apache Parquet](https://parquet.apache.org) and [GeoParquet](https://github.com/opengeospatial/geoparquet).
+- **TStore**: hierarchically-structured specification to efficiently store geospatial time series data based on [Apache Parquet](https://parquet.apache.org) and [GeoParquet](https://github.com/opengeospatial/geoparquet).
 - **TSDF**: tabular Python object to store univariate and multivariate time series data, with support for pandas, dask and polars.
 
 ______________________________________________________________________
