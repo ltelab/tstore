@@ -26,7 +26,7 @@ A `TSDF` is a table-like object where multiple columns can be of type `TSArray`.
 
 **When is this useful?** Consider the case of meteorological observations, where different stations may feature different sensors to record different variables, e.g., temperature, precipitation, wind speed, etc. Stations may have different observation frequencies, periods of inoperation or missing data and the like. Therefore it may not be appropriate to store all the observations within the same table in the so-called long-format as this could result in many NaN values across columns and duplicated timestamps. Instead, the observations can be structured as a `TSArray` with a dedicated `TS` object for each station.
 
-Additionally, it may be appropriate to store the observations of different variables in separate `TSArray` objects, which can be combined in a `TSDF` object. This is particularly useful when a station is equipped with multiple sensors to record different variables, which may have different observation frequencies. In fact, variables such as precipitation may have long periods without records, which would result in many NaN values in a multivariate time series.
+Additionally, it may be appropriate to store the observations of different variables in separate `TSArray` objects, which can be combined in a `TSDF` object. This is particularly useful when a station is equipped with multiple sensors to record different variables, which may have different observation frequencies.
 
 ------
 TSLong
