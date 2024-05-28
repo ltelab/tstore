@@ -10,9 +10,9 @@ The **TStore** is a Python package designed to make your life easier when dealin
 
 With **TStore**, you can:
 
-1. Efficiently **store and read** *(probably almost) any form* time series data to disk. Thanks to its hierarchically-structured approach based on `Apache Parquet <https://parquet.apache.org>`__ and `GeoParquet <https://github.com/opengeospatial/geoparquet>`__, you can choose how samples and variables are stored and temporally partitioned.
+1. Efficiently **store** *(probably almost) any form* time series data to disk. Thanks to its hierarchically-structured approach based on `Apache Parquet <https://parquet.apache.org>`__ and `GeoParquet <https://github.com/opengeospatial/geoparquet>`__, you can choose how samples and variables are stored and temporally partitioned.
 
-2. Process complex time series data structures thanks to the `TSDF` object, which by encapsulating univariate or multivariate time series data into an `Apache Arrow structure <https://arrow.apache.org/docs/python/data.html>`__ `TS` (which can be *zero-copy transformed* into pandas and polars objects), allows you to organize heterogeneous time series across samples and variables using a data frame object.
+2. Process complex time series data structures thanks to the `TSDF` object, which by encapsulating univariate or multivariate time series data into an `Apache Arrow structure <https://arrow.apache.org/docs/python/data.html>`__ `TS`. Thus, you can *zero-copy transform* `TS` objects into any of the supported data frame backends (pandas, dask, polars, pyarrow). This enables *distributed, lazy and and parallel processing*. Additionally, `TSDF` have seamless integration with geopandas and xvec to perform spatial operations.
 
 See the :ref:`key concepts <key_concepts>` page for more details on the TStore's core functionalities, and/or jump in to explore the various :ref:`tutorials <tutorials>` available in the documentation.
 
