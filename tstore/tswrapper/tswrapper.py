@@ -2,19 +2,76 @@
 
 from abc import ABC, abstractmethod
 from pathlib import Path
-from types import MethodType
 from typing import Callable, Union
+
+import pandas as pd
 
 from tstore.backend import Backend, DataFrame, change_backend
 
 
-class TSWrapper(ABC):
+class Proxy:
+    """Class wrapping an object and delegating attribute access to it."""
+
+    def __init__(self, obj):
+        # Set attributes using __dict__ to not trigger __setattr__
+        self.__dict__["_obj"] = obj
+
+    def __getattr__(self, key):
+        """Delegate attribute access to the wrapped object."""
+        if key in self.__dict__:
+            return self.__dict__[key]
+
+        return getattr(self._obj, key)
+
+    def __setattr__(self, key, value):
+        """Delegate attribute setting to the wrapped object."""
+        if key in self.__dict__:
+            self.__dict__[key] = value
+
+        else:
+            setattr(self._obj, key, value)
+
+    def __delattr__(self, key):
+        """Delegate attribute deletion to the wrapped object."""
+        if key in self.__dict__:
+            raise AttributeError(f"Cannot delete attribute {key}.")
+
+        delattr(self._obj, key)
+
+    def __getitem__(self, key):
+        """Delegate item access to the wrapped object."""
+        return self._obj[key]
+
+    def __setitem__(self, key, value):
+        """Delegate item setting to the wrapped object."""
+        self._obj[key] = value
+
+    def __delitem__(self, key):
+        """Delegate item deletion to the wrapped object."""
+        del self._obj[key]
+
+    def __call__(self, *args, **kwargs):
+        """Delegate call to the wrapped object."""
+        return self._obj(*args, **kwargs)
+
+    def __repr__(self):
+        """Return a string representation of the object and the wrapped object."""
+        obj_type = type(self._obj)
+        type_path = f"{obj_type.__module__}.{obj_type.__qualname__}"
+        return f"{self.__class__.__name__} wrapping a {type_path}:\n{self._obj}"
+
+    def __dir__(self):
+        """Return the attributes of the object and the wrapped object."""
+        own_attrs = set(dir(type(self))) | set(self.__dict__.keys())
+        df_attrs = set(dir(self._obj))
+        return list(own_attrs | df_attrs)
+
+
+class TSWrapper(ABC, Proxy):
     """Abstract base class for dataframe tstore wrappers."""
 
     def __init__(self, df: DataFrame):
-        # Set attributes using __dict__ to not trigger __setattr__
-        self.__dict__["_df"] = df
-        self.__dict__["_dtype"] = type(df)
+        super().__init__(df)
 
     @abstractmethod
     def to_tstore(self, *args, **kwargs) -> None:
@@ -27,7 +84,7 @@ class TSWrapper(ABC):
 
     def change_backend(self, new_backend: Backend) -> "TSWrapper":
         """Return a new wrapper with the dataframe converted to a different backend."""
-        new_df = change_backend(self._df, new_backend)
+        new_df = change_backend(self._obj, new_backend)
         return self.wrap(new_df)
 
     @classmethod
@@ -40,103 +97,50 @@ class TSWrapper(ABC):
         if key in self.__dict__:
             return self.__dict__[key]
 
-        return rewrap_result(getattr(self._df, key), self)
-
-    def __setattr__(self, key, value):
-        """Delegate attribute setting to the wrapped dataframe."""
-        if key in self.__dict__:
-            self.__dict__[key] = value
-
-        else:
-            setattr(self._df, key, value)
-
-    def __delattr__(self, key):
-        """Delegate attribute deletion to the wrapped dataframe."""
-        if key in self.__dict__:
-            raise AttributeError(f"Cannot delete attribute {key}.")
-
-        delattr(self._df, key)
+        return rewrap_result(getattr(self._obj, key), self)
 
     def __getitem__(self, key):
         """Delegate item access to the wrapped dataframe."""
-        return rewrap_result(self._df[key], self)
+        return rewrap_result(self._obj[key], self)
 
-    def __setitem__(self, key, value):
-        """Delegate item setting to the wrapped dataframe."""
-        self._df[key] = value
-
-    def __delitem__(self, key):
-        """Delegate item deletion to the wrapped dataframe."""
-        del self._df[key]
-
-    def __repr__(self):
-        """Return a string representation of the object and the wrapped dataframe."""
-        dtype_path = f"{self._dtype.__module__}.{self._dtype.__qualname__}"
-        return f"{self.__class__.__name__} wrapping a {dtype_path}:\n{self._df!s}"
-
-    def __dir__(self):
-        """Return the attributes of the object and the wrapped dataframe."""
-        own_attrs = set(dir(type(self))) | set(self.__dict__.keys())
-        df_attrs = set(dir(self._df))
-        return list(own_attrs | df_attrs)
+    def __call__(self, *args, **kwargs):
+        """Delegate call to the wrapped dataframe."""
+        return rewrap_result(self._obj(*args, **kwargs), self)
 
 
 def rewrap_result(obj, tswrapper: TSWrapper):
     """Rewrap the output of a method call if it is a dataframe."""
-    if isinstance(obj, tswrapper._dtype):
+    if isinstance(obj, type(tswrapper._obj)):
         return tswrapper.__class__(obj)
 
     if hasattr(obj, "__getitem__"):
         obj = wrap_indexable_result(obj, tswrapper)
 
-    if isinstance(obj, MethodType):
-        obj = wrap_method_result(obj, tswrapper)
-
-    elif callable(obj):
+    if callable(obj):
         obj = wrap_callable_result(obj, tswrapper)
 
     return obj
 
 
-def wrap_indexable_result(obj, tswrapper: TSWrapper) -> Callable:
+def wrap_indexable_result(obj, tswrapper: TSWrapper) -> Proxy:
     """Wrap the output of __getitem__ if it is a dataframe."""
+    # TODO: Generalize for other indexers
+    if not isinstance(obj, pd.core.indexing._iLocIndexer):
+        return obj
 
-    class Wrapped(type(obj)):
+    class IndexWrapper(Proxy):
         def __getitem__(self, key):
-            result = super().__getitem__(key)
-            return rewrap_result(result, tswrapper)
+            return rewrap_result(self._obj[key], tswrapper)
 
-    try:
-        obj.__class__ = Wrapped
-    except TypeError:
-        # If class cannot be reassigned, create a new instance
-        obj = Wrapped(obj)
-
-    return obj
-
-
-def wrap_method_result(obj, tswrapper: TSWrapper) -> Callable:
-    """Wrap the output of a method if it is a dataframe."""
-
-    def wrapped_method(*args, **kwargs):
-        result = obj(*args, **kwargs)
-        return rewrap_result(result, tswrapper)
-
-    return wrapped_method
+    return IndexWrapper(obj)
 
 
 def wrap_callable_result(obj: Callable, tswrapper: TSWrapper) -> Callable:
     """Wrap the output of a callable if it is a dataframe."""
 
-    class Wrapped(type(obj)):  # Does not work for methods
+    class CallableWrapper(Proxy):  # Does not work for methods
         def __call__(self, *args, **kwargs):
-            result = super().__call__(*args, **kwargs)
+            result = self._obj(*args, **kwargs)
             return rewrap_result(result, tswrapper)
 
-    try:
-        obj.__class__ = Wrapped
-    except TypeError:
-        # If class cannot be reassigned, create a new instance
-        obj = Wrapped(obj)
-
-    return obj
+    return CallableWrapper(obj)

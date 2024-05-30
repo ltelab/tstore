@@ -115,7 +115,7 @@ class TestLoad:
         """Test loading as a Pandas DataFrame."""
         tslong = tstore.open_tslong(tstore_path, backend="pandas", ts_variables=["ts_variable"])
         assert type(tslong) is TSLongPandas
-        assert type(tslong._df) is pd.DataFrame
+        assert type(tslong._obj) is pd.DataFrame
         assert tslong.shape == (192, 7)
         # TODO: dataframe should be wrapped in a TSLong object
         # TODO: time column is counted
@@ -129,7 +129,7 @@ class TestLoad:
         """Test loading as a Polars DataFrame."""
         tslong = tstore.open_tslong(tstore_path, backend="polars", ts_variables=["ts_variable"])
         assert type(tslong) is TSLongPolars
-        assert type(tslong._df) is pl.DataFrame
+        assert type(tslong._obj) is pl.DataFrame
         assert tslong.shape == (192, 7)
         # TODO: dataframe should be wrapped in a TSLong object
         # TODO: time column is counted
@@ -143,7 +143,7 @@ class TestLoad:
         """Test loading as a PyArrow Table."""
         tslong = tstore.open_tslong(tstore_path, backend="polars", ts_variables=["ts_variable"])
         assert type(tslong) is TSLongPolars
-        assert type(tslong._df) is pl.DataFrame
+        assert type(tslong._obj) is pl.DataFrame
         assert tslong.shape == (192, 7)
 
 

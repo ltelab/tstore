@@ -53,7 +53,7 @@ class TSLongPolars(TSLong):
 
         # Identify static dataframe (attributes)
         # - TODO: add flag to check if are actual duplicates !
-        df_attrs = self._df[[id_var, *static_variables]]
+        df_attrs = self._obj[[id_var, *static_variables]]
         df_attrs = df_attrs.unique()
 
         # Write static attributes
@@ -83,7 +83,7 @@ class TSLongPolars(TSLong):
         )
 
         # Write to disk per identifier
-        for tstore_id, df_group in self._df.groupby(id_var):
+        for tstore_id, df_group in self._obj.groupby(id_var):
             for ts_variable, columns in ts_variables.items():
                 # Retrieve columns of the TS object
                 if columns is None:
@@ -153,7 +153,7 @@ class TSLongPolars(TSLong):
             columns=columns,
             filesystem=filesystem,
             use_threads=use_threads,
-        )._df
+        )._obj
 
         # Conversion to polars
         tslong_pl = pl.from_arrow(tslong_pyarrow)

@@ -21,7 +21,7 @@ class TSDFPandas(TSDF):
     ):
         """Write TStore from TSDF object."""
         _ = write_tstore(
-            self._df,
+            self._obj,
             base_dir=base_dir,
             id_var=id_var,
             time_var=time_var,
