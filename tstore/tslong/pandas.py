@@ -35,12 +35,12 @@ class TSLongPandas(TSLong):
     ):
         """Write the wrapped dataframe as a TStore structure."""
         # If index time, remove
-        if time_var not in self._df.columns:
-            self._df = self._df.reset_index(names=time_var)
+        if time_var not in self._obj.columns:
+            self._obj = self._obj.reset_index(names=time_var)
 
         # Set identifier as pyarrow large_string !
         # - Very important to join attrs at read time !
-        self._df[id_var] = self._df[id_var].astype("large_string[pyarrow]")
+        self._obj[id_var] = self._obj[id_var].astype("large_string[pyarrow]")
 
         # Check inputs
         tstore_structure = check_tstore_structure(tstore_structure)
@@ -64,7 +64,7 @@ class TSLongPandas(TSLong):
         if static_variables is not None:
             attr_cols += static_variables
         # - TODO: add flag to check if are actual duplicates !
-        df_attrs = self._df[attr_cols]
+        df_attrs = self._obj[attr_cols]
         df_attrs = df_attrs.drop_duplicates(subset=id_var)
         df_attrs = df_attrs.reset_index(drop=True)
 
@@ -89,7 +89,7 @@ class TSLongPandas(TSLong):
         )
 
         # Write to disk per identifier
-        for tstore_id, df_group in self._df.groupby(id_var):
+        for tstore_id, df_group in self._obj.groupby(id_var):
             for ts_variable, columns in ts_variables.items():
                 # Retrieve columns of the TS object
                 if columns is None:
@@ -160,7 +160,7 @@ class TSLongPandas(TSLong):
             columns=columns,
             filesystem=filesystem,
             use_threads=use_threads,
-        )._df
+        )._obj
 
         # Conversion to pandas
         tslong_pandas = tslong_pyarrow.to_pandas(types_mapper=pd.ArrowDtype)

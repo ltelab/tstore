@@ -115,5 +115,5 @@ class TestLoad:
         """Test loading as a Pandas TSDF."""
         tsdf = tstore.open_tsdf(tstore_path, backend="pandas")
         assert type(tsdf) is TSDFPandas
-        assert type(tsdf._df) is pd.DataFrame
-        assert tsdf.shape == (4, 3)
+        assert type(tsdf._obj) is pd.DataFrame
+        assert tsdf.shape == (4, 2)
