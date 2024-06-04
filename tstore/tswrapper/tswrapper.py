@@ -68,7 +68,10 @@ class Proxy:
 
 
 class TSWrapper(ABC, Proxy):
-    """Abstract base class for dataframe tstore wrappers."""
+    """Abstract base class for dataframe tstore wrappers.
+
+    Added attributes should be prefixed with `_tstore_` and added to the `__dict__` in the `__init__` method.
+    """
 
     def __init__(self, df: DataFrame):
         super().__init__(df)
@@ -85,12 +88,15 @@ class TSWrapper(ABC, Proxy):
     def change_backend(self, new_backend: Backend) -> "TSWrapper":
         """Return a new wrapper with the dataframe converted to a different backend."""
         new_df = change_backend(self._obj, new_backend)
-        return self.wrap(new_df)
+        kwargs = {
+            key.removeprefix("_tstore_"): value for key, value in self.__dict__.items() if key.startswith("_tstore_")
+        }
+        return self.wrap(new_df, **kwargs)
 
     @classmethod
-    def wrap(cls, df: DataFrame):
+    def wrap(cls, df: DataFrame, *args, **kwargs):
         """Wrap a DataFrame in the appropriate TSWrapper subclass."""
-        return cls(df)
+        return cls(df, *args, **kwargs)
 
     def __getattr__(self, key):
         """Delegate attribute access to the wrapped dataframe."""

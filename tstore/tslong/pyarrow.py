@@ -68,7 +68,15 @@ class TSLongPyArrow(TSLong):
         # Join (duplicate) table_attrs on table
         tslong = table.join(table_attrs, keys=[id_var], join_type="full outer")
 
-        return TSLongPyArrow(tslong)
+        # TODO: Add static variables
+
+        return TSLongPyArrow(
+            tslong,
+            id_var=id_var,
+            time_var=time_var,
+            ts_vars=ts_variables,
+            static_vars=None,
+        )
 
 
 def _read_ts(

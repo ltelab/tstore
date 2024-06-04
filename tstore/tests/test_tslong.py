@@ -16,7 +16,9 @@ from tstore.tslong.pyarrow import TSLongPyArrow
 
 # Imported fixtures from conftest.py:
 # - pandas_long_dataframe
+# - pandas_tslong
 # - polars_long_dataframe
+# - polars_tslong
 
 
 tslong_classes = {
@@ -33,9 +35,6 @@ tslong_classes = {
 def store_tslong(tslong: tstore.TSLong, dirpath: str) -> None:
     tstore_structure = "id-var"
     overwrite = True
-    id_var = "store_id"
-    time_var = "time"
-    static_variables = ["static_var"]
     # geometry = None  # NOT IMPLEMENTED YET
 
     # Same partitioning for all TS
@@ -43,19 +42,9 @@ def store_tslong(tslong: tstore.TSLong, dirpath: str) -> None:
     # Partitioning specific to each TS
     partitioning = {"ts_variable": "year/month"}
 
-    # Each timeseries is a TS object
-    ts_variables = ["ts_var1", "ts_var2", "ts_var3", "ts_var4"]
-    # Group multiple timeseries into one TS object
-    ts_variables = {"ts_variable": ts_variables}
-
     tslong.to_tstore(
         # TSTORE options
         dirpath,
-        # DFLONG attributes
-        id_var=id_var,
-        time_var=time_var,
-        ts_variables=ts_variables,
-        static_variables=static_variables,
         # TSTORE options
         partitioning=partitioning,
         tstore_structure=tstore_structure,
@@ -74,7 +63,11 @@ def test_creation(
     """Test the creation of a TSLong object."""
     dataframe_fixture_name = f"{backend}_long_dataframe"
     df = request.getfixturevalue(dataframe_fixture_name)
-    tslong = tstore.TSLong.wrap(df)
+    tslong = tstore.TSLong.wrap(
+        df,
+        id_var="tstore_id",
+        time_var="time",
+    )
     assert isinstance(tslong, tslong_classes[backend])
     assert tslong.shape == df.shape
 
@@ -82,8 +75,8 @@ def test_creation(
 @pytest.mark.parametrize(
     "dataframe_fixture_name",
     [
-        "pandas_long_dataframe",
-        "polars_long_dataframe",
+        "pandas_tslong",
+        "polars_tslong",
     ],
 )
 def test_store(
@@ -92,8 +85,7 @@ def test_store(
     request,
 ) -> None:
     """Test the to_tstore function."""
-    df = request.getfixturevalue(dataframe_fixture_name)
-    tslong = tstore.TSLong.wrap(df)
+    tslong = request.getfixturevalue(dataframe_fixture_name)
     dirpath = tmp_path / "test_tstore"
     store_tslong(tslong, str(dirpath))
 
@@ -155,8 +147,7 @@ def test_change_backend(
     request,
 ) -> None:
     """Test the change_backend method."""
-    dataframe_fixture_name = f"{backend_from}_long_dataframe"
-    df = request.getfixturevalue(dataframe_fixture_name)
-    tslong = tstore.TSLong.wrap(df)
+    tslong_fixture_name = f"{backend_from}_tslong"
+    tslong = request.getfixturevalue(tslong_fixture_name)
     tslong_new = tslong.change_backend(new_backend=backend_to)
     assert isinstance(tslong_new, tslong_classes[backend_to])
