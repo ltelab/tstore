@@ -3,12 +3,12 @@
 from pathlib import Path
 
 import dask
+import dask.dataframe as dd
 import numpy as np
 import pandas as pd
 import polars as pl
 import pyarrow as pa
 import pytest
-from dask.dataframe import DataFrame as DaskDataFrame
 
 import tstore
 
@@ -56,13 +56,13 @@ def helpers() -> type[Helpers]:
 
 
 @pytest.fixture()
-def dask_dataframe(helpers) -> DaskDataFrame:
+def dask_dataframe(helpers) -> dd.DataFrame:
     """Create a Dask DataFrame with a dummy time series."""
     return helpers.create_dask_dataframe()
 
 
 @pytest.fixture()
-def pandas_dataframe(dask_dataframe: DaskDataFrame) -> pd.DataFrame:
+def pandas_dataframe(dask_dataframe: dd.DataFrame) -> pd.DataFrame:
     """Create a Pandas DataFrame with a dummy time series."""
     df_pd = dask_dataframe.compute()
     return df_pd
@@ -89,11 +89,42 @@ def pandas_dataframe_arrow_dtypes(pyarrow_dataframe: pa.Table) -> pd.DataFrame:
     return df_pd
 
 
+## Series
+
+
+@pytest.fixture()
+def pandas_series(pandas_dataframe: pd.DataFrame) -> pd.Series:
+    """Create a dummy Pandas Series of floats."""
+    series = pandas_dataframe["ts_var3"]
+    return series
+
+
+@pytest.fixture()
+def dask_series(pandas_series: pd.Series) -> dd.DataFrame:
+    """Create a Dask Series from a Pandas Series."""
+    series = dd.from_pandas(pandas_series)
+    return series
+
+
+@pytest.fixture()
+def polars_series(pandas_series: pd.Series) -> pl.Series:
+    """Create a Polars Series from a Pandas Series."""
+    series = pl.from_pandas(pandas_series)
+    return series
+
+
+@pytest.fixture()
+def pyarrow_series(pandas_series: pd.Series) -> pa.Array:
+    """Create a PyArrow Array from a Pandas Series."""
+    series = pa.Array.from_pandas(pandas_series)
+    return series
+
+
 ## Stored data
 
 
 @pytest.fixture()
-def parquet_timeseries(tmp_path: Path, dask_dataframe: DaskDataFrame) -> Path:
+def parquet_timeseries(tmp_path: Path, dask_dataframe: dd.DataFrame) -> Path:
     """Create a Parquet file with a dummy time series."""
     filepath = tmp_path / "test.parquet"
 
