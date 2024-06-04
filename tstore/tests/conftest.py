@@ -12,6 +12,16 @@ import pytest
 
 import tstore
 
+# Constants
+
+
+ID_VAR = "tstore_id"
+TIME_VAR = "time"
+TS_VAR = "ts_variable"
+TS_VARS = {TS_VAR: ["ts_var1", "ts_var2", "ts_var3", "ts_var4"]}
+STATIC_VAR = "static_var"
+
+
 # Functions
 
 
@@ -161,9 +171,6 @@ def tstore_path(tmp_path: Path, pandas_long_dataframe: pd.DataFrame) -> Path:
     dirpath = tmp_path / "test_tstore"
     tstore_structure = "id-var"
     overwrite = True
-    id_var = "store_id"
-    time_var = "time"
-    static_variables = ["static_var"]
     # geometry = None  # NOT IMPLEMENTED YET
 
     # Same partitioning for all TS
@@ -171,21 +178,16 @@ def tstore_path(tmp_path: Path, pandas_long_dataframe: pd.DataFrame) -> Path:
     # Partitioning specific to each TS
     partitioning = {"ts_variable": "year/month"}
 
-    # Each timeseries is a TS object
-    ts_variables = ["ts_var1", "ts_var2", "ts_var3", "ts_var4"]
-    # Group multiple timeseries into one TS object
-    ts_variables = {"ts_variable": ts_variables}
+    tslong = TSLongPandas(
+        pandas_long_dataframe,
+        id_var=ID_VAR,
+        time_var=TIME_VAR,
+        ts_vars=TS_VARS,
+        static_vars=[STATIC_VAR],
+    )
 
-    tslong = TSLongPandas(pandas_long_dataframe)
     tslong.to_tstore(
-        # TSTORE options
         str(dirpath),
-        # DFLONG attributes
-        id_var=id_var,
-        time_var=time_var,
-        ts_variables=ts_variables,
-        static_variables=static_variables,
-        # TSTORE options
         partitioning=partitioning,
         tstore_structure=tstore_structure,
         overwrite=overwrite,
@@ -206,12 +208,12 @@ def pandas_long_dataframe(helpers) -> pd.DataFrame:
 
     for store_id in store_ids:
         df = helpers.create_dask_dataframe().compute()
-        df["store_id"] = store_id
+        df[ID_VAR] = store_id
         df["static_var"] = f"{store_id}_static"
         df_list.append(df)
 
     df = pd.concat(df_list)
-    df["static_var"] = df["store_id"].astype(str) + "_static"
+    df["static_var"] = df[ID_VAR].astype(str) + "_static"
     return df
 
 
@@ -222,9 +224,35 @@ def polars_long_dataframe(pandas_long_dataframe: pd.DataFrame) -> pl.DataFrame:
 
     # TODO: Should these be necessary?
     df_pl = df_pl.rename({"timestamp": "time"})
-    df_pl = df_pl.with_columns(pl.col("store_id").cast(str))
+    df_pl = df_pl.with_columns(pl.col(ID_VAR).cast(str))
 
     return df_pl
+
+
+@pytest.fixture()
+def pandas_tslong(pandas_long_dataframe: pd.DataFrame) -> tstore.TSLong:
+    """Create a TSLong object."""
+    tslong = tstore.TSLong.wrap(
+        pandas_long_dataframe,
+        id_var=ID_VAR,
+        time_var=TIME_VAR,
+        ts_vars=TS_VARS,
+        static_vars=[STATIC_VAR],
+    )
+    return tslong
+
+
+@pytest.fixture()
+def polars_tslong(polars_long_dataframe: pl.DataFrame) -> tstore.TSLong:
+    """Create a TSLong object."""
+    tslong = tstore.TSLong.wrap(
+        polars_long_dataframe,
+        id_var=ID_VAR,
+        time_var=TIME_VAR,
+        ts_vars=TS_VARS,
+        static_vars=[STATIC_VAR],
+    )
+    return tslong
 
 
 ## TSArrays
@@ -262,7 +290,6 @@ def pandas_series_of_ts(pandas_tsarray: tstore.TSArray) -> pd.Series:
 def pandas_tsdf(pandas_series_of_ts: pd.Series) -> tstore.TSDF:
     """Create a TSDF object."""
     ts_variable = "ts_variable"
-    id_var = "tstore_id"
 
     tstore_ids = pandas_series_of_ts.index  # TODO: why id_var also needed?
     attributes = {
@@ -272,8 +299,8 @@ def pandas_tsdf(pandas_series_of_ts: pd.Series) -> tstore.TSDF:
 
     df = pd.DataFrame(attributes, index=tstore_ids)
     df[ts_variable] = pandas_series_of_ts
-    df[id_var] = [1, 2, 3, 4]
-    df[id_var] = df[id_var].astype("large_string[pyarrow]")
+    df[ID_VAR] = [1, 2, 3, 4]
+    df[ID_VAR] = df[ID_VAR].astype("large_string[pyarrow]")
 
     tsdf = tstore.TSDF.wrap(df)
     return tsdf
