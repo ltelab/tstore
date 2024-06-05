@@ -1,5 +1,6 @@
 """Module defining the abstract base class for dataframe tstore wrappers."""
 
+import inspect
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Callable, Union
@@ -7,6 +8,17 @@ from typing import Callable, Union
 import pandas as pd
 
 from tstore.backend import Backend, DataFrame, change_backend
+
+
+def copy_signature(source: Callable) -> Callable:
+    """Decorator that copies signature and doc from one function to another."""
+
+    def decorator(target: Callable) -> Callable:
+        target.__signature__ = inspect.signature(source)
+        target.__doc__ = source.__doc__
+        return target
+
+    return decorator
 
 
 class Proxy:
@@ -94,8 +106,12 @@ class TSWrapper(ABC, Proxy):
         return self.wrap(new_df, **kwargs)
 
     @classmethod
+    @copy_signature(__init__)
     def wrap(cls, df: DataFrame, *args, **kwargs):
-        """Wrap a DataFrame in the appropriate TSWrapper subclass."""
+        """Wrap a DataFrame in the appropriate TSWrapper subclass.
+
+        Takes the same arguments as the TSWrapper constructor.
+        """
         return cls(df, *args, **kwargs)
 
     def __getattr__(self, key):
@@ -112,6 +128,8 @@ class TSWrapper(ABC, Proxy):
     def __call__(self, *args, **kwargs):
         """Delegate call to the wrapped dataframe."""
         return rewrap_result(self._obj(*args, **kwargs), self)
+
+    copy_signature = copy_signature
 
 
 def rewrap_result(obj, tswrapper: TSWrapper):
