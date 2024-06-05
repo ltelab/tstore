@@ -46,8 +46,12 @@ class TSLong(TSWrapper):
         return super().__new__(cls)
 
     @staticmethod
+    @TSWrapper.copy_signature(__init__)
     def wrap(df: DataFrame, *args, **kwargs) -> "TSLong":
-        """Wrap a DataFrame in the appropriate TSLong subclass."""
+        """Wrap a DataFrame in the appropriate TSLong subclass.
+
+        Takes the same arguments as the TSLong constructor.
+        """
         # Lazy import to avoid circular imports
         from tstore.tslong.dask import TSLongDask
         from tstore.tslong.pandas import TSLongPandas
