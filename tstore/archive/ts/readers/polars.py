@@ -27,6 +27,7 @@ def open_ts(
     parallel=True,
 ):
     """Open a TS into a polars Frame."""
+    # TODO: can we efficiently filter at parquet read time? see https://github.com/pola-rs/polars/issues/3964
     # https://docs.pola.rs/py-polars/html/reference/api/polars.read_parquet.html
     # https://docs.pola.rs/py-polars/html/reference/api/polars.scan_parquet.html
     if lazy:
