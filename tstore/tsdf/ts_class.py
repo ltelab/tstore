@@ -64,6 +64,7 @@ class TS:
         columns=None,
         start_time=None,
         end_time=None,
+        inclusive=None,
         split_row_groups=False,
         # TS class options (here dask.dataframe)
         calculate_divisions=True,
@@ -80,6 +81,7 @@ class TS:
             columns=columns,
             start_time=start_time,
             end_time=end_time,
+            inclusive=inclusive,
             split_row_groups=split_row_groups,
             # Dask options
             calculate_divisions=calculate_divisions,
