@@ -1,6 +1,7 @@
 """Test the tslong subpackage."""
 
 import os
+from datetime import datetime
 from pathlib import Path
 from typing import Literal
 
@@ -365,6 +366,42 @@ class TestLoad:
         assert type(tslong._obj) is pd.DataFrame
         self.common_checks(tslong, with_geo)
         # TODO: time column is counted
+        tslong = tstore.open_tslong(tstore_path, backend="pandas", ts_variables=["ts_var1", "ts_var2"])
+        # time filters
+        # TODO: get the dates from the fixtures at conftest.py
+        for start_time, end_time in zip(["2000-01-01", datetime(2000, 1, 1)], ["2000-01-03", datetime(2000, 1, 3)]):
+            for time_kwargs in [
+                {"start_time": start_time},
+                {"end_time": end_time},
+                {"start_time": start_time, "end_time": end_time},
+            ]:
+                _tslong = tstore.open_tslong(
+                    tstore_path,
+                    backend="pandas",
+                    ts_variables=["ts_var1", "ts_var2"],
+                    **time_kwargs,
+                )
+                # types are preserved
+                assert type(_tslong) is TSLongPandas
+                assert type(_tslong._obj) is pd.DataFrame
+                # filtered data is at most as large
+                assert _tslong.shape[0] <= tslong.shape[0]
+
+                # try different values of inclusive
+                for inclusive in ["neither", "left", "right"]:
+                    _time_kwargs = time_kwargs.copy()
+                    _time_kwargs["inclusive"] = inclusive
+                    # inclusive values other than "both" (default) result in equal or smaller data
+                    assert (
+                        tstore.open_tslong(
+                            tstore_path,
+                            backend="pandas",
+                            ts_variables=["ts_var1", "ts_var2"],
+                            **_time_kwargs,
+                        ).shape[0]
+                        <= tslong.shape[0]
+                    )
+
         # TODO: line order is not preserved
         # TODO: column order is not preserved
 

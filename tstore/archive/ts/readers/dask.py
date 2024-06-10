@@ -17,6 +17,7 @@ def open_ts(
     columns=None,
     start_time=None,
     end_time=None,
+    inclusive=None,
     split_row_groups=False,
     # Dask-specific
     calculate_divisions=True,
@@ -25,7 +26,7 @@ def open_ts(
 ):
     """Open a time series into a Dask.DataFrame."""
     # Define filters argument
-    filters = get_time_filters(start_time=start_time, end_time=end_time)
+    filters = get_time_filters(start_time=start_time, end_time=end_time, inclusive=inclusive)
 
     # Define Apache Arrow settings
     arrow_to_pandas = {
