@@ -52,10 +52,9 @@ def test_pandas_tsdf_creation(pandas_tsdf: tstore.TSDF) -> None:
 
 def test_attributes(pandas_tsdf: tstore.TSDF) -> None:
     """Test the given and computed _tstore_ attributes."""
-    breakpoint()
     assert pandas_tsdf._tstore_id_var == "tstore_id"
     assert pandas_tsdf._tstore_time_var == "time"
-    assert pandas_tsdf._tstore_ts_vars == {"ts_variable": ["ts_variable"]}
+    assert pandas_tsdf._tstore_ts_vars == {"ts_variable": ["ts_var1", "ts_var2", "ts_var3", "ts_var4"]}
     assert pandas_tsdf._tstore_static_vars == ["attribute_1", "attribute_2"]
 
 
