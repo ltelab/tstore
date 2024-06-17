@@ -100,19 +100,23 @@ class TSWrapper(ABC, Proxy):
     def change_backend(self, new_backend: Backend) -> "TSWrapper":
         """Return a new wrapper with the dataframe converted to a different backend."""
         new_df = change_backend(self._obj, new_backend)
-        kwargs = {
-            key.removeprefix("_tstore_"): value for key, value in self.__dict__.items() if key.startswith("_tstore_")
-        }
-        return self.wrap(new_df, **kwargs)
+        return self._rewrap(new_df)
 
     @classmethod
     @copy_signature(__init__)
-    def wrap(cls, df: DataFrame, *args, **kwargs):
+    def wrap(cls, df: DataFrame, *args, **kwargs) -> "TSWrapper":
         """Wrap a DataFrame in the appropriate TSWrapper subclass.
 
         Takes the same arguments as the TSWrapper constructor.
         """
         return cls(df, *args, **kwargs)
+
+    def _rewrap(self, new_df: DataFrame) -> "TSWrapper":
+        """Create a wrapper around a new dataframe with the same `_tstore_` attributes."""
+        kwargs = {
+            key.removeprefix("_tstore_"): value for key, value in self.__dict__.items() if key.startswith("_tstore_")
+        }
+        return self.wrap(new_df, **kwargs)
 
     def __getattr__(self, key):
         """Delegate attribute access to the wrapped dataframe."""
@@ -135,7 +139,7 @@ class TSWrapper(ABC, Proxy):
 def rewrap_result(obj, tswrapper: TSWrapper):
     """Rewrap the output of a method call if it is a dataframe."""
     if isinstance(obj, type(tswrapper._obj)):
-        return tswrapper.__class__(obj)
+        return tswrapper._rewrap(obj)
 
     if hasattr(obj, "__getitem__"):
         obj = wrap_indexable_result(obj, tswrapper)

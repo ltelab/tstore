@@ -85,8 +85,6 @@ def test_store(
     overwrite = True
     pandas_tsdf.to_tstore(
         str(dirpath),
-        id_var="tstore_id",
-        time_var="time",
         partitioning=partitioning,
         tstore_structure=tstore_structure,
         overwrite=overwrite,

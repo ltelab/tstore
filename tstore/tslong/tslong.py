@@ -7,7 +7,7 @@ from tstore.tswrapper.tswrapper import TSWrapper
 
 
 class TSLong(TSWrapper):
-    """Abstract wrapper for a long-form timeseries dataframe."""
+    """Abstract wrapper for a long-form timeseries DataFrame."""
 
     def __init__(
         self,

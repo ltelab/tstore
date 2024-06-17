@@ -5,24 +5,46 @@ from tstore.tswrapper.tswrapper import TSWrapper
 
 
 class TSDF(TSWrapper):
-    """Abstract wrapper for a dataframe of TSArray objects."""
+    """Abstract wrapper for a DataFrame of TSArray objects."""
+
+    def __init__(
+        self,
+        df: DataFrame,
+        id_var: str,
+        time_var: str = "time",
+    ) -> None:
+        """Wrap a DataFrame of TSArrays as a TSDF object.
+
+        Args:
+            df (DataFrame): DataFrame to wrap.
+            id_var (str): Name of the column containing the identifier variable.
+            time_var (str): Name of the column containing the time variable. Defaults to "time".
+        """
+        super().__init__(df)
+        # Set attributes using __dict__ to not trigger __setattr__
+        self.__dict__.update(
+            {
+                "_tstore_id_var": id_var,
+                "_tstore_time_var": time_var,
+            },
+        )
 
     def __new__(cls, *args, **kwargs) -> "TSDF":
         """When calling TSDF() directly, return the appropriate subclass."""
         if cls is TSDF:
-            df = kwargs.get("df", args[0])
-            return TSDF.wrap(df)
+            return TSDF.wrap(*args, **kwargs)
 
         return super().__new__(cls)
 
     @staticmethod
-    def wrap(df: DataFrame) -> "TSDF":
+    @TSWrapper.copy_signature(__init__)
+    def wrap(df: DataFrame, *args, **kwargs) -> "TSDF":
         """Wrap a DataFrame in the appropriate TSDF subclass."""
         # Lazy import to avoid circular imports
         from tstore.tsdf.pandas import TSDFPandas
 
         if isinstance(df, PandasDataFrame):
-            return TSDFPandas(df)
+            return TSDFPandas(df, *args, **kwargs)
 
         type_path = f"{type(df).__module__}.{type(df).__qualname__}"
         raise TypeError(f"Cannot wrap type {type_path} as a TSDF object.")
