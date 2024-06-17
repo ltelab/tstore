@@ -54,12 +54,9 @@ class TSDF(TSWrapper):
     def _tstore_ts_vars(self) -> dict[str, list[str]]:
         """Return the dictionary of time-series column names."""
         df = self._obj
-
         ts_cols = [col for col in df.columns if isinstance(df[col].dtype, TSDtype)]
-
         ts_objects = {col: df[col].iloc[0] for col in ts_cols}
-
-        return {col: list(ts_obj.columns) for col, ts_obj in ts_objects.items()}
+        return {col: list(ts_obj.data.columns) for col, ts_obj in ts_objects.items()}
 
     @property
     def _tstore_static_vars(self) -> list[str]:
