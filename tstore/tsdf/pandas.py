@@ -1,9 +1,15 @@
 """TSDF class wrapping a Pandas dataframe of TSArray objects."""
 
+from typing import TYPE_CHECKING
+
 from tstore.archive.metadata.readers import read_tstore_metadata
 from tstore.tsdf.reader import _read_tsarrays
 from tstore.tsdf.tsdf import TSDF
 from tstore.tsdf.writer import write_tstore
+
+if TYPE_CHECKING:
+    # To avoid circular imports
+    from tstore.tslong.pandas import TSLongPandas
 
 
 class TSDFPandas(TSDF):
@@ -67,3 +73,7 @@ class TSDFPandas(TSDF):
 
     # Remove methods that are not supported by TSArray
     # --> min, ...
+
+    def to_tslong(self) -> "TSLongPandas":
+        """Convert the wrapper into a TSLong object."""
+        raise NotImplementedError

@@ -1,8 +1,16 @@
 """Module defining the TSDF abstract wrapper for a dataframe of TSArray objects."""
 
+from abc import abstractmethod
+from typing import TYPE_CHECKING
+
 from tstore.backend import DataFrame, PandasDataFrame
 from tstore.tsdf.ts_dtype import TSDtype
 from tstore.tswrapper.tswrapper import TSWrapper
+
+if TYPE_CHECKING:
+    # To avoid circular imports
+    from tstore.tslong.tslong import TSLong
+    from tstore.tswide.tswide import TSWide
 
 
 class TSDF(TSWrapper):
@@ -49,6 +57,14 @@ class TSDF(TSWrapper):
 
         type_path = f"{type(df).__module__}.{type(df).__qualname__}"
         raise TypeError(f"Cannot wrap type {type_path} as a TSDF object.")
+
+    @abstractmethod
+    def to_tslong(self) -> "TSLong":
+        """Convert the wrapper into a TSLong object."""
+
+    def to_tswide(self) -> "TSWide":
+        """Convert the wrapper into a TSWide object."""
+        return self.to_tslong().to_tswide()
 
     @property
     def _tstore_ts_vars(self) -> dict[str, list[str]]:

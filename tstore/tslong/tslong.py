@@ -1,9 +1,15 @@
 """Module defining the TSLong abstract wrapper."""
 
-from typing import Optional
+from abc import abstractmethod
+from typing import TYPE_CHECKING, Optional
 
 from tstore.backend import DaskDataFrame, DataFrame, PandasDataFrame, PolarsDataFrame, PyArrowDataFrame
 from tstore.tswrapper.tswrapper import TSWrapper
+
+if TYPE_CHECKING:
+    # To avoid circular imports
+    from tstore.tsdf.tsdf import TSDF
+    from tstore.tswide.tswide import TSWide
 
 
 class TSLong(TSWrapper):
@@ -72,3 +78,11 @@ class TSLong(TSWrapper):
 
         type_path = f"{type(df).__module__}.{type(df).__qualname__}"
         raise TypeError(f"Cannot wrap type {type_path} as a TSLong object.")
+
+    @abstractmethod
+    def to_tsdf(self) -> "TSDF":
+        """Convert the wrapper into a TSDF object."""
+
+    @abstractmethod
+    def to_tswide(self) -> "TSWide":
+        """Convert the wrapper into a TSWide object."""
