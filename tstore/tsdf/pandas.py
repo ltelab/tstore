@@ -12,8 +12,6 @@ class TSDFPandas(TSDF):
     def to_tstore(
         self,
         base_dir,
-        id_var,
-        time_var,  # likely not needed !
         partitioning=None,
         tstore_structure="id-var",
         overwrite=True,  # append functionality?
@@ -23,8 +21,8 @@ class TSDFPandas(TSDF):
         _ = write_tstore(
             self._obj,
             base_dir=base_dir,
-            id_var=id_var,
-            time_var=time_var,
+            id_var=self._tstore_id_var,
+            time_var=self._tstore_time_var,
             partitioning=partitioning,
             tstore_structure=tstore_structure,
             overwrite=overwrite,
@@ -53,7 +51,11 @@ class TSDFPandas(TSDF):
             #  pd.merge(df_attrs, df_series, left_index=True, right_index=True)
 
         # Return the TSDF
-        return TSDFPandas(df)
+        return TSDFPandas(
+            df,
+            id_var=metadata["id_var"],
+            time_var=metadata["time_var"],
+        )
 
     # Method that return identifier column
 

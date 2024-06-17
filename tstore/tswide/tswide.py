@@ -5,7 +5,7 @@ from tstore.tswrapper.tswrapper import TSWrapper
 
 
 class TSWide(TSWrapper):
-    """Abstract wrapper for a wide-form timeseries dataframe."""
+    """Abstract wrapper for a wide-form timeseries DataFrame."""
 
     def __new__(cls, *args, **kwargs) -> "TSWide":
         """When calling TSWide() directly, return the appropriate subclass."""

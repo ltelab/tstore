@@ -302,5 +302,9 @@ def pandas_tsdf(pandas_series_of_ts: pd.Series) -> tstore.TSDF:
     df[ID_VAR] = [1, 2, 3, 4]
     df[ID_VAR] = df[ID_VAR].astype("large_string[pyarrow]")
 
-    tsdf = tstore.TSDF.wrap(df)
+    tsdf = tstore.TSDF.wrap(
+        df,
+        id_var=ID_VAR,
+        time_var=TIME_VAR,
+    )
     return tsdf
