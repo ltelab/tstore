@@ -1,5 +1,7 @@
 """Module defining the TSLongPandas wrapper."""
 
+from typing import TYPE_CHECKING
+
 import pyarrow as pa
 
 from tstore.archive.io import (
@@ -13,6 +15,11 @@ from tstore.archive.partitions import add_partitioning_columns, check_partitioni
 from tstore.archive.ts.writers.pyarrow import write_partitioned_dataset
 from tstore.tslong.pyarrow import TSLongPyArrow
 from tstore.tslong.tslong import TSLong
+
+if TYPE_CHECKING:
+    # To avoid circular imports
+    from tstore.tsdf.pandas import TSDFPandas
+    from tstore.tswide.pandas import TSWidePandas
 
 
 class TSLongPandas(TSLong):
@@ -157,3 +164,11 @@ class TSLongPandas(TSLong):
 
         # Conversion to pandas
         return tslong_pyarrow.change_backend(new_backend="pandas")
+
+    def to_tsdf(self) -> "TSDFPandas":
+        """Convert the wrapper into a TSDF object."""
+        raise NotImplementedError
+
+    def to_tswide(self) -> "TSWidePandas":
+        """Convert the wrapper into a TSWide object."""
+        raise NotImplementedError

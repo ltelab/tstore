@@ -1,6 +1,7 @@
 """Module defining the TSLongPyArrow wrapper."""
 
 from functools import reduce
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pyarrow as pa
@@ -15,6 +16,11 @@ from tstore.archive.checks import (
 from tstore.archive.io import get_id_var, get_time_var, get_ts_info
 from tstore.archive.ts.readers.pyarrow import open_ts
 from tstore.tslong.tslong import TSLong
+
+if TYPE_CHECKING:
+    # To avoid circular imports
+    from tstore.tsdf.pyarrow import TSDFPyArrow
+    from tstore.tswide.pyarrow import TSWidePyArrow
 
 
 class TSLongPyArrow(TSLong):
@@ -77,6 +83,14 @@ class TSLongPyArrow(TSLong):
             ts_vars=ts_variables,
             static_vars=None,
         )
+
+    def to_tsdf(self) -> "TSDFPyArrow":
+        """Convert the wrapper into a TSDF object."""
+        raise NotImplementedError
+
+    def to_tswide(self) -> "TSWidePyArrow":
+        """Convert the wrapper into a TSWide object."""
+        raise NotImplementedError
 
 
 def _read_ts(

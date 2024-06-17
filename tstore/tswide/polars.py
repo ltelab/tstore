@@ -1,6 +1,12 @@
 """Module defining the TSWidePolars wrapper."""
 
+from typing import TYPE_CHECKING
+
 from tstore.tswide.tswide import TSWide
+
+if TYPE_CHECKING:
+    # To avoid circular imports
+    from tstore.tslong.polars import TSLongPolars
 
 
 class TSWidePolars(TSWide):
@@ -11,6 +17,10 @@ class TSWidePolars(TSWide):
         raise NotImplementedError
 
     @staticmethod
-    def from_tstore(base_dir) -> "TSWidePolars":
+    def from_tstore(base_dir: str) -> "TSWidePolars":
         """Open a TStore file structure as a TSWidePolars wrapper around a Polars long dataframe."""
+        raise NotImplementedError
+
+    def to_tslong(self) -> "TSLongPolars":
+        """Convert the wrapper into a TSLongPolars object."""
         raise NotImplementedError
