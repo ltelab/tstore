@@ -1,6 +1,7 @@
 """Module defining the TSDF abstract wrapper for a dataframe of TSArray objects."""
 
 from tstore.backend import DataFrame, PandasDataFrame
+from tstore.tsdf.ts_dtype import TSDtype
 from tstore.tswrapper.tswrapper import TSWrapper
 
 
@@ -48,3 +49,25 @@ class TSDF(TSWrapper):
 
         type_path = f"{type(df).__module__}.{type(df).__qualname__}"
         raise TypeError(f"Cannot wrap type {type_path} as a TSDF object.")
+
+    @property
+    def _tstore_ts_vars(self) -> dict[str, list[str]]:
+        """Return the dictionary of time-series column names."""
+        df = self._obj
+
+        ts_cols = [col for col in df.columns if isinstance(df[col].dtype, TSDtype)]
+
+        ts_objects = {col: df[col].iloc[0] for col in ts_cols}
+
+        return {col: list(ts_obj.columns) for col, ts_obj in ts_objects.items()}
+
+    @property
+    def _tstore_static_vars(self) -> list[str]:
+        """Return the list of static column names."""
+        df = self._obj
+
+        return [
+            col
+            for col in df.columns
+            if col != self._tstore_id_var and col != self._tstore_time_var and not isinstance(df[col].dtype, TSDtype)
+        ]
