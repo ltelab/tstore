@@ -67,9 +67,14 @@ def test_creation(
         df,
         id_var="tstore_id",
         time_var="time",
+        static_vars=["static_var"],
     )
     assert isinstance(tslong, tslong_classes[backend])
     assert tslong.shape == df.shape
+    assert tslong._tstore_id_var == "tstore_id"
+    assert tslong._tstore_time_var == "time"
+    assert tslong._tstore_ts_vars == {"ts_variable": ["ts_var1", "ts_var2", "ts_var3", "ts_var4"]}
+    assert tslong._tstore_static_vars == ["static_var"]
 
 
 @pytest.mark.parametrize(
