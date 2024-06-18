@@ -34,6 +34,17 @@ class TSLong(TSWrapper):
             static_vars (list[str]): List of column names that are static across time. Defaults to None.
         """
         super().__init__(df)
+
+        if static_vars is None:
+            static_vars = []
+
+        if ts_vars is None:
+            ts_vars = {
+                "ts_variable": [
+                    col for col in df.columns if col != id_var and col != time_var and col not in static_vars
+                ],
+            }
+
         # Set attributes using __dict__ to not trigger __setattr__
         self.__dict__.update(
             {
