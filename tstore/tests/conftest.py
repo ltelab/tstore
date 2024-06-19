@@ -47,6 +47,11 @@ class Helpers:
             seed=None,
         )
 
+        # TODO: Replace index by regular column
+        # df_dask = df_dask.reset_index()
+        # df_dask = df_dask.rename(columns={"index": TIME_VAR})
+
+        # Rename columns
         column_names = df_dask.columns
         new_column_names = [f"ts_var{i + 1}" for i in range(len(column_names))]
         df_dask = df_dask.rename(columns=dict(zip(column_names, new_column_names)))

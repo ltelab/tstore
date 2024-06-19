@@ -3,6 +3,7 @@
 import os
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 import polars as pl
 import pytest
@@ -156,3 +157,27 @@ def test_change_backend(
     tslong = request.getfixturevalue(tslong_fixture_name)
     tslong_new = tslong.change_backend(new_backend=backend_to)
     assert isinstance(tslong_new, tslong_classes[backend_to])
+
+
+@pytest.mark.parametrize(
+    "dataframe_fixture_name",
+    [
+        "pandas_tslong",
+    ],
+)
+def test_to_tsdf(
+    dataframe_fixture_name: str,
+    request,
+) -> None:
+    """Test the to_tsdf function."""
+    tslong = request.getfixturevalue(dataframe_fixture_name)
+    tslong._obj = tslong._obj.reset_index(names="time")
+    tsdf = tslong.to_tsdf()
+
+    assert isinstance(tsdf, tstore.TSDF)
+    np.testing.assert_array_equal(tsdf["tstore_id"], ["1", "2", "3", "4"])
+    np.testing.assert_array_equal(tsdf["static_var"], ["1_static", "2_static", "3_static", "4_static"])
+    assert tsdf._tstore_id_var == "tstore_id"
+    assert tsdf._tstore_time_var == "time"
+    assert tsdf._tstore_ts_vars == {"ts_variable": ["ts_var1", "ts_var2", "ts_var3", "ts_var4"]}
+    assert tsdf._tstore_static_vars == ["static_var"]
