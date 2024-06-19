@@ -45,6 +45,10 @@ class TSLong(TSWrapper):
                 ],
             }
 
+        # TODO: Adapt to Polar and PyArrow
+        if isinstance(df, (DaskDataFrame, PandasDataFrame)):
+            df[id_var] = df[id_var].astype("large_string[pyarrow]")
+
         # Set attributes using __dict__ to not trigger __setattr__
         self.__dict__.update(
             {

@@ -72,15 +72,14 @@ class TSDF(TSWrapper):
         df = self._obj
         ts_cols = [col for col in df.columns if isinstance(df[col].dtype, TSDtype)]
         ts_objects = {col: df[col].iloc[0] for col in ts_cols}
-        return {col: list(ts_obj.data.columns) for col, ts_obj in ts_objects.items()}
+        return {
+            col: [var for var in ts_obj.data.columns if var != self._tstore_time_var]
+            for col, ts_obj in ts_objects.items()
+        }
 
     @property
     def _tstore_static_vars(self) -> list[str]:
         """Return the list of static column names."""
         df = self._obj
 
-        return [
-            col
-            for col in df.columns
-            if col != self._tstore_id_var and col != self._tstore_time_var and not isinstance(df[col].dtype, TSDtype)
-        ]
+        return [col for col in df.columns if col != self._tstore_id_var and not isinstance(df[col].dtype, TSDtype)]
