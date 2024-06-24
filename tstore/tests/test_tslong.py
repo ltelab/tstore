@@ -101,7 +101,8 @@ def test_store(
 
     # Check directory content
     assert sorted(os.listdir(dirpath)) == ["1", "2", "3", "4", "_attributes.parquet", "tstore_metadata.yaml"]
-    assert os.listdir(dirpath / "1" / "ts_var1" / "year=2000" / "month=1") == ["part-0.parquet"]
+    for ts_var in ["ts_var1", "ts_var2"]:
+        assert os.listdir(dirpath / "1" / ts_var / "year=2000" / "month=1") == ["part-0.parquet"]
 
 
 class TestLoad:

@@ -103,12 +103,13 @@ def test_store(
     assert dirpath.is_dir()
 
     # Check directory content
-    assert sorted(os.listdir(dirpath / "1" / "ts_var1")) == [
-        "_common_metadata",
-        "_metadata",
-        "part.0.parquet",
-        "part.1.parquet",
-    ]
+    for ts_var in ["ts_var1", "ts_var2"]:
+        assert sorted(os.listdir(dirpath / "1" / ts_var)) == [
+            "_common_metadata",
+            "_metadata",
+            "part.0.parquet",
+            "part.1.parquet",
+        ]
     assert sorted(os.listdir(dirpath)) == ["1", "2", "3", "4", "_attributes.parquet", "tstore_metadata.yaml"]
 
 
