@@ -51,7 +51,7 @@ class TSLongPyArrow(TSLong):
         time_var = get_time_var(base_dir)
 
         # Get list of tslong for each ts_variable
-        table = _read_ts_variables(
+        table, ts_variables_dict = _read_ts_variables(
             base_dir=base_dir,
             id_var=id_var,
             time_var=time_var,
@@ -70,18 +70,18 @@ class TSLongPyArrow(TSLong):
             filesystem=filesystem,
             use_threads=use_threads,
         )
+        static_vars = table_attrs.schema.names
+        static_vars.remove(id_var)
 
         # Join (duplicate) table_attrs on table
         tslong = table.join(table_attrs, keys=[id_var], join_type="full outer")
-
-        # TODO: Add static variables
 
         return TSLongPyArrow(
             tslong,
             id_var=id_var,
             time_var=time_var,
-            ts_vars=ts_variables,
-            static_vars=None,
+            ts_vars=ts_variables_dict,
+            static_vars=static_vars,
         )
 
     def to_tsdf(self) -> "TSDFPyArrow":
@@ -174,7 +174,7 @@ def _read_ts_variables(
     columns=None,
     filesystem=None,
     use_threads=True,
-):
+) -> tuple[pa.Table, dict[str, list[str]]]:
     """Read TStore ts_variables into pyarrow long-format."""
     # Read TS of all ts_variables in long-format
     list_tables = [
@@ -191,14 +191,27 @@ def _read_ts_variables(
         for ts_variable in ts_variables
     ]
 
+    # Check each table has 'time' and 'tstore_id'
+    ts_variables_dict = {}
+    for ts_variable, table in zip(ts_variables, list_tables):
+        columns = table.schema.names
+
+        if id_var not in columns:
+            raise ValueError(f"ID variable '{id_var}' not found in '{ts_variable}' table.")
+
+        if time_var not in columns:
+            raise ValueError(f"Time variable '{time_var}' not found in '{ts_variable}' table.")
+
+        columns.remove(id_var)
+        columns.remove(time_var)
+
+        ts_variables_dict[ts_variable] = columns
+
     # Check that each table has different column names
     # --> Except from 'time' and 'tstore_id' on which align !
-    # TODO:
-
-    # Check each table has 'time' and 'tstore_id'
     # TODO:
 
     # Iteratively join the tables
     table = reduce(lambda left, right: _join_tables(left, right, id_var=id_var, time_var=time_var), list_tables)
 
-    return table
+    return table, ts_variables_dict
