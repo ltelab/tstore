@@ -72,7 +72,7 @@ class Helpers:
 
         for _ in range(size):
             df = Helpers.create_dask_dataframe()
-            df = df.iloc[:, columns_slice].compute()
+            df = df.iloc[:, columns_slice]
             ts = tstore.TS(df)
             ts_list.append(ts)
 
