@@ -96,13 +96,15 @@ def test_store(
     assert dirpath.is_dir()
 
     # Check directory content
-    assert sorted(os.listdir(dirpath / "1" / "ts_variable")) == [
+    assert sorted(os.listdir(dirpath / "tstore_id=1" / "variable=ts_variable")) == [
         "_common_metadata",
         "_metadata",
         "part.0.parquet",
         "part.1.parquet",
     ]
-    assert sorted(os.listdir(dirpath)) == ["1", "2", "3", "4", "_attributes.parquet", "tstore_metadata.yaml"]
+    assert sorted(os.listdir(dirpath)) == ["_attributes.parquet"] + [f"tstore_id={i}" for i in ["1", "2", "3", "4"]] + [
+        "tstore_metadata.yaml",
+    ]
 
 
 class TestLoad:
@@ -116,4 +118,4 @@ class TestLoad:
         tsdf = tstore.open_tsdf(tstore_path, backend="pandas")
         assert type(tsdf) is TSDFPandas
         assert type(tsdf._df) is pd.DataFrame
-        assert tsdf.shape == (4, 3)
+        assert tsdf.shape == (4, 2)

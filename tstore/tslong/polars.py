@@ -31,6 +31,7 @@ class TSLongPolars(TSLong):
         # TSTORE options
         partitioning=None,
         tstore_structure="id-var",
+        var_prefix="variable",
         overwrite=True,
     ) -> None:
         """Write the wrapped dataframe as a TStore structure."""
@@ -110,6 +111,8 @@ class TSLongPolars(TSLong):
                     tstore_id=tstore_id,
                     ts_variable=ts_variable,
                     tstore_structure=tstore_structure,
+                    id_prefix=id_var,
+                    var_prefix=var_prefix,
                 )
 
                 # TODO; Maybe create TS object and use TS.to_parquet() once implemented

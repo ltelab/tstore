@@ -1,5 +1,7 @@
 """Module defining the TSLongPandas wrapper."""
 
+from pathlib import Path
+
 import pandas as pd
 import pyarrow as pa
 
@@ -22,18 +24,42 @@ class TSLongPandas(TSLong):
     def to_tstore(
         self,
         # TSTORE options
-        base_dir,
+        base_dir: Path | str,
         # DFLONG attributes
-        id_var,
-        time_var,
-        ts_variables,
-        static_variables=None,
+        id_var: str,
+        time_var: str,
+        ts_variables: list[str],
+        static_variables: list[str] | None = None,
         # TSTORE options
-        partitioning=None,
-        tstore_structure="id-var",
-        overwrite=True,
-    ):
-        """Write the wrapped dataframe as a TStore structure."""
+        partitioning: str | None = None,
+        tstore_structure: str = "id-var",
+        var_prefix: str = "variable",
+        overwrite: bool = True,
+    ) -> None:
+        """
+        Write the wrapped long data frame into a TStore.
+
+        Parameters
+        ----------
+        base_dir : path-like
+            Base directory of the TStore.
+        id_var : str
+            Name of the id variable.
+        time_var : str
+            Name of the time variable.
+        ts_variables : list-like of str
+            List of time series variables to write.
+        static_variables : list-like of str, optional
+            List of static variables to write.
+        partitioning : str, optional
+            Time partitioning string.
+        tstore_structure : ["id-var", "var-id"], default "id-var"
+            TStore structure, either "id-var" or "var-id".
+        var_prefix : str, default "variable"
+            Prefix for the variable directory in the TStore.
+        overwrite : bool, default True
+            Overwrite existing TStore.
+        """
         # If index time, remove
         if time_var not in self._df.columns:
             self._df = self._df.reset_index(names=time_var)
@@ -117,6 +143,8 @@ class TSLongPandas(TSLong):
                     tstore_id=tstore_id,
                     ts_variable=ts_variable,
                     tstore_structure=tstore_structure,
+                    id_prefix=id_var,
+                    var_prefix=var_prefix,
                 )
 
                 # -----------------------------------------------

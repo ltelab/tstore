@@ -5,7 +5,10 @@ Created on Mon Jun 12 15:49:54 2023.
 @author: ghiggi
 """
 
+from pathlib import Path
+
 import numpy as np
+import pandas as pd
 
 from tstore.archive.io import (
     check_tstore_directory,
@@ -41,8 +44,21 @@ def _write_attributes(df, base_dir):
     write_attributes(df=df_attributes, base_dir=base_dir)
 
 
-def _write_ts_series(ts_series, base_dir, tstore_structure):
-    """Write TSDF TSArray."""
+def _write_ts_series(ts_series: pd.Series, base_dir: Path | str, tstore_structure: str, var_prefix: str) -> None:
+    """
+    Write TSDF TSArray.
+
+    Parameters
+    ----------
+    ts_series : pd.Series of tstore.TS objects
+        Series of TS objects.
+    base_dir : path-like
+        Base directory of the TStore.
+    tstore_structure : ["id-var", "var-id"]
+        TStore structure, either "id-var" or "var-id".
+    var_prefix : str
+        Prefix for the variable directory.
+    """
     ts_variable = ts_series.name
     tstore_ids = ts_series.index.array.astype(str)
     for tstore_id, ts in zip(tstore_ids, ts_series):
@@ -52,18 +68,34 @@ def _write_ts_series(ts_series, base_dir, tstore_structure):
                 tstore_id=tstore_id,
                 ts_variable=ts_variable,
                 tstore_structure=tstore_structure,
+                id_prefix=ts_series.index.name,
+                var_prefix=var_prefix,
             )
             ts.to_disk(ts_fpath)
 
 
-def _write_tsarrays(df, base_dir, tstore_structure):
-    """Write TSDF TSArrays."""
+def _write_tsarrays(df: pd.DataFrame, base_dir: Path | str, tstore_structure: str, var_prefix: str) -> None:
+    """
+    Write TSDF TSArrays.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Data frame with TSArray as columns.
+    base_dir : path-like
+        Base directory of the TStore.
+    tstore_structure : ["id-var", "var-id"]
+        TStore structure, either "id-var" or "var-id".
+    var_prefix : str
+        Prefix for the variable directory.
+    """
     tsarray_columns = _get_ts_variables(df)
     for column in tsarray_columns:
         _write_ts_series(
             ts_series=df[column],
             base_dir=base_dir,
             tstore_structure=tstore_structure,
+            var_prefix=var_prefix,
         )
 
 
@@ -82,15 +114,37 @@ def _write_metadata(base_dir, tstore_structure, id_var, time_var, ts_variables, 
 
 
 def write_tstore(
-    df,
-    base_dir,
-    id_var,
-    time_var,  # maybe not needed for TSDF?
-    partitioning,
-    tstore_structure="id-var",
-    overwrite=True,
-):
-    """Write TStore from TSDF object."""
+    df: pd.DataFrame,
+    base_dir: Path | str,
+    id_var: str,
+    time_var: str,  # maybe not needed for TSDF?
+    partitioning: str,
+    tstore_structure: str,
+    var_prefix: str,
+    overwrite: bool,
+) -> None:
+    """
+    Write TStore from TSDF object.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Data frame with TSArray as columns.
+    base_dir : path-like
+        Base directory of the TStore.
+    id_var : str
+        Name of the id variable.
+    time_var : str
+        Name of the time variable.
+    partitioning : str
+        Time partitioning string.
+    tstore_structure : ["id-var", "var-id"], default "id-var"
+        TStore structure, either "id-var" or "var-id".
+    var_prefix : str
+        Prefix for the variable directory in the TStore.
+    overwrite : bool
+        Overwrite existing TStore.
+    """
     # Checks
     tstore_structure = check_tstore_structure(tstore_structure)
     base_dir = check_tstore_directory(base_dir, overwrite=overwrite)
@@ -102,7 +156,7 @@ def write_tstore(
     _write_attributes(df, base_dir=base_dir)
 
     # Write TSArrays
-    _write_tsarrays(df, base_dir=base_dir, tstore_structure=tstore_structure)
+    _write_tsarrays(df, base_dir=base_dir, tstore_structure=tstore_structure, var_prefix=var_prefix)
 
     # Write TSArrays metadata
     ts_variables = _get_ts_variables(df)
