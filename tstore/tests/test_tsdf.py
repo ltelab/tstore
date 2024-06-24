@@ -44,18 +44,19 @@ def test_pandas_series_concatenation(pandas_series_of_ts: pd.Series) -> None:
 def test_pandas_tsdf_creation(pandas_tsdf: tstore.TSDF) -> None:
     """Test the TSDF wrapper."""
     assert isinstance(pandas_tsdf, tstore.TSDF)
-    assert isinstance(pandas_tsdf["ts_variable"], pd.Series)
+    assert isinstance(pandas_tsdf["ts_var1"], pd.Series)
+    assert isinstance(pandas_tsdf["ts_var2"], pd.Series)
     np.testing.assert_array_equal(pandas_tsdf["tstore_id"], ["1", "2", "3", "4"])
-    np.testing.assert_array_equal(pandas_tsdf["attribute_1"], ["A", "B", "C", "D"])
-    np.testing.assert_array_equal(pandas_tsdf["attribute_2"], [1.0, 2.0, 3.0, 4.0])
+    np.testing.assert_array_equal(pandas_tsdf["static_var1"], ["A", "B", "C", "D"])
+    np.testing.assert_array_equal(pandas_tsdf["static_var2"], [1.0, 2.0, 3.0, 4.0])
 
 
 def test_attributes(pandas_tsdf: tstore.TSDF) -> None:
     """Test the given and computed _tstore_ attributes."""
     assert pandas_tsdf._tstore_id_var == "tstore_id"
     assert pandas_tsdf._tstore_time_var == "time"
-    assert pandas_tsdf._tstore_ts_vars == {"ts_variable": ["ts_var1", "ts_var2", "ts_var3", "ts_var4"]}
-    assert pandas_tsdf._tstore_static_vars == ["attribute_1", "attribute_2"]
+    assert pandas_tsdf._tstore_ts_vars == {"ts_var1": ["var1", "var2"], "ts_var2": ["var3", "var4"]}
+    assert pandas_tsdf._tstore_static_vars == ["static_var1", "static_var2"]
 
 
 def test_add(
@@ -71,8 +72,8 @@ def test_add(
 
 def test_drop(pandas_tsdf: tstore.TSDF) -> None:
     """Test dropping a variable."""
-    pandas_tsdf = pandas_tsdf.drop(columns=["ts_variable"])
-    assert "ts_variable" not in pandas_tsdf.columns
+    pandas_tsdf = pandas_tsdf.drop(columns=["ts_var1"])
+    assert "ts_var1" not in pandas_tsdf.columns
     assert isinstance(pandas_tsdf, tstore.TSDF)
 
 
@@ -102,7 +103,7 @@ def test_store(
     assert dirpath.is_dir()
 
     # Check directory content
-    assert sorted(os.listdir(dirpath / "1" / "ts_variable")) == [
+    assert sorted(os.listdir(dirpath / "1" / "ts_var1")) == [
         "_common_metadata",
         "_metadata",
         "part.0.parquet",
@@ -122,4 +123,13 @@ class TestLoad:
         tsdf = tstore.open_tsdf(tstore_path, backend="pandas")
         assert type(tsdf) is TSDFPandas
         assert type(tsdf._obj) is pd.DataFrame
-        assert tsdf.shape == (4, 2)
+        assert tsdf._tstore_id_var == "tstore_id"
+        assert tsdf._tstore_time_var == "time"
+        assert tsdf._tstore_ts_vars == {"ts_var1": ["var1", "var2"], "ts_var2": ["var3", "var4"]}
+        assert tsdf._tstore_static_vars == ["static_var1", "static_var2"]
+        assert isinstance(tsdf["ts_var1"], pd.Series)
+        assert isinstance(tsdf["ts_var2"], pd.Series)
+        # TODO: add tstore_id column instead of using an index
+        # np.testing.assert_array_equal(tsdf["tstore_id"], ["1", "2", "3", "4"])
+        np.testing.assert_array_equal(tsdf["static_var1"], ["A", "B", "C", "D"])
+        np.testing.assert_array_equal(tsdf["static_var2"], [1.0, 2.0, 3.0, 4.0])

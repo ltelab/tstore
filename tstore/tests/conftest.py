@@ -1,6 +1,7 @@
 """Fixtures for the tests."""
 
 from pathlib import Path
+from typing import Optional
 
 import dask
 import dask.dataframe as dd
@@ -17,9 +18,12 @@ import tstore
 
 ID_VAR = "tstore_id"
 TIME_VAR = "time"
-TS_VAR = "ts_variable"
-TS_VARS = {TS_VAR: ["ts_var1", "ts_var2", "ts_var3", "ts_var4"]}
-STATIC_VAR = "static_var"
+TS_VAR1 = "ts_var1"
+TS_VAR2 = "ts_var2"
+TS_VARS = {TS_VAR1: ["var1", "var2"], TS_VAR2: ["var3", "var4"]}
+STATIC_VAR1 = "static_var1"
+STATIC_VAR2 = "static_var2"
+STATIC_VARS = [STATIC_VAR1, STATIC_VAR2]
 
 
 # Functions
@@ -29,14 +33,14 @@ class Helpers:
     """Helper functions for the tests."""
 
     @staticmethod
-    def create_dask_dataframe():
+    def create_dask_dataframe() -> dd.DataFrame:
         """Create a Dask DataFrame with a dummy time series.
 
         The columns are:
-            - ts_var1: str
-            - ts_var2: int
-            - ts_var3: float
-            - ts_var4: float
+            - var1: str
+            - var2: int
+            - var3: float
+            - var4: float
         """
         df_dask = dask.datasets.timeseries(
             start="2000-01-01",
@@ -53,10 +57,27 @@ class Helpers:
 
         # Rename columns
         column_names = df_dask.columns
-        new_column_names = [f"ts_var{i + 1}" for i in range(len(column_names))]
+        new_column_names = [f"var{i + 1}" for i in range(len(column_names))]
         df_dask = df_dask.rename(columns=dict(zip(column_names, new_column_names)))
 
         return df_dask
+
+    @staticmethod
+    def create_pandas_tsarray(size: int = 4, columns_slice: Optional[slice] = None) -> tstore.TSArray:
+        """Create a TSArray of TS objects."""
+        if columns_slice is None:
+            columns_slice = slice(0, 4)
+
+        ts_list = []
+
+        for _ in range(size):
+            df = Helpers.create_dask_dataframe()
+            df = df.iloc[:, columns_slice].compute()
+            ts = tstore.TS(df)
+            ts_list.append(ts)
+
+        tsarray = tstore.TSArray(ts_list)
+        return tsarray
 
 
 @pytest.fixture()
@@ -110,7 +131,7 @@ def pandas_dataframe_arrow_dtypes(pyarrow_dataframe: pa.Table) -> pd.DataFrame:
 @pytest.fixture()
 def pandas_series(pandas_dataframe: pd.DataFrame) -> pd.Series:
     """Create a dummy Pandas Series of floats."""
-    series = pandas_dataframe["ts_var3"]
+    series = pandas_dataframe["var3"]
     return series
 
 
@@ -181,14 +202,14 @@ def tstore_path(tmp_path: Path, pandas_long_dataframe: pd.DataFrame) -> Path:
     # Same partitioning for all TS
     partitioning = "year/month"
     # Partitioning specific to each TS
-    partitioning = {"ts_variable": "year/month"}
+    partitioning = {TS_VAR1: "year/month", TS_VAR2: "year/month"}
 
     tslong = TSLongPandas(
         pandas_long_dataframe,
         id_var=ID_VAR,
         time_var=TIME_VAR,
         ts_vars=TS_VARS,
-        static_vars=[STATIC_VAR],
+        static_vars=STATIC_VARS,
     )
 
     tslong.to_tstore(
@@ -214,11 +235,11 @@ def pandas_long_dataframe(helpers) -> pd.DataFrame:
     for store_id in store_ids:
         df = helpers.create_dask_dataframe().compute()
         df[ID_VAR] = store_id
-        df["static_var"] = f"{store_id}_static"
+        df[STATIC_VAR1] = chr(64 + store_id)  # A, B, C, D
+        df[STATIC_VAR2] = float(store_id)  # 1.0, 2.0, 3.0, 4.0
         df_list.append(df)
 
     df = pd.concat(df_list)
-    df["static_var"] = df[ID_VAR].astype(str) + "_static"
     return df
 
 
@@ -242,7 +263,7 @@ def pandas_tslong(pandas_long_dataframe: pd.DataFrame) -> tstore.TSLong:
         id_var=ID_VAR,
         time_var=TIME_VAR,
         ts_vars=TS_VARS,
-        static_vars=[STATIC_VAR],
+        static_vars=STATIC_VARS,
     )
     return tslong
 
@@ -255,7 +276,7 @@ def polars_tslong(polars_long_dataframe: pl.DataFrame) -> tstore.TSLong:
         id_var=ID_VAR,
         time_var=TIME_VAR,
         ts_vars=TS_VARS,
-        static_vars=[STATIC_VAR],
+        static_vars=STATIC_VARS,
     )
     return tslong
 
@@ -266,15 +287,7 @@ def polars_tslong(polars_long_dataframe: pl.DataFrame) -> tstore.TSLong:
 @pytest.fixture()
 def pandas_tsarray(helpers) -> tstore.TSArray:
     """Create a TSArray of TS objects."""
-    ts_list = []
-
-    for _ in range(4):
-        df = helpers.create_dask_dataframe()
-        ts = tstore.TS(df)
-        ts_list.append(ts)
-
-    tsarray = tstore.TSArray(ts_list)
-    return tsarray
+    return helpers.create_pandas_tsarray(size=4)
 
 
 ## Pandas Series
@@ -283,8 +296,7 @@ def pandas_tsarray(helpers) -> tstore.TSArray:
 @pytest.fixture()
 def pandas_series_of_ts(pandas_tsarray: tstore.TSArray) -> pd.Series:
     """Create a Pandas Series of TS objects from a TSArray."""
-    tstore_ids = np.arange(1, pandas_tsarray.shape[0] + 1)
-    df_series = pd.Series(pandas_tsarray, index=tstore_ids)
+    df_series = pd.Series(pandas_tsarray)
     return df_series
 
 
@@ -292,19 +304,20 @@ def pandas_series_of_ts(pandas_tsarray: tstore.TSArray) -> pd.Series:
 
 
 @pytest.fixture()
-def pandas_tsdf(pandas_series_of_ts: pd.Series) -> tstore.TSDF:
+def pandas_tsdf(helpers) -> tstore.TSDF:
     """Create a TSDF object."""
-    ts_variable = "ts_variable"
-
-    tstore_ids = pandas_series_of_ts.index  # TODO: why id_var also needed?
-    attributes = {
-        "attribute_1": ["A", "B", "C", "D"],
-        "attribute_2": [1.0, 2.0, 3.0, 4.0],
+    pd_series_of_ts_1 = pd.Series(helpers.create_pandas_tsarray(size=4, columns_slice=slice(0, 2)))
+    pd_series_of_ts_2 = pd.Series(helpers.create_pandas_tsarray(size=4, columns_slice=slice(2, 4)))
+    tstore_ids = np.arange(1, pd_series_of_ts_1.size + 1)
+    data = {
+        ID_VAR: tstore_ids,
+        TS_VAR1: pd_series_of_ts_1,
+        TS_VAR2: pd_series_of_ts_2,
+        STATIC_VAR1: ["A", "B", "C", "D"],
+        STATIC_VAR2: [1.0, 2.0, 3.0, 4.0],
     }
 
-    df = pd.DataFrame(attributes, index=tstore_ids)
-    df[ts_variable] = pandas_series_of_ts
-    df[ID_VAR] = [1, 2, 3, 4]
+    df = pd.DataFrame(data)
     df[ID_VAR] = df[ID_VAR].astype("large_string[pyarrow]")
 
     tsdf = tstore.TSDF.wrap(

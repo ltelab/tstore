@@ -41,7 +41,7 @@ def store_tslong(tslong: tstore.TSLong, dirpath: str) -> None:
     # Same partitioning for all TS
     partitioning = "year/month"
     # Partitioning specific to each TS
-    partitioning = {"ts_variable": "year/month"}
+    partitioning = {"ts_var1": "year/month", "ts_var2": "year/month"}
 
     tslong.to_tstore(
         # TSTORE options
@@ -68,14 +68,15 @@ def test_creation(
         df,
         id_var="tstore_id",
         time_var="time",
-        static_vars=["static_var"],
+        ts_vars={"ts_var1": ["var1", "var2"], "ts_var2": ["var3", "var4"]},
+        static_vars=["static_var1", "static_var2"],
     )
     assert isinstance(tslong, tslong_classes[backend])
     assert tslong.shape == df.shape
     assert tslong._tstore_id_var == "tstore_id"
     assert tslong._tstore_time_var == "time"
-    assert tslong._tstore_ts_vars == {"ts_variable": ["ts_var1", "ts_var2", "ts_var3", "ts_var4"]}
-    assert tslong._tstore_static_vars == ["static_var"]
+    assert tslong._tstore_ts_vars == {"ts_var1": ["var1", "var2"], "ts_var2": ["var3", "var4"]}
+    assert tslong._tstore_static_vars == ["static_var1", "static_var2"]
 
 
 @pytest.mark.parametrize(
@@ -100,22 +101,29 @@ def test_store(
 
     # Check directory content
     assert sorted(os.listdir(dirpath)) == ["1", "2", "3", "4", "_attributes.parquet", "tstore_metadata.yaml"]
-    assert os.listdir(dirpath / "1" / "ts_variable" / "year=2000" / "month=1") == ["part-0.parquet"]
+    assert os.listdir(dirpath / "1" / "ts_var1" / "year=2000" / "month=1") == ["part-0.parquet"]
 
 
 class TestLoad:
     """Test the from_tstore function."""
+
+    def common_checks(self, tslong: tstore.TSLong) -> None:
+        assert tslong.shape == (192, 8)
+        assert tslong._tstore_id_var == "tstore_id"
+        assert tslong._tstore_time_var == "time"
+        assert tslong._tstore_ts_vars == {"ts_var1": ["var1", "var2"], "ts_var2": ["var3", "var4"]}
+        assert tslong._tstore_static_vars == ["static_var1", "static_var2"]
 
     def test_pandas(
         self,
         tstore_path: Path,
     ) -> None:
         """Test loading as a Pandas DataFrame."""
-        tslong = tstore.open_tslong(tstore_path, backend="pandas", ts_variables=["ts_variable"])
+        tslong = tstore.open_tslong(tstore_path, backend="pandas", ts_variables=["ts_var1", "ts_var2"])
+        breakpoint()
         assert type(tslong) is TSLongPandas
         assert type(tslong._obj) is pd.DataFrame
-        assert tslong.shape == (192, 7)
-        # TODO: dataframe should be wrapped in a TSLong object
+        self.common_checks(tslong)
         # TODO: time column is counted
         # TODO: line order is not preserved
         # TODO: column order is not preserved
@@ -125,11 +133,10 @@ class TestLoad:
         tstore_path: Path,
     ) -> None:
         """Test loading as a Polars DataFrame."""
-        tslong = tstore.open_tslong(tstore_path, backend="polars", ts_variables=["ts_variable"])
+        tslong = tstore.open_tslong(tstore_path, backend="polars", ts_variables=["ts_var1", "ts_var2"])
         assert type(tslong) is TSLongPolars
         assert type(tslong._obj) is pl.DataFrame
-        assert tslong.shape == (192, 7)
-        # TODO: dataframe should be wrapped in a TSLong object
+        self.common_checks(tslong)
         # TODO: time column is counted
         # TODO: line order is not preserved
         # TODO: column order is not preserved
@@ -139,10 +146,10 @@ class TestLoad:
         tstore_path: Path,
     ) -> None:
         """Test loading as a PyArrow Table."""
-        tslong = tstore.open_tslong(tstore_path, backend="polars", ts_variables=["ts_variable"])
+        tslong = tstore.open_tslong(tstore_path, backend="polars", ts_variables=["ts_var1", "ts_var2"])
         assert type(tslong) is TSLongPolars
         assert type(tslong._obj) is pl.DataFrame
-        assert tslong.shape == (192, 7)
+        self.common_checks(tslong)
 
 
 @pytest.mark.parametrize("backend_to", ["dask", "pandas", "polars", "pyarrow"])
@@ -160,24 +167,27 @@ def test_change_backend(
 
 
 @pytest.mark.parametrize(
-    "dataframe_fixture_name",
+    "tslong_fixture_name",
     [
         "pandas_tslong",
     ],
 )
 def test_to_tsdf(
-    dataframe_fixture_name: str,
+    tslong_fixture_name: str,
     request,
 ) -> None:
     """Test the to_tsdf function."""
-    tslong = request.getfixturevalue(dataframe_fixture_name)
+    tslong = request.getfixturevalue(tslong_fixture_name)
     tslong._obj = tslong._obj.reset_index(names="time")
     tsdf = tslong.to_tsdf()
 
     assert isinstance(tsdf, tstore.TSDF)
-    np.testing.assert_array_equal(tsdf["tstore_id"], ["1", "2", "3", "4"])
-    np.testing.assert_array_equal(tsdf["static_var"], ["1_static", "2_static", "3_static", "4_static"])
     assert tsdf._tstore_id_var == "tstore_id"
     assert tsdf._tstore_time_var == "time"
-    assert tsdf._tstore_ts_vars == {"ts_variable": ["ts_var1", "ts_var2", "ts_var3", "ts_var4"]}
-    assert tsdf._tstore_static_vars == ["static_var"]
+    assert tsdf._tstore_ts_vars == {"ts_var1": ["var1", "var2"], "ts_var2": ["var3", "var4"]}
+    assert tsdf._tstore_static_vars == ["static_var1", "static_var2"]
+    assert isinstance(tsdf["ts_var1"], pd.Series)
+    assert isinstance(tsdf["ts_var2"], pd.Series)
+    np.testing.assert_array_equal(tsdf["tstore_id"], ["1", "2", "3", "4"])
+    np.testing.assert_array_equal(tsdf["static_var1"], ["A", "B", "C", "D"])
+    np.testing.assert_array_equal(tsdf["static_var2"], [1.0, 2.0, 3.0, 4.0])
