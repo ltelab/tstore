@@ -120,7 +120,6 @@ class TestLoad:
     ) -> None:
         """Test loading as a Pandas DataFrame."""
         tslong = tstore.open_tslong(tstore_path, backend="pandas", ts_variables=["ts_var1", "ts_var2"])
-        breakpoint()
         assert type(tslong) is TSLongPandas
         assert type(tslong._obj) is pd.DataFrame
         self.common_checks(tslong)
