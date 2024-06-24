@@ -37,6 +37,7 @@ class TS:
 
         self.data = data
 
+    @staticmethod
     def from_file(
         fpath,
         partitions,

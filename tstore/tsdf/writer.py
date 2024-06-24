@@ -41,10 +41,9 @@ def _write_attributes(df, base_dir):
     write_attributes(df=df_attributes, base_dir=base_dir)
 
 
-def _write_ts_series(ts_series, base_dir, tstore_structure):
+def _write_ts_series(ts_series, tstore_ids, base_dir, tstore_structure):
     """Write TSDF TSArray."""
     ts_variable = ts_series.name
-    tstore_ids = ts_series.index.array.astype(str)
     for tstore_id, ts in zip(tstore_ids, ts_series):
         if ts:  # not empty
             ts_fpath = define_tsarray_filepath(
@@ -56,12 +55,13 @@ def _write_ts_series(ts_series, base_dir, tstore_structure):
             ts.to_disk(ts_fpath)
 
 
-def _write_tsarrays(df, base_dir, tstore_structure):
+def _write_tsarrays(df, id_var, base_dir, tstore_structure):
     """Write TSDF TSArrays."""
     tsarray_columns = _get_ts_variables(df)
     for column in tsarray_columns:
         _write_ts_series(
             ts_series=df[column],
+            tstore_ids=df[id_var],
             base_dir=base_dir,
             tstore_structure=tstore_structure,
         )
@@ -102,7 +102,7 @@ def write_tstore(
     _write_attributes(df, base_dir=base_dir)
 
     # Write TSArrays
-    _write_tsarrays(df, base_dir=base_dir, tstore_structure=tstore_structure)
+    _write_tsarrays(df, id_var, base_dir=base_dir, tstore_structure=tstore_structure)
 
     # Write TSArrays metadata
     ts_variables = _get_ts_variables(df)
