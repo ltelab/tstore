@@ -73,7 +73,7 @@ class TSDF(TSWrapper):
         ts_cols = [col for col in df.columns if isinstance(df[col].dtype, TSDtype)]
         ts_objects = {col: df[col].iloc[0] for col in ts_cols}
         return {
-            col: [var for var in ts_obj.data.columns if var != self._tstore_time_var]
+            col: [var for var in ts_obj._obj.columns if var != self._tstore_time_var]
             for col, ts_obj in ts_objects.items()
         }
 
