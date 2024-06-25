@@ -9,6 +9,7 @@ import dask.dataframe as dd
 import pandas as pd
 
 from tstore.archive.partitions import add_partitioning_columns
+from tstore.backend import DataFrame
 
 
 def check_time_index(df):
@@ -29,13 +30,17 @@ def ensure_is_dask_dataframe(data):
 class TS:
     """TS object."""
 
-    def __init__(self, data):
+    def __init__(
+        self,
+        df: DataFrame,
+        time_var="time",
+    ):
         """Initialize TS class."""
         # Set index as 'time'
         # --> TODO: this to adapt for polars, pyarrow ...
-        data.index.name = "time"
-
-        self.data = data
+        df.index.name = time_var
+        self._obj = df
+        self._tstore_time_var = time_var
 
     @staticmethod
     def from_file(
@@ -77,7 +82,7 @@ class TS:
         # --> All code should exploit the arrow write_partitioned_dataset() function
 
         # Ensure is a dask dataframe
-        df = ensure_is_dask_dataframe(self.data)
+        df = ensure_is_dask_dataframe(self._obj)
 
         # Check the index is datetime
         check_time_index(df)
@@ -118,6 +123,6 @@ class TS:
     def __repr__(self):
         """Print TS object."""
         try:
-            return f"TS[shape={self.data.shape},start={self.data.index.min()},end={self.data.index.max()}]"
+            return f"TS[shape={self._obj.shape},start={self._obj.index.min()},end={self._obj.index.max()}]"
         except Exception:
-            return self.data.__repr__()
+            return self._obj.__repr__()

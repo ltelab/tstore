@@ -34,7 +34,7 @@ def test_wrap(
     df = request.getfixturevalue(dataframe_fixture_name)
     ts = TS(df)
 
-    assert dir(ts.data) == dir(df)
+    assert dir(ts._obj) == dir(df)
 
 
 @pytest.mark.parametrize(
@@ -64,7 +64,7 @@ class TestLoad:
     ) -> None:
         """Test on a Dask TS object."""
         ts = TS.from_file(parquet_timeseries, partitions=[])
-        assert isinstance(ts.data, dask.dataframe.DataFrame)
+        assert isinstance(ts._obj, dask.dataframe.DataFrame)
 
     def test_pandas(
         self,
@@ -100,8 +100,8 @@ class TestStoreAndLoad:
         ts.to_disk(filepath)
         ts_loaded = TS.from_file(filepath, partitions=[])
 
-        df = ts.data.compute()
-        df_loaded = ts_loaded.data.compute()
+        df = ts._obj.compute()
+        df_loaded = ts_loaded._obj.compute()
 
         if type_check == "with_type_check":
             # Test total equality
@@ -123,8 +123,8 @@ class TestStoreAndLoad:
         ts.to_disk(filepath)
         ts_loaded = TS.from_file(filepath, partitions=[])
 
-        df = ts.data.compute()
-        df_loaded = ts_loaded.data.compute()
+        df = ts._obj.compute()
+        df_loaded = ts_loaded._obj.compute()
 
         pd.testing.assert_frame_equal(df, df_loaded)
 
@@ -139,7 +139,7 @@ class TestStoreAndLoad:
         ts.to_disk(filepath)
         ts_loaded = TS.from_file(filepath, partitions=[])
 
-        df = ts.data.compute()
-        df_loaded = ts_loaded.data.compute()
+        df = ts._obj.compute()
+        df_loaded = ts_loaded._obj.compute()
 
         pd.testing.assert_frame_equal(df, df_loaded)
