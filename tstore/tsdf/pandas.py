@@ -30,7 +30,10 @@ class TSDFPandas(TSDF):
         base_dir : path-like
             Base directory of the TStore.
         id_var : str, optional
-            Name of the id variable.
+            Name of the id variable. If the provided value matches a column of the wrapped data frame, the corresponding
+            column will be used as id. If the provided value is not None but does not match any column of the wrapped
+            data frame, the id values will be taken from the index, which will be named using the provided value.
+            Otherwise, the id values and name will be taken from the index.
         time_var : str, optional
             Name of the time variable.
         ts_variables : list-like of str

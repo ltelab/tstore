@@ -40,11 +40,16 @@ def _write_attributes(df, base_dir):
 
     static_columns = _get_static_columns(df)
     df_attributes = df[static_columns]
-    df_attributes.index.name = "tstore_id"
     write_attributes(df=df_attributes, base_dir=base_dir)
 
 
-def _write_ts_series(ts_series: pd.Series, base_dir: Path | str, tstore_structure: str, var_prefix: str) -> None:
+def _write_ts_series(
+    ts_series: pd.Series,
+    base_dir: Path | str,
+    tstore_structure: str,
+    id_prefix: str,
+    var_prefix: str,
+) -> None:
     """
     Write TSDF TSArray.
 
@@ -56,8 +61,10 @@ def _write_ts_series(ts_series: pd.Series, base_dir: Path | str, tstore_structur
         Base directory of the TStore.
     tstore_structure : ["id-var", "var-id"]
         TStore structure, either "id-var" or "var-id".
+    id_prefix : str
+        Prefix for the id directory in the TStore.
     var_prefix : str
-        Prefix for the variable directory.
+        Prefix for the variable directory in the TStore.
     """
     ts_variable = ts_series.name
     tstore_ids = ts_series.index.array.astype(str)
@@ -68,13 +75,19 @@ def _write_ts_series(ts_series: pd.Series, base_dir: Path | str, tstore_structur
                 tstore_id=tstore_id,
                 ts_variable=ts_variable,
                 tstore_structure=tstore_structure,
-                id_prefix=ts_series.index.name,
+                id_prefix=id_prefix,
                 var_prefix=var_prefix,
             )
             ts.to_disk(ts_fpath)
 
 
-def _write_tsarrays(df: pd.DataFrame, base_dir: Path | str, tstore_structure: str, var_prefix: str) -> None:
+def _write_tsarrays(
+    df: pd.DataFrame,
+    base_dir: Path | str,
+    tstore_structure: str,
+    id_prefix: str,
+    var_prefix: str,
+) -> None:
     """
     Write TSDF TSArrays.
 
@@ -86,8 +99,10 @@ def _write_tsarrays(df: pd.DataFrame, base_dir: Path | str, tstore_structure: st
         Base directory of the TStore.
     tstore_structure : ["id-var", "var-id"]
         TStore structure, either "id-var" or "var-id".
+    id_prefix : str
+        Prefix for the id directory in the TStore.
     var_prefix : str
-        Prefix for the variable directory.
+        Prefix for the variable directory in the TStore.
     """
     tsarray_columns = _get_ts_variables(df)
     for column in tsarray_columns:
@@ -95,6 +110,7 @@ def _write_tsarrays(df: pd.DataFrame, base_dir: Path | str, tstore_structure: st
             ts_series=df[column],
             base_dir=base_dir,
             tstore_structure=tstore_structure,
+            id_prefix=id_prefix,
             var_prefix=var_prefix,
         )
 
@@ -152,11 +168,24 @@ def write_tstore(
     ts_variables = _get_ts_variables(df)
     partitioning = check_partitioning(partitioning, ts_variables=ts_variables)
 
+    # id var
+    if id_var is None:
+        # if no `id_var` value is passed, the values are taken from the index.
+        # TODO: enforce that index has a non-None name?
+        id_var = df.index.name
+    elif id_var not in df:
+        # if a non-None `id_var` is passed but does not match a column of the data frame, take the values from the
+        # index but take `id_var` as name
+        df = df.reset_index(names=id_var)
+    else:
+        # if a non-None `id_var` is passed and matches a column of the data frame, there is nothing to do here
+        pass
+
     # Write static attributes
     _write_attributes(df, base_dir=base_dir)
 
     # Write TSArrays
-    _write_tsarrays(df, base_dir=base_dir, tstore_structure=tstore_structure, var_prefix=var_prefix)
+    _write_tsarrays(df, base_dir=base_dir, tstore_structure=tstore_structure, id_prefix=id_var, var_prefix=var_prefix)
 
     # Write TSArrays metadata
     ts_variables = _get_ts_variables(df)
