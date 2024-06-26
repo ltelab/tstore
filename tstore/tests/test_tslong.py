@@ -101,8 +101,10 @@ def test_store(
     assert dirpath.is_dir()
 
     # Check directory content
-    assert sorted(os.listdir(dirpath)) == ["1", "2", "3", "4", "_attributes.parquet", "tstore_metadata.yaml"]
-    assert os.listdir(dirpath / "1" / "ts_variable" / "year=2000" / "month=1") == ["part-0.parquet"]
+    assert sorted(os.listdir(dirpath)) == ["_attributes.parquet"] + [f"store_id={i}" for i in ["1", "2", "3", "4"]] + [
+        "tstore_metadata.yaml",
+    ]
+    assert os.listdir(dirpath / "store_id=1" / "variable=ts_variable" / "year=2000" / "month=1") == ["part-0.parquet"]
 
 
 class TestLoad:

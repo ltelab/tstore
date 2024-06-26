@@ -28,6 +28,7 @@ class TSLongPyArrow(TSLong):
     def from_tstore(
         base_dir,
         ts_variables=None,
+        var_prefix="variable",
         start_time=None,
         end_time=None,
         tstore_ids=None,
@@ -50,6 +51,7 @@ class TSLongPyArrow(TSLong):
             id_var=id_var,
             time_var=time_var,
             ts_variables=ts_variables,
+            var_prefix=var_prefix,
             start_time=start_time,
             end_time=end_time,
             columns=columns,
@@ -104,6 +106,7 @@ def _read_ts_variable(
     base_dir,
     id_var,
     ts_variable,
+    var_prefix,
     start_time=None,
     end_time=None,
     columns=None,
@@ -112,7 +115,8 @@ def _read_ts_variable(
 ):
     """Read a TStore ts_variable into pyarrow long-format."""
     # Find TS and associated TStore IDs
-    fpaths, tstore_ids, partitions = get_ts_info(base_dir=base_dir, ts_variable=ts_variable)
+    fpaths, tstore_ids, partitions = get_ts_info(base_dir=base_dir, ts_variable=ts_variable, var_prefix=var_prefix)
+
     # Read each TS
     list_tables = [
         _read_ts(
@@ -147,6 +151,7 @@ def _read_ts_variables(
     id_var,
     time_var,
     ts_variables,
+    var_prefix,
     start_time=None,
     end_time=None,
     columns=None,
@@ -160,6 +165,7 @@ def _read_ts_variables(
             base_dir=base_dir,
             id_var=id_var,
             ts_variable=ts_variable,
+            var_prefix=var_prefix,
             start_time=start_time,
             end_time=end_time,
             columns=columns,  # columns[ts_variable] in future
