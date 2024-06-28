@@ -34,7 +34,7 @@ class Helpers:
 
     @staticmethod
     def create_dask_dataframe() -> dd.DataFrame:
-        """Create a Dask DataFrame with a dummy time series.
+        """Create a Dask DataFrame with a dummy time series (with time index).
 
         The columns are:
             - var1: str
@@ -51,9 +51,11 @@ class Helpers:
             seed=None,
         )
 
-        # TODO: Replace index by regular column
-        # df_dask = df_dask.reset_index()
-        # df_dask = df_dask.rename(columns={"index": TIME_VAR})
+        # Change index name
+        old_index_name = df_dask.index.name
+        df_dask = df_dask.reset_index()
+        df_dask = df_dask.rename(columns={old_index_name: TIME_VAR})
+        df_dask = df_dask.set_index(TIME_VAR)
 
         # Rename columns
         column_names = df_dask.columns
@@ -63,7 +65,7 @@ class Helpers:
         return df_dask
 
     @staticmethod
-    def create_pandas_tsarray(size: int = 4, columns_slice: Optional[slice] = None) -> tstore.TSArray:
+    def create_dask_tsarray(size: int = 4, columns_slice: Optional[slice] = None) -> tstore.TSArray:
         """Create a TSArray of TS objects."""
         if columns_slice is None:
             columns_slice = slice(0, 4)
@@ -71,8 +73,9 @@ class Helpers:
         ts_list = []
 
         for _ in range(size):
-            df = Helpers.create_dask_dataframe()
+            df = Helpers.create_dask_dataframe().compute()
             df = df.iloc[:, columns_slice]
+            df = dd.from_pandas(df)
             ts = tstore.TS(df)
             ts_list.append(ts)
 
@@ -93,34 +96,48 @@ def helpers() -> type[Helpers]:
 
 @pytest.fixture()
 def dask_dataframe(helpers) -> dd.DataFrame:
-    """Create a Dask DataFrame with a dummy time series."""
+    """Create a Dask DataFrame with a dummy time series (with time index)."""
     return helpers.create_dask_dataframe()
 
 
 @pytest.fixture()
+def dask_dataframe_no_index(dask_dataframe: dd.DataFrame) -> dd.DataFrame:
+    """Create a Dask DataFrame with a dummy time series (without time index)."""
+    df_dask = dask_dataframe.reset_index()
+    return df_dask
+
+
+@pytest.fixture()
 def pandas_dataframe(dask_dataframe: dd.DataFrame) -> pd.DataFrame:
-    """Create a Pandas DataFrame with a dummy time series."""
+    """Create a Pandas DataFrame with a dummy time series (with time index)."""
     df_pd = dask_dataframe.compute()
     return df_pd
 
 
 @pytest.fixture()
+def pandas_dataframe_no_index(dask_dataframe_no_index: dd.DataFrame) -> pd.DataFrame:
+    """Create a Pandas DataFrame with a dummy time series (without time index)."""
+    df_pd = dask_dataframe_no_index.compute()
+    return df_pd
+
+
+@pytest.fixture()
 def pyarrow_dataframe(pandas_dataframe: pd.DataFrame) -> pa.Table:
-    """Create an PyArrow Table with a dummy time series."""
+    """Create an PyArrow Table with a dummy time series (without index)."""
     df_pyarrow = pa.Table.from_pandas(pandas_dataframe)
     return df_pyarrow
 
 
 @pytest.fixture()
 def polars_dataframe(pyarrow_dataframe: pa.Table) -> pl.DataFrame:
-    """Create a Polars DataFrame with a dummy time series."""
+    """Create a Polars DataFrame with a dummy time series (without index)."""
     df_pl = pl.from_arrow(pyarrow_dataframe)
     return df_pl
 
 
 @pytest.fixture()
 def pandas_dataframe_arrow_dtypes(pyarrow_dataframe: pa.Table) -> pd.DataFrame:
-    """Create a Pandas DataFrame with Arrow dtypes."""
+    """Create a Pandas DataFrame with Arrow dtypes (with index)."""
     df_pd = pyarrow_dataframe.to_pandas(types_mapper=pd.ArrowDtype)
     return df_pd
 
@@ -130,28 +147,42 @@ def pandas_dataframe_arrow_dtypes(pyarrow_dataframe: pa.Table) -> pd.DataFrame:
 
 @pytest.fixture()
 def pandas_series(pandas_dataframe: pd.DataFrame) -> pd.Series:
-    """Create a dummy Pandas Series of floats."""
+    """Create a dummy Pandas Series of floats (with index)."""
     series = pandas_dataframe["var3"]
     return series
 
 
 @pytest.fixture()
+def pandas_series_no_index(pandas_series: pd.Series) -> pd.Series:
+    """Create a dummy Pandas Series of floats (without index)."""
+    series = pandas_series.reset_index(drop=True)
+    return series
+
+
+@pytest.fixture()
 def dask_series(pandas_series: pd.Series) -> dd.DataFrame:
-    """Create a Dask Series from a Pandas Series."""
+    """Create a Dask Series from a Pandas Series (with index)."""
     series = dd.from_pandas(pandas_series)
     return series
 
 
 @pytest.fixture()
+def dask_series_no_index(pandas_series_no_index: pd.Series) -> dd.DataFrame:
+    """Create a Dask Series from a Pandas Series (without index)."""
+    series = dd.from_pandas(pandas_series_no_index)
+    return series
+
+
+@pytest.fixture()
 def polars_series(pandas_series: pd.Series) -> pl.Series:
-    """Create a Polars Series from a Pandas Series."""
+    """Create a Polars Series from a Pandas Series (without index)."""
     series = pl.from_pandas(pandas_series)
     return series
 
 
 @pytest.fixture()
 def pyarrow_series(pandas_series: pd.Series) -> pa.Array:
-    """Create a PyArrow Array from a Pandas Series."""
+    """Create a PyArrow Array from a Pandas Series (without index)."""
     series = pa.Array.from_pandas(pandas_series)
     return series
 
@@ -247,9 +278,6 @@ def pandas_long_dataframe(helpers) -> pd.DataFrame:
 def polars_long_dataframe(pandas_long_dataframe: pd.DataFrame) -> pl.DataFrame:
     """Create a long Polars DataFrame."""
     df_pl = pl.from_pandas(pandas_long_dataframe, include_index=True)
-
-    # TODO: Should these be necessary?
-    df_pl = df_pl.rename({"timestamp": "time"})
     df_pl = df_pl.with_columns(pl.col(ID_VAR).cast(str))
 
     return df_pl
@@ -285,18 +313,18 @@ def polars_tslong(polars_long_dataframe: pl.DataFrame) -> tstore.TSLong:
 
 
 @pytest.fixture()
-def pandas_tsarray(helpers) -> tstore.TSArray:
+def dask_tsarray(helpers) -> tstore.TSArray:
     """Create a TSArray of TS objects."""
-    return helpers.create_pandas_tsarray(size=4)
+    return helpers.create_dask_tsarray(size=4)
 
 
 ## Pandas Series
 
 
 @pytest.fixture()
-def pandas_series_of_ts(pandas_tsarray: tstore.TSArray) -> pd.Series:
+def pandas_series_of_ts(dask_tsarray: tstore.TSArray) -> pd.Series:
     """Create a Pandas Series of TS objects from a TSArray."""
-    df_series = pd.Series(pandas_tsarray)
+    df_series = pd.Series(dask_tsarray)
     return df_series
 
 
@@ -304,10 +332,10 @@ def pandas_series_of_ts(pandas_tsarray: tstore.TSArray) -> pd.Series:
 
 
 @pytest.fixture()
-def pandas_tsdf(helpers) -> tstore.TSDF:
+def dask_tsdf(helpers) -> tstore.TSDF:
     """Create a TSDF object."""
-    pd_series_of_ts_1 = pd.Series(helpers.create_pandas_tsarray(size=4, columns_slice=slice(0, 2)))
-    pd_series_of_ts_2 = pd.Series(helpers.create_pandas_tsarray(size=4, columns_slice=slice(2, 4)))
+    pd_series_of_ts_1 = pd.Series(helpers.create_dask_tsarray(size=4, columns_slice=slice(0, 2)))
+    pd_series_of_ts_2 = pd.Series(helpers.create_dask_tsarray(size=4, columns_slice=slice(2, 4)))
     tstore_ids = np.arange(1, pd_series_of_ts_1.size + 1)
     data = {
         ID_VAR: tstore_ids,

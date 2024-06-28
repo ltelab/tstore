@@ -3,7 +3,7 @@
 from abc import abstractmethod
 from typing import TYPE_CHECKING
 
-from tstore.backend import DataFrame, PandasDataFrame
+from tstore.backend import DataFrame
 from tstore.tsdf.ts_dtype import TSDtype
 from tstore.tswrapper.tswrapper import TSWrapper
 
@@ -50,10 +50,11 @@ class TSDF(TSWrapper):
     def wrap(df: DataFrame, *args, **kwargs) -> "TSDF":
         """Wrap a DataFrame in the appropriate TSDF subclass."""
         # Lazy import to avoid circular imports
-        from tstore.tsdf.pandas import TSDFPandas
+        from tstore.tsdf.dask import TSDFDask
 
-        if isinstance(df, PandasDataFrame):
-            return TSDFPandas(df, *args, **kwargs)
+        # TODO: check dataframe type inside TS objects
+        # if isinstance(df, DaskDataFrame):
+        return TSDFDask(df, *args, **kwargs)
 
         type_path = f"{type(df).__module__}.{type(df).__qualname__}"
         raise TypeError(f"Cannot wrap type {type_path} as a TSDF object.")

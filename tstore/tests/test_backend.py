@@ -71,6 +71,7 @@ def test_change_dataframe_backend(
 
     # Check size
     assert df.shape[0] == df_new.shape[0]
+    print(backend_from, df.shape, backend_to, df_new.shape)
 
 
 @pytest.mark.parametrize("backend_to", backend_names)
@@ -118,8 +119,8 @@ def test_change_backend_to_and_fro(
 
 
 def test_polars_to_pandas(polars_dataframe: pl.DataFrame) -> None:
-    """Test the .to_pandas() method on a Polars DataFrame with PyArrow dtype."""
-    # Check that both methods return the same DataFrame
+    """Test the .to_pandas() method on a Polars DataFrame with PyArrow dtype using different kwargs."""
+    # Check that both kwargs return the same DataFrame
     df1 = polars_dataframe.to_pandas(use_pyarrow_extension_array=True)
     df2 = polars_dataframe.to_pandas(types_mapper=pd.ArrowDtype)
     pd.testing.assert_frame_equal(df1, df2)
