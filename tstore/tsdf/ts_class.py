@@ -9,7 +9,7 @@ import dask.dataframe as dd
 import pandas as pd
 
 from tstore.archive.partitions import add_partitioning_columns
-from tstore.backend import DataFrame
+from tstore.backend import DataFrame, change_backend
 
 
 def check_time_index(df):
@@ -42,8 +42,13 @@ class TS:
         self._obj = df
         self._tstore_time_var = time_var
 
+    def change_backend(self, new_backend):
+        """Return a new TS object with the dataframe converted to a different backend."""
+        new_df = change_backend(self._obj, new_backend)
+        return TS(new_df, time_var=self._tstore_time_var)
+
     @staticmethod
-    def from_file(
+    def from_disk(
         fpath,
         partitions,
         columns=None,

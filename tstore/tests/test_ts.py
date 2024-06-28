@@ -56,14 +56,14 @@ def test_store(
 
 
 class TestLoad:
-    """Test the from_file method of the TS class."""
+    """Test the from_disk method of the TS class."""
 
     def test_dask(
         self,
         parquet_timeseries: Path,
     ) -> None:
         """Test on a Dask TS object."""
-        ts = TS.from_file(parquet_timeseries, partitions=[])
+        ts = TS.from_disk(parquet_timeseries, partitions=[])
         assert isinstance(ts._obj, dask.dataframe.DataFrame)
 
     def test_pandas(
@@ -82,7 +82,7 @@ class TestLoad:
 
 
 class TestStoreAndLoad:
-    """Test that the to_disk and from_file methods of the TS class are consistent."""
+    """Test that the to_disk and from_disk methods of the TS class are consistent."""
 
     @pytest.mark.parametrize(
         "type_check",
@@ -98,7 +98,7 @@ class TestStoreAndLoad:
         filepath = str(tmp_path / "test.parquet")
         ts = TS(dask_dataframe)
         ts.to_disk(filepath)
-        ts_loaded = TS.from_file(filepath, partitions=[])
+        ts_loaded = TS.from_disk(filepath, partitions=[])
 
         df = ts._obj.compute()
         df_loaded = ts_loaded._obj.compute()
@@ -121,7 +121,7 @@ class TestStoreAndLoad:
         filepath = str(tmp_path / "test.parquet")
         ts = TS(pandas_dataframe)
         ts.to_disk(filepath)
-        ts_loaded = TS.from_file(filepath, partitions=[])
+        ts_loaded = TS.from_disk(filepath, partitions=[])
 
         df = ts._obj.compute()
         df_loaded = ts_loaded._obj.compute()
@@ -137,7 +137,7 @@ class TestStoreAndLoad:
         filepath = str(tmp_path / "test.parquet")
         ts = TS(polars_dataframe)
         ts.to_disk(filepath)
-        ts_loaded = TS.from_file(filepath, partitions=[])
+        ts_loaded = TS.from_disk(filepath, partitions=[])
 
         df = ts._obj.compute()
         df_loaded = ts_loaded._obj.compute()
