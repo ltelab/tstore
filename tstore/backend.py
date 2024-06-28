@@ -1,6 +1,6 @@
 """Define possible backends for type hinting."""
 
-from typing import Literal, TypeVar, Union
+from typing import Literal, Optional, TypeVar, Union
 
 import dask.dataframe as dd
 import pandas as pd
@@ -13,6 +13,13 @@ Backend = Literal[
     "polars",
     "pyarrow",
 ]
+
+index_support = {
+    "dask": True,
+    "pandas": True,
+    "polars": False,
+    "pyarrow": False,
+}
 
 DaskDataFrame = dd.DataFrame
 PandasDataFrame = pd.DataFrame
@@ -30,8 +37,18 @@ Series = Union[DaskSeries, PandasSeries, PolarsSeries, PyArrowSeries]
 T = TypeVar("T", DataFrame, Series)
 
 
-def change_backend(obj: T, new_backend: Backend, **backend_kwargs) -> T:
-    """Change the backend of a dataframe or a series."""
+def change_backend(
+    obj: T,
+    new_backend: Backend,
+    index_var: Optional[str] = None,
+    **backend_kwargs,
+) -> T:
+    """Change the backend of a dataframe or a series.
+
+    If index_var is provided, the corresponding column is set as the index if
+    the backend supports it. Otherwise, it is converted to a regular column
+    (DataFrame) or dropped (Series).
+    """
     change_backend_functions = {
         DaskDataFrame: _change_dataframe_backend_from_dask,
         PandasDataFrame: _change_dataframe_backend_from_pandas,
@@ -45,12 +62,17 @@ def change_backend(obj: T, new_backend: Backend, **backend_kwargs) -> T:
 
     for supported_type, change_backend_function in change_backend_functions.items():
         if isinstance(obj, supported_type):
-            return change_backend_function(obj, new_backend, **backend_kwargs)
+            return change_backend_function(obj, new_backend, index_var=index_var, **backend_kwargs)
 
     raise TypeError(f"Unsupported type: {type(obj).__module__}.{type(obj).__qualname__}")
 
 
-def _change_dataframe_backend_from_dask(df: DaskDataFrame, new_backend: Backend, **backend_kwargs) -> DataFrame:
+def _change_dataframe_backend_from_dask(
+    df: DaskDataFrame,
+    new_backend: Backend,
+    index_var: Optional[str] = None,  # noqa: ARG001
+    **backend_kwargs,
+) -> DataFrame:
     """Change the backend of a Dask dataframe."""
     if new_backend == "dask":
         return df
@@ -67,7 +89,12 @@ def _change_dataframe_backend_from_dask(df: DaskDataFrame, new_backend: Backend,
     raise ValueError(f"Unsupported backend: {new_backend}")
 
 
-def _change_dataframe_backend_from_pandas(df: PandasDataFrame, new_backend: Backend, **backend_kwargs) -> DataFrame:
+def _change_dataframe_backend_from_pandas(
+    df: PandasDataFrame,
+    new_backend: Backend,
+    index_var: Optional[str] = None,  # noqa: ARG001
+    **backend_kwargs,
+) -> DataFrame:
     """Change the backend of a Pandas dataframe."""
     if new_backend == "dask":
         return dd.from_pandas(df, **backend_kwargs)
@@ -84,7 +111,12 @@ def _change_dataframe_backend_from_pandas(df: PandasDataFrame, new_backend: Back
     raise ValueError(f"Unsupported backend: {new_backend}")
 
 
-def _change_dataframe_backend_from_polars(df: PolarsDataFrame, new_backend: Backend, **backend_kwargs) -> DataFrame:
+def _change_dataframe_backend_from_polars(
+    df: PolarsDataFrame,
+    new_backend: Backend,
+    index_var: Optional[str] = None,  # noqa: ARG001
+    **backend_kwargs,
+) -> DataFrame:
     """Change the backend of a Polars dataframe."""
     if new_backend == "dask":
         return dd.from_pandas(df.to_pandas(use_pyarrow_extension_array=True), **backend_kwargs)
@@ -102,7 +134,12 @@ def _change_dataframe_backend_from_polars(df: PolarsDataFrame, new_backend: Back
     raise ValueError(f"Unsupported backend: {new_backend}")
 
 
-def _change_dataframe_backend_from_pyarrow(df: PyArrowDataFrame, new_backend: Backend, **backend_kwargs) -> DataFrame:
+def _change_dataframe_backend_from_pyarrow(
+    df: PyArrowDataFrame,
+    new_backend: Backend,
+    index_var: Optional[str] = None,  # noqa: ARG001
+    **backend_kwargs,
+) -> DataFrame:
     """Change the backend of a PyArrow table."""
     if new_backend == "dask":
         return dd.from_pandas(df.to_pandas(types_mapper=pd.ArrowDtype), **backend_kwargs)
@@ -120,7 +157,12 @@ def _change_dataframe_backend_from_pyarrow(df: PyArrowDataFrame, new_backend: Ba
     raise ValueError(f"Unsupported backend: {new_backend}")
 
 
-def _change_series_backend_from_dask(series: dd.Series, new_backend: str, **backend_kwargs):
+def _change_series_backend_from_dask(
+    series: dd.Series,
+    new_backend: Backend,
+    index_var: Optional[str] = None,  # noqa: ARG001
+    **backend_kwargs,
+) -> Series:
     """Change the backend of a Dask series."""
     if new_backend == "dask":
         return series
@@ -137,7 +179,12 @@ def _change_series_backend_from_dask(series: dd.Series, new_backend: str, **back
     raise ValueError(f"Unsupported backend: {new_backend}")
 
 
-def _change_series_backend_from_pandas(series: pd.Series, new_backend: str, **backend_kwargs):
+def _change_series_backend_from_pandas(
+    series: pd.Series,
+    new_backend: Backend,
+    index_var: Optional[str] = None,  # noqa: ARG001
+    **backend_kwargs,
+) -> Series:
     """Change the backend of a Pandas series."""
     if new_backend == "dask":
         return dd.from_pandas(series, **backend_kwargs)
@@ -154,7 +201,12 @@ def _change_series_backend_from_pandas(series: pd.Series, new_backend: str, **ba
     raise ValueError(f"Unsupported backend: {new_backend}")
 
 
-def _change_series_backend_from_polars(series: pl.Series, new_backend: str, **backend_kwargs):
+def _change_series_backend_from_polars(
+    series: pl.Series,
+    new_backend: Backend,
+    index_var: Optional[str] = None,  # noqa: ARG001
+    **backend_kwargs,
+) -> Series:
     """Change the backend of a Polars series."""
     if new_backend == "dask":
         return dd.from_pandas(series.to_pandas(use_pyarrow_extension_array=True), **backend_kwargs)
@@ -172,7 +224,12 @@ def _change_series_backend_from_polars(series: pl.Series, new_backend: str, **ba
     raise ValueError(f"Unsupported backend: {new_backend}")
 
 
-def _change_series_backend_from_pyarrow(series: pa.Array, new_backend: str, **backend_kwargs):
+def _change_series_backend_from_pyarrow(
+    series: pa.Array,
+    new_backend: Backend,
+    index_var: Optional[str] = None,  # noqa: ARG001
+    **backend_kwargs,
+) -> Series:
     """Change the backend of a Pyarrow series."""
     pandas_series = pd.Series(series.to_pandas())
 
