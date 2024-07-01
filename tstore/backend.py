@@ -1,6 +1,6 @@
 """Define possible backends for type hinting."""
 
-from typing import Literal, Optional, TypeVar, Union
+from typing import Callable, Literal, Optional, TypeVar, Union
 
 import dask.dataframe as dd
 import pandas as pd
@@ -13,13 +13,6 @@ Backend = Literal[
     "polars",
     "pyarrow",
 ]
-
-index_support = {
-    "dask": True,
-    "pandas": True,
-    "polars": False,
-    "pyarrow": False,
-}
 
 DaskDataFrame = dd.DataFrame
 PandasDataFrame = pd.DataFrame
@@ -67,10 +60,30 @@ def change_backend(
     raise TypeError(f"Unsupported type: {type(obj).__module__}.{type(obj).__qualname__}")
 
 
+def re_set_dataframe_index(func: Callable) -> Callable:
+    """Decorator to remove existing dataframe index and set a new one if index_var is provided."""
+
+    def wrapper(*args, index_var: Optional[str] = None, **kwargs) -> DataFrame:
+        df = func(*args, **kwargs)
+
+        if isinstance(df, (PolarsDataFrame, PyArrowDataFrame)):
+            return df
+
+        if df.index.name is not None:
+            df = df.reset_index(drop=False)
+
+        if index_var is not None:
+            df = df.set_index(index_var)
+
+        return df
+
+    return wrapper
+
+
+@re_set_dataframe_index
 def _change_dataframe_backend_from_dask(
     df: DaskDataFrame,
     new_backend: Backend,
-    index_var: Optional[str] = None,  # noqa: ARG001
     **backend_kwargs,
 ) -> DataFrame:
     """Change the backend of a Dask dataframe."""
@@ -81,18 +94,20 @@ def _change_dataframe_backend_from_dask(
         return df.compute(**backend_kwargs)
 
     if new_backend == "polars":
+        backend_kwargs.setdefault("include_index", True)
         return pl.from_pandas(df.compute(), **backend_kwargs)
 
     if new_backend == "pyarrow":
+        backend_kwargs.setdefault("preserve_index", True)
         return pa.Table.from_pandas(df.compute(), **backend_kwargs)
 
     raise ValueError(f"Unsupported backend: {new_backend}")
 
 
+@re_set_dataframe_index
 def _change_dataframe_backend_from_pandas(
     df: PandasDataFrame,
     new_backend: Backend,
-    index_var: Optional[str] = None,  # noqa: ARG001
     **backend_kwargs,
 ) -> DataFrame:
     """Change the backend of a Pandas dataframe."""
@@ -103,27 +118,31 @@ def _change_dataframe_backend_from_pandas(
         return df
 
     if new_backend == "polars":
+        backend_kwargs.setdefault("include_index", True)
         return pl.from_pandas(df, **backend_kwargs)
 
     if new_backend == "pyarrow":
+        backend_kwargs.setdefault("preserve_index", True)
         return pa.Table.from_pandas(df, **backend_kwargs)
 
     raise ValueError(f"Unsupported backend: {new_backend}")
 
 
+@re_set_dataframe_index
 def _change_dataframe_backend_from_polars(
     df: PolarsDataFrame,
     new_backend: Backend,
-    index_var: Optional[str] = None,  # noqa: ARG001
     **backend_kwargs,
 ) -> DataFrame:
     """Change the backend of a Polars dataframe."""
     if new_backend == "dask":
-        return dd.from_pandas(df.to_pandas(use_pyarrow_extension_array=True), **backend_kwargs)
+        df = df.to_pandas(use_pyarrow_extension_array=True)
+        return dd.from_pandas(df, **backend_kwargs)
 
     if new_backend == "pandas":
         backend_kwargs.setdefault("use_pyarrow_extension_array", True)
-        return df.to_pandas(**backend_kwargs)
+        df = df.to_pandas(**backend_kwargs)
+        return df
 
     if new_backend == "polars":
         return df
@@ -134,15 +153,16 @@ def _change_dataframe_backend_from_polars(
     raise ValueError(f"Unsupported backend: {new_backend}")
 
 
+@re_set_dataframe_index
 def _change_dataframe_backend_from_pyarrow(
     df: PyArrowDataFrame,
     new_backend: Backend,
-    index_var: Optional[str] = None,  # noqa: ARG001
     **backend_kwargs,
 ) -> DataFrame:
     """Change the backend of a PyArrow table."""
     if new_backend == "dask":
-        return dd.from_pandas(df.to_pandas(types_mapper=pd.ArrowDtype), **backend_kwargs)
+        df = df.to_pandas(types_mapper=pd.ArrowDtype)
+        return dd.from_pandas(df, **backend_kwargs)
 
     if new_backend == "pandas":
         backend_kwargs.setdefault("types_mapper", pd.ArrowDtype)
@@ -160,10 +180,13 @@ def _change_dataframe_backend_from_pyarrow(
 def _change_series_backend_from_dask(
     series: dd.Series,
     new_backend: Backend,
-    index_var: Optional[str] = None,  # noqa: ARG001
+    index_var: Optional[str] = None,
     **backend_kwargs,
 ) -> Series:
     """Change the backend of a Dask series."""
+    if index_var is not None:
+        raise NotImplementedError("Setting an index is not supported for series.")
+
     if new_backend == "dask":
         return series
 
@@ -182,10 +205,13 @@ def _change_series_backend_from_dask(
 def _change_series_backend_from_pandas(
     series: pd.Series,
     new_backend: Backend,
-    index_var: Optional[str] = None,  # noqa: ARG001
+    index_var: Optional[str] = None,
     **backend_kwargs,
 ) -> Series:
     """Change the backend of a Pandas series."""
+    if index_var is not None:
+        raise NotImplementedError("Setting an index is not supported for series.")
+
     if new_backend == "dask":
         return dd.from_pandas(series, **backend_kwargs)
 
@@ -204,10 +230,13 @@ def _change_series_backend_from_pandas(
 def _change_series_backend_from_polars(
     series: pl.Series,
     new_backend: Backend,
-    index_var: Optional[str] = None,  # noqa: ARG001
+    index_var: Optional[str] = None,
     **backend_kwargs,
 ) -> Series:
     """Change the backend of a Polars series."""
+    if index_var is not None:
+        raise NotImplementedError("Setting an index is not supported for series.")
+
     if new_backend == "dask":
         return dd.from_pandas(series.to_pandas(use_pyarrow_extension_array=True), **backend_kwargs)
 
@@ -227,10 +256,13 @@ def _change_series_backend_from_polars(
 def _change_series_backend_from_pyarrow(
     series: pa.Array,
     new_backend: Backend,
-    index_var: Optional[str] = None,  # noqa: ARG001
+    index_var: Optional[str] = None,
     **backend_kwargs,
 ) -> Series:
     """Change the backend of a Pyarrow series."""
+    if index_var is not None:
+        raise NotImplementedError("Setting an index is not supported for series.")
+
     pandas_series = pd.Series(series.to_pandas())
 
     if new_backend == "dask":

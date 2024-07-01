@@ -109,7 +109,7 @@ class TestLoad:
     """Test the from_tstore function."""
 
     def common_checks(self, tslong: tstore.TSLong) -> None:
-        assert tslong.shape == (192, 8)
+        assert tslong.shape[0] == 192
         assert tslong._tstore_id_var == "tstore_id"
         assert tslong._tstore_time_var == "time"
         assert tslong._tstore_ts_vars == {"ts_var1": ["var1", "var2"], "ts_var2": ["var3", "var4"]}
