@@ -217,7 +217,6 @@ def test_to_tsdf(
 
     assert isinstance(tsdf, tstore.TSDF)
     assert tsdf._tstore_id_var == "tstore_id"
-    assert tsdf._tstore_time_var == "time"
     assert tsdf._tstore_ts_vars == {"ts_var1": ["var1", "var2"], "ts_var2": ["var3", "var4"]}
     assert tsdf._tstore_static_vars == ["static_var1", "static_var2"]
     assert isinstance(tsdf["ts_var1"], pd.Series)

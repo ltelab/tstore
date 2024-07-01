@@ -394,6 +394,5 @@ def dask_tsdf(helpers) -> tstore.tsdf.TSDFDask:
     tsdf = tstore.TSDF.wrap(
         df,
         id_var=ID_VAR,
-        time_var=TIME_VAR,
     )
     return tsdf

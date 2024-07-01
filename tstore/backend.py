@@ -60,6 +60,17 @@ def change_backend(
     raise TypeError(f"Unsupported type: {type(obj).__module__}.{type(obj).__qualname__}")
 
 
+def remove_dataframe_index(df: DataFrame) -> DataFrame:
+    """Remove the index of a DataFrame and keep it as a regular column."""
+    if isinstance(df, (PolarsDataFrame, PyArrowDataFrame)):
+        return df
+
+    if df.index.name is not None:
+        df = df.reset_index(drop=False)
+
+    return df
+
+
 def re_set_dataframe_index(df: DataFrame, index_var: Optional[str] = None) -> DataFrame:
     """Remove existing dataframe index and set a new one if index_var is provided."""
     if isinstance(df, (PolarsDataFrame, PyArrowDataFrame)):

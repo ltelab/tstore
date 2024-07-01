@@ -54,7 +54,6 @@ def test_dask_tsdf_creation(dask_tsdf: tstore.TSDF) -> None:
 def test_attributes(dask_tsdf: tstore.TSDF) -> None:
     """Test the given and computed _tstore_ attributes."""
     assert dask_tsdf._tstore_id_var == "tstore_id"
-    assert dask_tsdf._tstore_time_var == "time"
     assert dask_tsdf._tstore_ts_vars == {"ts_var1": ["var1", "var2"], "ts_var2": ["var3", "var4"]}
     assert dask_tsdf._tstore_static_vars == ["static_var1", "static_var2"]
 
@@ -124,12 +123,10 @@ class TestLoad:
         assert type(tsdf) is TSDFDask
         assert type(tsdf._obj) is pd.DataFrame
         assert tsdf._tstore_id_var == "tstore_id"
-        assert tsdf._tstore_time_var == "time"
         assert tsdf._tstore_ts_vars == {"ts_var1": ["var1", "var2"], "ts_var2": ["var3", "var4"]}
         assert tsdf._tstore_static_vars == ["static_var1", "static_var2"]
         assert isinstance(tsdf["ts_var1"], pd.Series)
         assert isinstance(tsdf["ts_var2"], pd.Series)
-        # TODO: add tstore_id column instead of using an index
-        # np.testing.assert_array_equal(tsdf["tstore_id"], ["1", "2", "3", "4"])
+        np.testing.assert_array_equal(tsdf["tstore_id"], ["1", "2", "3", "4"])
         np.testing.assert_array_equal(tsdf["static_var1"], ["A", "B", "C", "D"])
         np.testing.assert_array_equal(tsdf["static_var2"], [1.0, 2.0, 3.0, 4.0])

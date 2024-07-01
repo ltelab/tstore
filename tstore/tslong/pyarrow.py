@@ -13,7 +13,7 @@ from tstore.archive.checks import (
     check_ts_variables,
     check_tstore_ids,
 )
-from tstore.archive.io import get_id_var, get_time_var, get_ts_info
+from tstore.archive.io import get_id_var, get_ts_info
 from tstore.archive.ts.readers.pyarrow import open_ts
 from tstore.tslong.tslong import TSLong
 
@@ -60,7 +60,7 @@ class TSLongPyArrow(TSLong):
         tstore_ids = check_tstore_ids(tstore_ids, base_dir=base_dir)
         start_time, end_time = check_start_end_time(start_time, end_time)
         id_var = get_id_var(base_dir)
-        time_var = get_time_var(base_dir)
+        time_var = "time"
 
         # Get list of tslong for each ts_variable
         table, ts_variables_dict = _read_ts_variables(

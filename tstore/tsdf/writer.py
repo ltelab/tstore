@@ -67,14 +67,13 @@ def _write_tsarrays(df, id_var, base_dir, tstore_structure):
         )
 
 
-def _write_metadata(base_dir, tstore_structure, id_var, time_var, ts_variables, partitioning):
+def _write_metadata(base_dir, tstore_structure, id_var, ts_variables, partitioning):
     """Write TStore metadata."""
     from tstore.archive.metadata.writers import write_tstore_metadata
 
     write_tstore_metadata(
         base_dir=base_dir,
         id_var=id_var,
-        time_var=time_var,
         ts_variables=ts_variables,
         tstore_structure=tstore_structure,
         partitioning=partitioning,
@@ -85,7 +84,6 @@ def write_tstore(
     df,
     base_dir,
     id_var,
-    time_var,  # maybe not needed for TSDF?
     partitioning,
     tstore_structure="id-var",
     overwrite=True,
@@ -111,6 +109,5 @@ def write_tstore(
         tstore_structure=tstore_structure,
         ts_variables=ts_variables,
         id_var=id_var,
-        time_var=time_var,
         partitioning=partitioning,
     )

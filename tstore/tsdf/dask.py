@@ -28,7 +28,6 @@ class TSDFDask(TSDF):
             self._obj,
             base_dir=base_dir,
             id_var=self._tstore_id_var,
-            time_var=self._tstore_time_var,
             partitioning=partitioning,
             tstore_structure=tstore_structure,
             overwrite=overwrite,
@@ -60,7 +59,6 @@ class TSDFDask(TSDF):
         return TSDFDask(
             df,
             id_var=metadata["id_var"],
-            time_var=metadata["time_var"],
         )
 
     # Method that return identifier column
