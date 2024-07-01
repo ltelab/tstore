@@ -23,6 +23,8 @@ from tstore.tslong.pyarrow import TSLongPyArrow
 # - pandas_tslong
 # - polars_long_dataframe
 # - polars_tslong
+# - pyarrow_long_dataframe
+# - pyarrow_tslong
 
 
 tslong_classes = {
@@ -59,7 +61,7 @@ def store_tslong(tslong: tstore.TSLong, dirpath: str) -> None:
 # Tests ########################################################################
 
 
-@pytest.mark.parametrize("backend", ["dask", "pandas", "polars"])
+@pytest.mark.parametrize("backend", ["dask", "pandas", "polars", "pyarrow"])
 def test_creation(
     backend: Backend,
     request,
@@ -91,6 +93,7 @@ def test_creation(
         "dask_tslong",
         "pandas_tslong",
         "polars_tslong",
+        "pyarrow_tslong",
     ],
 )
 def test_store(
@@ -173,7 +176,7 @@ class TestLoad:
 
 
 @pytest.mark.parametrize("backend_to", ["dask", "pandas", "polars", "pyarrow"])
-@pytest.mark.parametrize("backend_from", ["dask", "pandas", "polars"])
+@pytest.mark.parametrize("backend_from", ["dask", "pandas", "polars", "pyarrow"])
 def test_change_backend(
     backend_from: Backend,
     backend_to: Backend,

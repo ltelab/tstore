@@ -290,6 +290,13 @@ def polars_long_dataframe(pandas_long_dataframe: pd.DataFrame) -> pl.DataFrame:
     return df_pl
 
 
+@pytest.fixture()
+def pyarrow_long_dataframe(pandas_long_dataframe: pd.DataFrame) -> pa.Table:
+    """Create a long Pyarrow Table."""
+    df_pa = pa.Table.from_pandas(pandas_long_dataframe, preserve_index=True)
+    return df_pa
+
+
 ## TSLong
 
 
@@ -324,6 +331,19 @@ def polars_tslong(polars_long_dataframe: pl.DataFrame) -> tstore.tslong.TSLongPo
     """Create a Polars TSLong object."""
     tslong = tstore.TSLong.wrap(
         polars_long_dataframe,
+        id_var=ID_VAR,
+        time_var=TIME_VAR,
+        ts_vars=TS_VARS,
+        static_vars=STATIC_VARS,
+    )
+    return tslong
+
+
+@pytest.fixture()
+def pyarrow_tslong(pyarrow_long_dataframe: pa.Table) -> tstore.tslong.TSLongPyArrow:
+    """Create a PyArrow TSLong object."""
+    tslong = tstore.TSLong.wrap(
+        pyarrow_long_dataframe,
         id_var=ID_VAR,
         time_var=TIME_VAR,
         ts_vars=TS_VARS,

@@ -26,9 +26,21 @@ if TYPE_CHECKING:
 class TSLongPyArrow(TSLong):
     """Wrapper for a long-form PyArrow timeseries dataframe."""
 
-    def to_tstore(self) -> None:
+    def to_tstore(
+        self,
+        base_dir,
+        partitioning=None,
+        tstore_structure="id-var",
+        overwrite=True,
+    ):
         """Write the wrapped dataframe as a TStore structure."""
-        raise NotImplementedError("Method not implemented yet.")
+        pandas_tslong = self.change_backend(new_backend="pandas")
+        pandas_tslong.to_tstore(
+            base_dir=base_dir,
+            partitioning=partitioning,
+            tstore_structure=tstore_structure,
+            overwrite=overwrite,
+        )
 
     @staticmethod
     def from_tstore(
