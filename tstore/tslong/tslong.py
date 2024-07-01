@@ -14,6 +14,7 @@ from tstore.backend import (
     PolarsDataFrame,
     PyArrowDataFrame,
     change_backend,
+    re_set_dataframe_index,
 )
 from tstore.tswrapper.tswrapper import TSWrapper
 
@@ -56,6 +57,9 @@ class TSLong(TSWrapper):
             schema = schema.remove(field_index)
             schema = schema.insert(field_index, pa.field(id_var, pa.large_string()))
             df = df.cast(target_schema=schema)
+
+        # Ensure correct index column
+        df = re_set_dataframe_index(df, index_var=time_var)
 
         super().__init__(df)
 

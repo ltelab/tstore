@@ -85,7 +85,6 @@ class TSLongPandas(TSLong):
         write_tstore_metadata(
             base_dir=base_dir,
             id_var=self._tstore_id_var,
-            time_var=self._tstore_time_var,
             ts_variables=list(ts_variables),
             tstore_structure=tstore_structure,
             partitioning=partitioning,
@@ -182,7 +181,6 @@ class TSLongPandas(TSLong):
         return TSDFPandas(
             df,
             id_var=self._tstore_id_var,
-            time_var=self._tstore_time_var,
         )
 
     def _get_tstore_ids(self) -> list:

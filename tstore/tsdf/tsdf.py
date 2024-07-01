@@ -3,7 +3,7 @@
 from abc import abstractmethod
 from typing import TYPE_CHECKING
 
-from tstore.backend import DataFrame
+from tstore.backend import DataFrame, remove_dataframe_index
 from tstore.tsdf.ts_dtype import TSDtype
 from tstore.tswrapper.tswrapper import TSWrapper
 
@@ -20,21 +20,19 @@ class TSDF(TSWrapper):
         self,
         df: DataFrame,
         id_var: str,
-        time_var: str = "time",
     ) -> None:
         """Wrap a DataFrame of TSArrays as a TSDF object.
 
         Args:
             df (DataFrame): DataFrame to wrap.
             id_var (str): Name of the column containing the identifier variable.
-            time_var (str): Name of the column containing the time variable. Defaults to "time".
         """
+        df = remove_dataframe_index(df)
         super().__init__(df)
         # Set attributes using __dict__ to not trigger __setattr__
         self.__dict__.update(
             {
                 "_tstore_id_var": id_var,
-                "_tstore_time_var": time_var,
             },
         )
 
@@ -74,7 +72,7 @@ class TSDF(TSWrapper):
         ts_cols = [col for col in df.columns if isinstance(df[col].dtype, TSDtype)]
         ts_objects = {col: df[col].iloc[0] for col in ts_cols}
         return {
-            col: [var for var in ts_obj._obj.columns if var != self._tstore_time_var]
+            col: [var for var in ts_obj._obj.columns if var != ts_obj._tstore_time_var]
             for col, ts_obj in ts_objects.items()
         }
 

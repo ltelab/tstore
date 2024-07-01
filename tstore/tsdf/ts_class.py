@@ -36,7 +36,8 @@ class TS:
         time_var="time",
     ):
         """Initialize TS class."""
-        df = re_set_dataframe_index(df, time_var)
+        # Ensure correct index column
+        df = re_set_dataframe_index(df, index_var=time_var)
         self._obj = df
         self._tstore_time_var = time_var
 
