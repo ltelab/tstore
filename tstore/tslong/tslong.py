@@ -3,6 +3,9 @@
 from abc import abstractmethod
 from typing import TYPE_CHECKING, Optional
 
+import polars as pl
+import pyarrow as pa
+
 from tstore.backend import (
     Backend,
     DaskDataFrame,
@@ -41,6 +44,19 @@ class TSLong(TSWrapper):
                 Defaults to None, which will group all columns not in `static_vars` together.
             static_vars (list[str]): List of column names that are static across time. Defaults to None.
         """
+        if isinstance(df, (DaskDataFrame, PandasDataFrame)):
+            df[id_var] = df[id_var].astype("large_string[pyarrow]")
+
+        elif isinstance(df, PolarsDataFrame):
+            df = df.cast({id_var: pl.String})
+
+        elif isinstance(df, PyArrowDataFrame):
+            schema = df.schema
+            field_index = schema.get_field_index(id_var)
+            schema = schema.remove(field_index)
+            schema = schema.insert(field_index, pa.field(id_var, pa.large_string()))
+            df = df.cast(target_schema=schema)
+
         super().__init__(df)
 
         if static_vars is None:
@@ -52,10 +68,6 @@ class TSLong(TSWrapper):
                     col for col in df.columns if col != id_var and col != time_var and col not in static_vars
                 ],
             }
-
-        # TODO: Adapt to Polar and PyArrow
-        if isinstance(df, (DaskDataFrame, PandasDataFrame)):
-            df[id_var] = df[id_var].astype("large_string[pyarrow]")
 
         # Set attributes using __dict__ to not trigger __setattr__
         self.__dict__.update(

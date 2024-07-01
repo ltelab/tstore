@@ -7,6 +7,7 @@ import dask.dataframe as dd
 import numpy as np
 import pandas as pd
 import polars as pl
+import pyarrow as pa
 import pytest
 
 import tstore
@@ -76,15 +77,25 @@ def test_creation(
         ts_vars={"ts_var1": ["var1", "var2"], "ts_var2": ["var3", "var4"]},
         static_vars=["static_var1", "static_var2"],
     )
+
     assert isinstance(tslong, tslong_classes[backend])
+
     if isinstance(tslong, TSLongDask):
         assert tslong._obj.compute().shape == df.compute().shape
     else:
         assert tslong.shape == df.shape
+
     assert tslong._tstore_id_var == "tstore_id"
     assert tslong._tstore_time_var == "time"
     assert tslong._tstore_ts_vars == {"ts_var1": ["var1", "var2"], "ts_var2": ["var3", "var4"]}
     assert tslong._tstore_static_vars == ["static_var1", "static_var2"]
+
+    if isinstance(tslong, (TSLongDask, TSLongPandas)):
+        assert tslong["tstore_id"].dtype == "large_string[pyarrow]"
+    elif isinstance(tslong, TSLongPolars):
+        assert tslong["tstore_id"].dtype == pl.String
+    elif isinstance(tslong, TSLongPyArrow):
+        assert tslong["tstore_id"].type == pa.large_string()
 
 
 @pytest.mark.parametrize(
