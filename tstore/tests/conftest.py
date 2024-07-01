@@ -274,7 +274,7 @@ def pandas_long_dataframe(helpers) -> pd.DataFrame:
 
     for store_id in store_ids:
         df = helpers.create_dask_dataframe().compute()
-        df[ID_VAR] = str(store_id)
+        df[ID_VAR] = store_id
         df[STATIC_VAR1] = chr(64 + store_id)  # A, B, C, D
         df[STATIC_VAR2] = float(store_id)  # 1.0, 2.0, 3.0, 4.0
         df_list.append(df)
