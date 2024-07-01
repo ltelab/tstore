@@ -3,7 +3,15 @@
 from abc import abstractmethod
 from typing import TYPE_CHECKING, Optional
 
-from tstore.backend import DaskDataFrame, DataFrame, PandasDataFrame, PolarsDataFrame, PyArrowDataFrame
+from tstore.backend import (
+    Backend,
+    DaskDataFrame,
+    DataFrame,
+    PandasDataFrame,
+    PolarsDataFrame,
+    PyArrowDataFrame,
+    change_backend,
+)
 from tstore.tswrapper.tswrapper import TSWrapper
 
 if TYPE_CHECKING:
@@ -65,6 +73,11 @@ class TSLong(TSWrapper):
             return TSLong.wrap(*args, **kwargs)
 
         return super().__new__(cls)
+
+    def change_backend(self, new_backend: Backend) -> "TSLong":
+        """Return a new wrapper with the dataframe converted to a different backend."""
+        new_df = change_backend(self._obj, new_backend, index_var=self._tstore_time_var)
+        return self._rewrap(new_df)
 
     @staticmethod
     @TSWrapper.copy_signature(__init__)
