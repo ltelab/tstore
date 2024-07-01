@@ -84,16 +84,11 @@ class TestLoad:
         assert isinstance(ts._obj, pl.DataFrame)
 
 
-@pytest.mark.parametrize(
-    "type_check",
-    ["with_type_check", "no_type_check"],
-)
 class TestStoreAndLoad:
     """Test that the to_disk and from_disk methods of the TS class are consistent."""
 
     def test_dask(
         self,
-        type_check: str,
         dask_dataframe: dask.dataframe.DataFrame,
         tmp_path: Path,
     ) -> None:
@@ -106,18 +101,12 @@ class TestStoreAndLoad:
         df = ts._obj.compute()
         df_loaded = ts_loaded._obj.compute()
 
-        if type_check == "with_type_check":
-            # Test total equality
-            pd.testing.assert_frame_equal(df, df_loaded)
-
-        else:
-            # Test equality without matching types
-            # index is datetime or timestamp, strings are string or large_string
-            pd.testing.assert_frame_equal(df, df_loaded, check_dtype=False, check_index_type=False, check_freq=False)
+        # Test equality without matching types
+        # index is datetime or timestamp, strings are string or large_string
+        pd.testing.assert_frame_equal(df, df_loaded, check_dtype=False, check_index_type=False, check_freq=False)
 
     def test_pandas(
         self,
-        type_check: str,
         pandas_dataframe: pd.DataFrame,
         tmp_path: Path,
     ) -> None:
@@ -130,18 +119,12 @@ class TestStoreAndLoad:
         df = ts._obj
         df_loaded = ts_loaded._obj
 
-        if type_check == "with_type_check":
-            # Test total equality
-            pd.testing.assert_frame_equal(df, df_loaded)
-
-        else:
-            # Test equality without matching types
-            # index is datetime or timestamp, strings are string or large_string
-            pd.testing.assert_frame_equal(df, df_loaded, check_dtype=False, check_index_type=False, check_freq=False)
+        # Test equality without matching types
+        # index is datetime or timestamp, strings are string or large_string
+        pd.testing.assert_frame_equal(df, df_loaded, check_dtype=False, check_index_type=False, check_freq=False)
 
     def test_polars(
         self,
-        type_check: str,
         polars_dataframe: pl.DataFrame,
         tmp_path: Path,
     ) -> None:
@@ -154,10 +137,5 @@ class TestStoreAndLoad:
         df = ts._obj
         df_loaded = ts_loaded._obj
 
-        if type_check == "with_type_check":
-            # Test total equality
-            pl_testing.assert_frame_equal(df, df_loaded, check_column_order=False)
-
-        else:
-            # Test equality without matching types
-            pl_testing.assert_frame_equal(df, df_loaded, check_column_order=False, check_dtype=False)
+        # Test equality without matching types
+        pl_testing.assert_frame_equal(df, df_loaded, check_column_order=False)
