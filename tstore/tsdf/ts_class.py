@@ -9,7 +9,7 @@ import dask.dataframe as dd
 import pandas as pd
 
 from tstore.archive.partitions import add_partitioning_columns
-from tstore.backend import DataFrame, change_backend
+from tstore.backend import Backend, DataFrame, change_backend, re_set_dataframe_index
 
 
 def check_time_index(df):
@@ -36,21 +36,20 @@ class TS:
         time_var="time",
     ):
         """Initialize TS class."""
-        # Set index as 'time'
-        # --> TODO: this to adapt for polars, pyarrow ...
-        df.index.name = time_var
+        df = re_set_dataframe_index(df, time_var)
         self._obj = df
         self._tstore_time_var = time_var
 
     def change_backend(self, new_backend):
         """Return a new TS object with the dataframe converted to a different backend."""
-        new_df = change_backend(self._obj, new_backend)
+        new_df = change_backend(self._obj, new_backend, index_var=self._tstore_time_var)
         return TS(new_df, time_var=self._tstore_time_var)
 
     @staticmethod
     def from_disk(
         fpath,
         partitions,
+        backend: Backend = "dask",
         columns=None,
         start_time=None,
         end_time=None,
@@ -77,6 +76,8 @@ class TS:
             **kwargs,
         )
 
+        df = change_backend(df, new_backend=backend)
+
         # Create the TS object
         return TS(df)
 
@@ -87,7 +88,8 @@ class TS:
         # --> All code should exploit the arrow write_partitioned_dataset() function
 
         # Ensure is a dask dataframe
-        df = ensure_is_dask_dataframe(self._obj)
+        df = change_backend(self._obj, new_backend="dask", index_var=self._tstore_time_var)
+        df = ensure_is_dask_dataframe(df)
 
         # Check the index is datetime
         check_time_index(df)

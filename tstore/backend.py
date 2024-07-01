@@ -60,27 +60,31 @@ def change_backend(
     raise TypeError(f"Unsupported type: {type(obj).__module__}.{type(obj).__qualname__}")
 
 
-def re_set_dataframe_index(func: Callable) -> Callable:
+def re_set_dataframe_index(df: DataFrame, index_var: Optional[str] = None) -> DataFrame:
+    """Remove existing dataframe index and set a new one if index_var is provided."""
+    if isinstance(df, (PolarsDataFrame, PyArrowDataFrame)):
+        return df
+
+    if df.index.name is not None:
+        df = df.reset_index(drop=False)
+
+    if index_var is not None:
+        df = df.set_index(index_var)
+
+    return df
+
+
+def re_set_dataframe_index_decorator(func: Callable) -> Callable:
     """Decorator to remove existing dataframe index and set a new one if index_var is provided."""
 
     def wrapper(*args, index_var: Optional[str] = None, **kwargs) -> DataFrame:
         df = func(*args, **kwargs)
-
-        if isinstance(df, (PolarsDataFrame, PyArrowDataFrame)):
-            return df
-
-        if df.index.name is not None:
-            df = df.reset_index(drop=False)
-
-        if index_var is not None:
-            df = df.set_index(index_var)
-
-        return df
+        return re_set_dataframe_index(df, index_var=index_var)
 
     return wrapper
 
 
-@re_set_dataframe_index
+@re_set_dataframe_index_decorator
 def _change_dataframe_backend_from_dask(
     df: DaskDataFrame,
     new_backend: Backend,
@@ -104,7 +108,7 @@ def _change_dataframe_backend_from_dask(
     raise ValueError(f"Unsupported backend: {new_backend}")
 
 
-@re_set_dataframe_index
+@re_set_dataframe_index_decorator
 def _change_dataframe_backend_from_pandas(
     df: PandasDataFrame,
     new_backend: Backend,
@@ -128,7 +132,7 @@ def _change_dataframe_backend_from_pandas(
     raise ValueError(f"Unsupported backend: {new_backend}")
 
 
-@re_set_dataframe_index
+@re_set_dataframe_index_decorator
 def _change_dataframe_backend_from_polars(
     df: PolarsDataFrame,
     new_backend: Backend,
@@ -153,7 +157,7 @@ def _change_dataframe_backend_from_polars(
     raise ValueError(f"Unsupported backend: {new_backend}")
 
 
-@re_set_dataframe_index
+@re_set_dataframe_index_decorator
 def _change_dataframe_backend_from_pyarrow(
     df: PyArrowDataFrame,
     new_backend: Backend,
