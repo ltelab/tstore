@@ -12,6 +12,8 @@ import pyarrow as pa
 import pytest
 
 import tstore
+import tstore.tsdf
+import tstore.tslong
 
 # Constants
 
@@ -257,6 +259,13 @@ def tstore_path(tmp_path: Path, pandas_long_dataframe: pd.DataFrame) -> Path:
 
 
 @pytest.fixture()
+def dask_long_dataframe(pandas_long_dataframe: pd.DataFrame) -> dd.DataFrame:
+    """Create a long Dask DataFrame."""
+    df_dask = dd.from_pandas(pandas_long_dataframe)
+    return df_dask
+
+
+@pytest.fixture()
 def pandas_long_dataframe(helpers) -> pd.DataFrame:
     """Create a long Pandas DataFrame."""
     store_ids = np.arange(1, 4 + 1)
@@ -265,7 +274,7 @@ def pandas_long_dataframe(helpers) -> pd.DataFrame:
 
     for store_id in store_ids:
         df = helpers.create_dask_dataframe().compute()
-        df[ID_VAR] = store_id
+        df[ID_VAR] = str(store_id)
         df[STATIC_VAR1] = chr(64 + store_id)  # A, B, C, D
         df[STATIC_VAR2] = float(store_id)  # 1.0, 2.0, 3.0, 4.0
         df_list.append(df)
@@ -278,14 +287,28 @@ def pandas_long_dataframe(helpers) -> pd.DataFrame:
 def polars_long_dataframe(pandas_long_dataframe: pd.DataFrame) -> pl.DataFrame:
     """Create a long Polars DataFrame."""
     df_pl = pl.from_pandas(pandas_long_dataframe, include_index=True)
-    df_pl = df_pl.with_columns(pl.col(ID_VAR).cast(str))
-
     return df_pl
 
 
+## TSLong
+
+
 @pytest.fixture()
-def pandas_tslong(pandas_long_dataframe: pd.DataFrame) -> tstore.TSLong:
-    """Create a TSLong object."""
+def dask_tslong(dask_long_dataframe: pd.DataFrame) -> tstore.tslong.TSLongDask:
+    """Create a Dask TSLong object."""
+    tslong = tstore.TSLong.wrap(
+        dask_long_dataframe,
+        id_var=ID_VAR,
+        time_var=TIME_VAR,
+        ts_vars=TS_VARS,
+        static_vars=STATIC_VARS,
+    )
+    return tslong
+
+
+@pytest.fixture()
+def pandas_tslong(pandas_long_dataframe: pd.DataFrame) -> tstore.tslong.TSLongPandas:
+    """Create a Pandas TSLong object."""
     tslong = tstore.TSLong.wrap(
         pandas_long_dataframe,
         id_var=ID_VAR,
@@ -297,8 +320,8 @@ def pandas_tslong(pandas_long_dataframe: pd.DataFrame) -> tstore.TSLong:
 
 
 @pytest.fixture()
-def polars_tslong(polars_long_dataframe: pl.DataFrame) -> tstore.TSLong:
-    """Create a TSLong object."""
+def polars_tslong(polars_long_dataframe: pl.DataFrame) -> tstore.tslong.TSLongPolars:
+    """Create a Polars TSLong object."""
     tslong = tstore.TSLong.wrap(
         polars_long_dataframe,
         id_var=ID_VAR,
@@ -332,7 +355,7 @@ def pandas_series_of_ts(dask_tsarray: tstore.TSArray) -> pd.Series:
 
 
 @pytest.fixture()
-def dask_tsdf(helpers) -> tstore.TSDF:
+def dask_tsdf(helpers) -> tstore.tsdf.TSDFDask:
     """Create a TSDF object."""
     pd_series_of_ts_1 = pd.Series(helpers.create_dask_tsarray(size=4, columns_slice=slice(0, 2)))
     pd_series_of_ts_2 = pd.Series(helpers.create_dask_tsarray(size=4, columns_slice=slice(2, 4)))

@@ -3,6 +3,7 @@
 import os
 from pathlib import Path
 
+import dask.dataframe as dd
 import numpy as np
 import pandas as pd
 import polars as pl
@@ -16,6 +17,8 @@ from tstore.tslong.polars import TSLongPolars
 from tstore.tslong.pyarrow import TSLongPyArrow
 
 # Imported fixtures from conftest.py:
+# - dask_long_dataframe
+# - dask_tslong
 # - pandas_long_dataframe
 # - pandas_tslong
 # - polars_long_dataframe
@@ -56,7 +59,7 @@ def store_tslong(tslong: tstore.TSLong, dirpath: str) -> None:
 # Tests ########################################################################
 
 
-@pytest.mark.parametrize("backend", ["pandas", "polars"])
+@pytest.mark.parametrize("backend", ["dask", "pandas", "polars"])
 def test_creation(
     backend: Backend,
     request,
@@ -72,7 +75,10 @@ def test_creation(
         static_vars=["static_var1", "static_var2"],
     )
     assert isinstance(tslong, tslong_classes[backend])
-    assert tslong.shape == df.shape
+    if isinstance(tslong, TSLongDask):
+        assert tslong._obj.compute().shape == df.compute().shape
+    else:
+        assert tslong.shape == df.shape
     assert tslong._tstore_id_var == "tstore_id"
     assert tslong._tstore_time_var == "time"
     assert tslong._tstore_ts_vars == {"ts_var1": ["var1", "var2"], "ts_var2": ["var3", "var4"]}
@@ -82,6 +88,7 @@ def test_creation(
 @pytest.mark.parametrize(
     "dataframe_fixture_name",
     [
+        "dask_tslong",
         "pandas_tslong",
         "polars_tslong",
     ],
@@ -109,11 +116,24 @@ class TestLoad:
     """Test the from_tstore function."""
 
     def common_checks(self, tslong: tstore.TSLong) -> None:
-        assert tslong.shape[0] == 192
+        if isinstance(tslong, TSLongDask):
+            assert tslong._obj.compute().shape[0] == 192
+        else:
+            assert tslong.shape[0] == 192
         assert tslong._tstore_id_var == "tstore_id"
         assert tslong._tstore_time_var == "time"
         assert tslong._tstore_ts_vars == {"ts_var1": ["var1", "var2"], "ts_var2": ["var3", "var4"]}
         assert tslong._tstore_static_vars == ["static_var1", "static_var2"]
+
+    def test_dask(
+        self,
+        tstore_path: Path,
+    ) -> None:
+        """Test loading as a Dask DataFrame."""
+        tslong = tstore.open_tslong(tstore_path, backend="dask", ts_variables=["ts_var1", "ts_var2"])
+        assert type(tslong) is TSLongDask
+        assert type(tslong._obj) is dd.DataFrame
+        self.common_checks(tslong)
 
     def test_pandas(
         self,
@@ -153,7 +173,7 @@ class TestLoad:
 
 
 @pytest.mark.parametrize("backend_to", ["dask", "pandas", "polars", "pyarrow"])
-@pytest.mark.parametrize("backend_from", ["pandas", "polars"])
+@pytest.mark.parametrize("backend_from", ["dask", "pandas", "polars"])
 def test_change_backend(
     backend_from: Backend,
     backend_to: Backend,
