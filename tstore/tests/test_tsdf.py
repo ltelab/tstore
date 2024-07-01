@@ -3,11 +3,13 @@
 import os
 from pathlib import Path
 
+import dask.dataframe as dd
 import numpy as np
 import pandas as pd
 
 import tstore
 from tstore.tsdf.dask import TSDFDask
+from tstore.tsdf.pandas import TSDFPandas
 
 # Imported fixtures from conftest.py:
 # - dask_tsarray
@@ -130,3 +132,20 @@ class TestLoad:
         np.testing.assert_array_equal(tsdf["tstore_id"], ["1", "2", "3", "4"])
         np.testing.assert_array_equal(tsdf["static_var1"], ["A", "B", "C", "D"])
         np.testing.assert_array_equal(tsdf["static_var2"], [1.0, 2.0, 3.0, 4.0])
+
+
+def test_change_backend(
+    dask_tsdf: tstore.TSDF,
+) -> None:
+    """Test changing the backend of a TSDF."""
+    assert isinstance(dask_tsdf, TSDFDask)
+    assert isinstance(dask_tsdf["ts_var1"].iloc[0]._obj, dd.DataFrame)
+
+    tsdf_new = dask_tsdf.change_backend("pandas")
+    assert isinstance(tsdf_new, TSDFPandas)
+    assert isinstance(tsdf_new["ts_var1"], pd.Series)
+    assert isinstance(tsdf_new["ts_var2"], pd.Series)
+    assert isinstance(tsdf_new["ts_var1"].iloc[0]._obj, pd.DataFrame)
+    np.testing.assert_array_equal(tsdf_new["tstore_id"], ["1", "2", "3", "4"])
+    np.testing.assert_array_equal(tsdf_new["static_var1"], ["A", "B", "C", "D"])
+    np.testing.assert_array_equal(tsdf_new["static_var2"], [1.0, 2.0, 3.0, 4.0])
