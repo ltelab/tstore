@@ -12,6 +12,10 @@ import pytest
 
 import tstore
 from tstore.backend import Backend
+from tstore.tsdf.dask import TSDFDask
+from tstore.tsdf.pandas import TSDFPandas
+from tstore.tsdf.polars import TSDFPolars
+from tstore.tsdf.pyarrow import TSDFPyArrow
 from tstore.tslong.dask import TSLongDask
 from tstore.tslong.pandas import TSLongPandas
 from tstore.tslong.polars import TSLongPolars
@@ -33,6 +37,13 @@ tslong_classes = {
     "pandas": TSLongPandas,
     "polars": TSLongPolars,
     "pyarrow": TSLongPyArrow,
+}
+
+tsdf_classes = {
+    "dask": TSDFDask,
+    "pandas": TSDFPandas,
+    "polars": TSDFPolars,
+    "pyarrow": TSDFPyArrow,
 }
 
 
@@ -200,22 +211,17 @@ def test_change_backend(
     assert isinstance(tslong_new, tslong_classes[backend_to])
 
 
-@pytest.mark.parametrize(
-    "tslong_fixture_name",
-    [
-        "pandas_tslong",
-    ],
-)
+@pytest.mark.parametrize("backend", ["dask", "pandas"])
 def test_to_tsdf(
-    tslong_fixture_name: str,
+    backend: str,
     request,
 ) -> None:
     """Test the to_tsdf function."""
+    tslong_fixture_name = f"{backend}_tslong"
     tslong = request.getfixturevalue(tslong_fixture_name)
-    tslong._obj = tslong._obj.reset_index(names="time")
     tsdf = tslong.to_tsdf()
 
-    assert isinstance(tsdf, tstore.TSDF)
+    assert isinstance(tsdf, tsdf_classes[backend])
     assert tsdf._tstore_id_var == "tstore_id"
     assert tsdf._tstore_ts_vars == {"ts_var1": ["var1", "var2"], "ts_var2": ["var3", "var4"]}
     assert tsdf._tstore_static_vars == ["static_var1", "static_var2"]
