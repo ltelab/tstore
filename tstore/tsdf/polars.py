@@ -6,7 +6,7 @@ from tstore.tsdf.tsdf import TSDF
 
 if TYPE_CHECKING:
     # To avoid circular imports
-    from tstore.tslong.polars import TSLongPolars
+    pass
 
 
 class TSDFPolars(TSDF):
@@ -19,8 +19,4 @@ class TSDFPolars(TSDF):
     @staticmethod
     def from_tstore(base_dir: str) -> "TSDFPolars":
         """Read TStore into TSDF object."""
-        raise NotImplementedError
-
-    def to_tslong(self) -> "TSLongPolars":
-        """Convert the wrapper into a TSLong object."""
         raise NotImplementedError

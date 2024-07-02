@@ -6,7 +6,7 @@ from tstore.tsdf.tsdf import TSDF, get_ts_columns
 
 if TYPE_CHECKING:
     # To avoid circular imports
-    from tstore.tslong.pyarrow import TSLongPyArrow
+    pass
 
 
 class TSDFPyArrow(TSDF):
@@ -31,7 +31,3 @@ class TSDFPyArrow(TSDF):
             col: [var for var in ts_obj._obj.schema.names if var != ts_obj._tstore_time_var]
             for col, ts_obj in ts_objects.items()
         }
-
-    def to_tslong(self) -> "TSLongPyArrow":
-        """Convert the wrapper into a TSLong object."""
-        raise NotImplementedError

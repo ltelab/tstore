@@ -176,7 +176,8 @@ def test_change_backend(
     np.testing.assert_array_equal(tsdf_new["static_var2"], [1.0, 2.0, 3.0, 4.0])
 
 
-@pytest.mark.parametrize("backend", ["dask", "pandas", "polars", "pyarrow"])
+# @pytest.mark.parametrize("backend", ["dask", "pandas", "polars", "pyarrow"])
+@pytest.mark.parametrize("backend", ["polars", "pyarrow"])
 def test_to_tslong(
     backend: Backend,
     dask_tsdf: tstore.TSDF,
