@@ -18,7 +18,6 @@ from tstore.tslong.tslong import TSLong
 
 if TYPE_CHECKING:
     # To avoid circular imports
-    from tstore.tsdf.pandas import TSDFPandas
     from tstore.tswide.pandas import TSWidePandas
 
 
@@ -160,13 +159,6 @@ class TSLongPandas(TSLong):
 
         # Conversion to pandas
         return tslong_pyarrow.change_backend(new_backend="pandas")
-
-    def to_tsdf(self) -> "TSDFPandas":
-        """Convert the wrapper into a TSDF object."""
-        dask_tslong = self.change_backend(new_backend="dask")
-        dask_tsdf = dask_tslong.to_tsdf()
-        tsdf = dask_tsdf.change_backend(new_backend="pandas")
-        return tsdf
 
     def to_tswide(self) -> "TSWidePandas":
         """Convert the wrapper into a TSWide object."""

@@ -123,9 +123,12 @@ class TSLong(TSWrapper):
         type_path = f"{type(df).__module__}.{type(df).__qualname__}"
         raise TypeError(f"Cannot wrap type {type_path} as a TSLong object.")
 
-    @abstractmethod
     def to_tsdf(self) -> "TSDF":
         """Convert the wrapper into a TSDF object."""
+        dask_tslong = self.change_backend(new_backend="dask")
+        dask_tsdf = dask_tslong.to_tsdf()
+        tsdf = dask_tsdf.change_backend(new_backend=self.current_backend)
+        return tsdf
 
     @abstractmethod
     def to_tswide(self) -> "TSWide":

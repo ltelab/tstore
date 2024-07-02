@@ -18,7 +18,6 @@ from tstore.tslong.tslong import TSLong
 
 if TYPE_CHECKING:
     # To avoid circular imports
-    from tstore.tsdf.polars import TSDFPolars
     from tstore.tswide.polars import TSWidePolars
 
 
@@ -156,10 +155,6 @@ class TSLongPolars(TSLong):
 
         # Conversion to polars
         return tslong_pyarrow.change_backend(new_backend="polars")
-
-    def to_tsdf(self) -> "TSDFPolars":
-        """Convert the wrapper into a TSDF object."""
-        raise NotImplementedError
 
     def to_tswide(self) -> "TSWidePolars":
         """Convert the wrapper into a TSWide object."""
