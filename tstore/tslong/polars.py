@@ -1,7 +1,8 @@
 """Module defining the TSLongPolars wrapper."""
 
+from typing import TYPE_CHECKING
+
 import pandas as pd
-import polars as pl
 
 from tstore.archive.io import (
     check_tstore_directory,
@@ -15,20 +16,17 @@ from tstore.archive.ts.writers.pyarrow import write_partitioned_dataset
 from tstore.tslong.pyarrow import TSLongPyArrow
 from tstore.tslong.tslong import TSLong
 
+if TYPE_CHECKING:
+    # To avoid circular imports
+    from tstore.tswide.polars import TSWidePolars
+
 
 class TSLongPolars(TSLong):
     """Wrapper for a long-form Polars timeseries dataframe."""
 
     def to_tstore(
         self,
-        # TSTORE options
         base_dir,
-        # DFLONG attributes
-        id_var,
-        time_var,
-        ts_variables,
-        static_variables,
-        # TSTORE options
         partitioning=None,
         tstore_structure="id-var",
         overwrite=True,
@@ -39,11 +37,12 @@ class TSLongPolars(TSLong):
         base_dir = check_tstore_directory(base_dir, overwrite=overwrite)
 
         # Check ts_variables
+        ts_variables = self._tstore_ts_vars
         if isinstance(ts_variables, list):
             ts_variables = {column: None for column in ts_variables}
 
         # Identify all ts columns
-        # ts_columns = set(df.columns) - set([time_var]) - set(static_variables)
+        # ts_columns = set(df.columns) - set([self._tstore_time_var]) - set(self._tstore_static_vars)
 
         # Check which columns remains (not specified at class init)
         # TODO
@@ -53,7 +52,7 @@ class TSLongPolars(TSLong):
 
         # Identify static dataframe (attributes)
         # - TODO: add flag to check if are actual duplicates !
-        df_attrs = self._df[[id_var, *static_variables]]
+        df_attrs = self._obj[[self._tstore_id_var, *self._tstore_static_vars]]
         df_attrs = df_attrs.unique()
 
         # Write static attributes
@@ -75,22 +74,21 @@ class TSLongPolars(TSLong):
         # Write tstore metadata
         write_tstore_metadata(
             base_dir=base_dir,
-            id_var=id_var,
-            time_var=time_var,
+            id_var=self._tstore_id_var,
             ts_variables=list(ts_variables),
             tstore_structure=tstore_structure,
             partitioning=partitioning,
         )
 
         # Write to disk per identifier
-        for tstore_id, df_group in self._df.groupby(id_var):
+        for tstore_id, df_group in self._obj.groupby(self._tstore_id_var):
             for ts_variable, columns in ts_variables.items():
                 # Retrieve columns of the TS object
                 if columns is None:
                     columns = [ts_variable]
 
                 # Retrieve TS object
-                df_ts = df_group[[*columns, time_var]]
+                df_ts = df_group[[*columns, self._tstore_time_var]]
 
                 # Check time is sorted ?
                 # TODO
@@ -100,7 +98,7 @@ class TSLongPolars(TSLong):
                 df_ts, partitions = add_partitioning_columns(
                     df_ts,
                     partitioning_str=partitioning_str,
-                    time_var=time_var,
+                    time_var=self._tstore_time_var,
                     backend="polars",
                 )
 
@@ -153,8 +151,11 @@ class TSLongPolars(TSLong):
             columns=columns,
             filesystem=filesystem,
             use_threads=use_threads,
-        )._df
+        )
 
         # Conversion to polars
-        tslong_pl = pl.from_arrow(tslong_pyarrow)
-        return TSLongPolars(tslong_pl)
+        return tslong_pyarrow.change_backend(new_backend="polars")
+
+    def to_tswide(self) -> "TSWidePolars":
+        """Convert the wrapper into a TSWide object."""
+        raise NotImplementedError

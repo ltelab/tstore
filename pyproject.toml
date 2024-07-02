@@ -22,6 +22,7 @@ dependencies = [
     "dask",
     "distributed",
     "geopandas",
+    "numpy >= 1.26.4, < 2",
     "pandas",
     "polars",
     "pyarrow",

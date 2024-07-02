@@ -1,6 +1,7 @@
 """Module defining the TSLongPandas wrapper."""
 
-import pandas as pd
+from typing import TYPE_CHECKING
+
 import pyarrow as pa
 
 from tstore.archive.io import (
@@ -15,43 +16,38 @@ from tstore.archive.ts.writers.pyarrow import write_partitioned_dataset
 from tstore.tslong.pyarrow import TSLongPyArrow
 from tstore.tslong.tslong import TSLong
 
+if TYPE_CHECKING:
+    # To avoid circular imports
+    from tstore.tswide.pandas import TSWidePandas
+
 
 class TSLongPandas(TSLong):
     """Wrapper for a long-form Pandas timeseries dataframe."""
 
     def to_tstore(
         self,
-        # TSTORE options
         base_dir,
-        # DFLONG attributes
-        id_var,
-        time_var,
-        ts_variables,
-        static_variables=None,
-        # TSTORE options
         partitioning=None,
         tstore_structure="id-var",
         overwrite=True,
     ):
         """Write the wrapped dataframe as a TStore structure."""
         # If index time, remove
-        if time_var not in self._df.columns:
-            self._df = self._df.reset_index(names=time_var)
-
-        # Set identifier as pyarrow large_string !
-        # - Very important to join attrs at read time !
-        self._df[id_var] = self._df[id_var].astype("large_string[pyarrow]")
+        df = self._obj
+        if self._tstore_time_var not in df.columns:
+            df = df.reset_index(names=self._tstore_time_var)
 
         # Check inputs
         tstore_structure = check_tstore_structure(tstore_structure)
         base_dir = check_tstore_directory(base_dir, overwrite=overwrite)
 
         # Check ts_variables
+        ts_variables = self._tstore_ts_vars
         if isinstance(ts_variables, list):
             ts_variables = {column: None for column in ts_variables}
 
         # Identify all ts columns
-        # ts_columns = set(df.columns) - set([time_var]) - set(static_variables)
+        # ts_columns = set(df.columns) - set([self._tstore_time_var]) - set(static_variables)
 
         # Check which columns remains (not specified at class init)
         # TODO
@@ -60,12 +56,12 @@ class TSLongPandas(TSLong):
         partitioning = check_partitioning(partitioning, ts_variables=list(ts_variables))
 
         # Identify static dataframe (attributes)
-        attr_cols = [id_var]
-        if static_variables is not None:
-            attr_cols += static_variables
+        attr_cols = [self._tstore_id_var]
+        if self._tstore_static_vars is not None:
+            attr_cols += self._tstore_static_vars
         # - TODO: add flag to check if are actual duplicates !
-        df_attrs = self._df[attr_cols]
-        df_attrs = df_attrs.drop_duplicates(subset=id_var)
+        df_attrs = df[attr_cols]
+        df_attrs = df_attrs.drop_duplicates(subset=self._tstore_id_var)
         df_attrs = df_attrs.reset_index(drop=True)
 
         # Write static attributes
@@ -81,22 +77,21 @@ class TSLongPandas(TSLong):
         # Write tstore metadata
         write_tstore_metadata(
             base_dir=base_dir,
-            id_var=id_var,
-            time_var=time_var,
+            id_var=self._tstore_id_var,
             ts_variables=list(ts_variables),
             tstore_structure=tstore_structure,
             partitioning=partitioning,
         )
 
         # Write to disk per identifier
-        for tstore_id, df_group in self._df.groupby(id_var):
+        for tstore_id, df_group in df.groupby(self._tstore_id_var):
             for ts_variable, columns in ts_variables.items():
                 # Retrieve columns of the TS object
                 if columns is None:
                     columns = [ts_variable]
 
                 # Retrieve TS object
-                df_ts = df_group[[*columns, time_var]].copy()
+                df_ts = df_group[[*columns, self._tstore_time_var]].copy()
                 df_ts = df_ts.reset_index(drop=True)
 
                 # Check time is sorted ?
@@ -107,7 +102,7 @@ class TSLongPandas(TSLong):
                 df_ts, partitions = add_partitioning_columns(
                     df_ts,
                     partitioning_str=partitioning_str,
-                    time_var=time_var,
+                    time_var=self._tstore_time_var,
                     backend="pandas",
                 )
 
@@ -160,8 +155,11 @@ class TSLongPandas(TSLong):
             columns=columns,
             filesystem=filesystem,
             use_threads=use_threads,
-        )._df
+        )
 
         # Conversion to pandas
-        tslong_pandas = tslong_pyarrow.to_pandas(types_mapper=pd.ArrowDtype)
-        return TSLongPandas(tslong_pandas)
+        return tslong_pyarrow.change_backend(new_backend="pandas")
+
+    def to_tswide(self) -> "TSWidePandas":
+        """Convert the wrapper into a TSWide object."""
+        raise NotImplementedError

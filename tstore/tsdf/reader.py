@@ -18,7 +18,7 @@ def _read_tsarray(base_dir, ts_variable):
     ts_fpaths, tstore_ids, partitions = get_ts_info(base_dir=base_dir, ts_variable=ts_variable)
     # Read TS objects
     # TODO: add option for TS format (dask, pandas, ...)
-    list_ts = [TS.from_file(fpath, partitions=partitions) for fpath in ts_fpaths]
+    list_ts = [TS.from_disk(fpath, partitions=partitions) for fpath in ts_fpaths]
 
     # Create the TSArray Series
     tstore_ids = pd.Index(tstore_ids, dtype="string[pyarrow]", name="tstore_id")  # TODO: generalize

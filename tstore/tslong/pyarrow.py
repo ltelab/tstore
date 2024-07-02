@@ -1,6 +1,7 @@
 """Module defining the TSLongPyArrow wrapper."""
 
 from functools import reduce
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pyarrow as pa
@@ -12,17 +13,33 @@ from tstore.archive.checks import (
     check_ts_variables,
     check_tstore_ids,
 )
-from tstore.archive.io import get_id_var, get_time_var, get_ts_info
+from tstore.archive.io import get_id_var, get_ts_info
 from tstore.archive.ts.readers.pyarrow import open_ts
 from tstore.tslong.tslong import TSLong
+
+if TYPE_CHECKING:
+    # To avoid circular imports
+    from tstore.tswide.pyarrow import TSWidePyArrow
 
 
 class TSLongPyArrow(TSLong):
     """Wrapper for a long-form PyArrow timeseries dataframe."""
 
-    def to_tstore(self) -> None:
+    def to_tstore(
+        self,
+        base_dir,
+        partitioning=None,
+        tstore_structure="id-var",
+        overwrite=True,
+    ):
         """Write the wrapped dataframe as a TStore structure."""
-        raise NotImplementedError("Method not implemented yet.")
+        pandas_tslong = self.change_backend(new_backend="pandas")
+        pandas_tslong.to_tstore(
+            base_dir=base_dir,
+            partitioning=partitioning,
+            tstore_structure=tstore_structure,
+            overwrite=overwrite,
+        )
 
     @staticmethod
     def from_tstore(
@@ -42,10 +59,10 @@ class TSLongPyArrow(TSLong):
         tstore_ids = check_tstore_ids(tstore_ids, base_dir=base_dir)
         start_time, end_time = check_start_end_time(start_time, end_time)
         id_var = get_id_var(base_dir)
-        time_var = get_time_var(base_dir)
+        time_var = "time"
 
         # Get list of tslong for each ts_variable
-        table = _read_ts_variables(
+        table, ts_variables_dict = _read_ts_variables(
             base_dir=base_dir,
             id_var=id_var,
             time_var=time_var,
@@ -64,11 +81,23 @@ class TSLongPyArrow(TSLong):
             filesystem=filesystem,
             use_threads=use_threads,
         )
+        static_vars = table_attrs.schema.names
+        static_vars.remove(id_var)
 
         # Join (duplicate) table_attrs on table
         tslong = table.join(table_attrs, keys=[id_var], join_type="full outer")
 
-        return TSLongPyArrow(tslong)
+        return TSLongPyArrow(
+            tslong,
+            id_var=id_var,
+            time_var=time_var,
+            ts_vars=ts_variables_dict,
+            static_vars=static_vars,
+        )
+
+    def to_tswide(self) -> "TSWidePyArrow":
+        """Convert the wrapper into a TSWide object."""
+        raise NotImplementedError
 
 
 def _read_ts(
@@ -152,7 +181,7 @@ def _read_ts_variables(
     columns=None,
     filesystem=None,
     use_threads=True,
-):
+) -> tuple[pa.Table, dict[str, list[str]]]:
     """Read TStore ts_variables into pyarrow long-format."""
     # Read TS of all ts_variables in long-format
     list_tables = [
@@ -169,14 +198,27 @@ def _read_ts_variables(
         for ts_variable in ts_variables
     ]
 
+    # Check each table has 'time' and 'tstore_id'
+    ts_variables_dict = {}
+    for ts_variable, table in zip(ts_variables, list_tables):
+        columns = table.schema.names
+
+        if id_var not in columns:
+            raise ValueError(f"ID variable '{id_var}' not found in '{ts_variable}' table.")
+
+        if time_var not in columns:
+            raise ValueError(f"Time variable '{time_var}' not found in '{ts_variable}' table.")
+
+        columns.remove(id_var)
+        columns.remove(time_var)
+
+        ts_variables_dict[ts_variable] = columns
+
     # Check that each table has different column names
     # --> Except from 'time' and 'tstore_id' on which align !
-    # TODO:
-
-    # Check each table has 'time' and 'tstore_id'
     # TODO:
 
     # Iteratively join the tables
     table = reduce(lambda left, right: _join_tables(left, right, id_var=id_var, time_var=time_var), list_tables)
 
-    return table
+    return table, ts_variables_dict

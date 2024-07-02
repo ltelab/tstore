@@ -1,4 +1,4 @@
-"""TSDF class wrapping a Pandas dataframe of TSArray objects."""
+"""TSDF class wrapping a Polars dataframe of TSArray objects."""
 
 from typing import TYPE_CHECKING
 
@@ -9,7 +9,7 @@ if TYPE_CHECKING:
     pass
 
 
-class TSDFPandas(TSDF):
+class TSDFPolars(TSDF):
     """A dataframe class with additional functionality for TSArray data."""
 
     def to_tstore(self):
@@ -17,6 +17,6 @@ class TSDFPandas(TSDF):
         raise NotImplementedError
 
     @staticmethod
-    def from_tstore(base_dir: str) -> "TSDFPandas":
+    def from_tstore(base_dir: str) -> "TSDFPolars":
         """Read TStore into TSDF object."""
         raise NotImplementedError

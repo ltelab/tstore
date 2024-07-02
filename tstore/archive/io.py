@@ -56,14 +56,6 @@ def get_tstore_structure(base_dir):
     return metadata["tstore_structure"]
 
 
-def get_time_var(base_dir):
-    """Get TStore time variable."""
-    from tstore.archive.metadata.readers import read_tstore_metadata
-
-    metadata = read_tstore_metadata(base_dir=base_dir)
-    return metadata["time_var"]
-
-
 def get_id_var(base_dir):
     """Get TStore ID variable."""
     from tstore.archive.metadata.readers import read_tstore_metadata

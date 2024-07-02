@@ -61,7 +61,7 @@ class TSArray(ExtensionArray):
         # --> Need to create empty object !
         # TS[empty]
         ts_object = self._data[0]
-        tabular_object = getattr(ts_object, "data", pd.Series())
+        tabular_object = getattr(ts_object, "_obj", pd.Series())
         ts_class = get_tabular_object_type(tabular_object)
         return ts_class
 

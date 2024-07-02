@@ -35,9 +35,9 @@ ts_pd = TS(df_pd)
 ts_dask = TS(df_dask)
 
 # Get time series data
-ts_pd.data
-ts_dask.data
-ts_dask.data.compute()
+ts_pd._obj
+ts_dask._obj
+ts_dask._obj.compute()
 
 # See TS methods
 dir(ts_pd)
@@ -77,7 +77,7 @@ ts_dask.to_disk(fpath)
 
 # Dask code
 ts = TS.from_file(fpath, partitions=[])  # logic of partitions not implemented ...
-ts.data
+ts._obj
 
 
 ####-------------------------------------.
