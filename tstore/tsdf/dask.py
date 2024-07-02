@@ -2,9 +2,11 @@
 
 from typing import TYPE_CHECKING
 
+import dask.dataframe as dd
+
 from tstore.archive.metadata.readers import read_tstore_metadata
 from tstore.tsdf.reader import _read_tsarrays
-from tstore.tsdf.tsdf import TSDF
+from tstore.tsdf.tsdf import TSDF, get_ts_columns
 from tstore.tsdf.writer import write_tstore
 
 if TYPE_CHECKING:
@@ -74,4 +76,40 @@ class TSDFDask(TSDF):
 
     def to_tslong(self) -> "TSLongDask":
         """Convert the wrapper into a TSLong object."""
-        raise NotImplementedError
+        from tstore.tslong.dask import TSLongDask
+
+        df = None
+        tstore_ids = self._obj[self._tstore_id_var].unique()
+
+        long_rows = [self._get_long_rows(tstore_id) for tstore_id in tstore_ids]
+        df = dd.concat(long_rows)
+        time_var = df.index.name
+
+        return TSLongDask(
+            df,
+            id_var=self._tstore_id_var,
+            time_var=time_var,
+            ts_vars=self._tstore_ts_vars,
+            static_vars=self._tstore_static_vars,
+        )
+
+    def _get_long_rows(self, tstore_id: str) -> dd.DataFrame:
+        """Return a long form DataFrame for a single tstore_id."""
+        ts_df = self._obj
+        ts_df = ts_df[ts_df[self._tstore_id_var] == tstore_id]
+        ts_cols = get_ts_columns(ts_df)
+
+        # Add time series
+        df = None
+        for ts_col in ts_cols:
+            new_df = ts_df[ts_col].iloc[0]._obj
+            df = new_df if df is None else df.join(new_df, how="outer")
+
+        # Add static variables
+        df = df.assign(**{self._tstore_id_var: tstore_id})
+
+        for static_var in self._tstore_static_vars:
+            static_value = ts_df[static_var].iloc[0]
+            df = df.assign(**{static_var: static_value})
+
+        return df
