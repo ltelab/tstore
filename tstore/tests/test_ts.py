@@ -36,6 +36,8 @@ def test_wrap(
     ts = TS(df)
 
     assert dir(ts._obj) == dir(df)
+    assert ts._tstore_time_var == "time"
+    assert ts.current_backend == dataframe_fixture_name.split("_")[0]
 
 
 @pytest.mark.parametrize(

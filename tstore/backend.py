@@ -30,6 +30,23 @@ Series = Union[DaskSeries, PandasSeries, PolarsSeries, PyArrowSeries]
 T = TypeVar("T", DataFrame, Series)
 
 
+def get_backend(obj: T) -> Backend:
+    """Get the backend of a dataframe or a series."""
+    if isinstance(obj, (DaskDataFrame, DaskSeries)):
+        return "dask"
+
+    if isinstance(obj, (PandasDataFrame, PandasSeries)):
+        return "pandas"
+
+    if isinstance(obj, (PolarsDataFrame, PolarsSeries)):
+        return "polars"
+
+    if isinstance(obj, (PyArrowDataFrame, PyArrowSeries)):
+        return "pyarrow"
+
+    raise TypeError(f"Unsupported type: {type(obj).__module__}.{type(obj).__qualname__}")
+
+
 def change_backend(
     obj: T,
     new_backend: Backend,

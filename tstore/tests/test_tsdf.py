@@ -46,6 +46,7 @@ def test_pandas_series_concatenation(pandas_series_of_ts: pd.Series) -> None:
 def test_dask_tsdf_creation(dask_tsdf: tstore.TSDF) -> None:
     """Test the TSDF wrapper."""
     assert isinstance(dask_tsdf, tstore.TSDF)
+    assert dask_tsdf.current_backend == "dask"
     assert isinstance(dask_tsdf["ts_var1"], pd.Series)
     assert isinstance(dask_tsdf["ts_var2"], pd.Series)
     np.testing.assert_array_equal(dask_tsdf["tstore_id"], ["1", "2", "3", "4"])

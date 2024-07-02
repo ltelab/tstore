@@ -7,7 +7,7 @@ from typing import Callable, Union
 
 import pandas as pd
 
-from tstore.backend import Backend, DataFrame, change_backend
+from tstore.backend import Backend, DataFrame, change_backend, get_backend
 
 
 def copy_signature(source: Callable) -> Callable:
@@ -101,6 +101,11 @@ class TSWrapper(ABC, Proxy):
         """Return a new wrapper with the dataframe converted to a different backend."""
         new_df = change_backend(self._obj, new_backend)
         return self._rewrap(new_df)
+
+    @property
+    def current_backend(self) -> Backend:
+        """Return the backend of the wrapped dataframe."""
+        return get_backend(self._obj)
 
     @classmethod
     @copy_signature(__init__)
