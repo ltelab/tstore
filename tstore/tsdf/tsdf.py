@@ -59,7 +59,7 @@ class TSDF(TSWrapper):
     def change_backend(self, new_backend: Backend) -> "TSDF":
         """Return a new TSDF object with dataframes wrapped in internal TS objects converted to a different backend."""
         df = self._obj.copy()
-        ts_cols = _get_ts_columns(df)
+        ts_cols = get_ts_columns(df)
 
         df[ts_cols] = df[ts_cols].applymap(lambda ts_obj: ts_obj.change_backend(new_backend))
         df[ts_cols] = df[ts_cols].astype(TSDtype)
@@ -70,7 +70,7 @@ class TSDF(TSWrapper):
     def current_backend(self) -> Backend:
         """Return the current backend of the wrapped dataframe."""
         df = self._obj.copy()
-        ts_cols = _get_ts_columns(df)
+        ts_cols = get_ts_columns(df)
         ts_object = df[ts_cols[0]].iloc[0]
         return ts_object.current_backend
 
@@ -84,7 +84,7 @@ class TSDF(TSWrapper):
         from tstore.tsdf.polars import TSDFPolars
         from tstore.tsdf.pyarrow import TSDFPyArrow
 
-        ts_cols = _get_ts_columns(df)
+        ts_cols = get_ts_columns(df)
         ts_object = df[ts_cols[0]].iloc[0]
         inner_df = ts_object._obj
 
@@ -115,7 +115,7 @@ class TSDF(TSWrapper):
     def _tstore_ts_vars(self) -> dict[str, list[str]]:
         """Return the dictionary of time-series column names."""
         df = self._obj
-        ts_cols = _get_ts_columns(df)
+        ts_cols = get_ts_columns(df)
         ts_objects = {col: df[col].iloc[0] for col in ts_cols}
         return {
             col: [var for var in ts_obj._obj.columns if var != ts_obj._tstore_time_var]
@@ -130,6 +130,6 @@ class TSDF(TSWrapper):
         return [col for col in df.columns if col != self._tstore_id_var and not isinstance(df[col].dtype, TSDtype)]
 
 
-def _get_ts_columns(df: PandasDataFrame) -> list[str]:
+def get_ts_columns(df: PandasDataFrame) -> list[str]:
     """Return the list of columns containing TS objects."""
     return [col for col in df.columns if isinstance(df[col].dtype, TSDtype)]

@@ -212,7 +212,7 @@ def test_change_backend(
     assert isinstance(tslong_new, tslong_classes[backend_to])
 
 
-@pytest.mark.parametrize("backend", ["dask", "pandas"])
+@pytest.mark.parametrize("backend", ["dask", "pandas", "polars", "pyarrow"])
 def test_to_tsdf(
     backend: str,
     request,
