@@ -66,6 +66,14 @@ class TSDF(TSWrapper):
 
         return self.wrap(df, self._tstore_id_var)
 
+    @property
+    def current_backend(self) -> Backend:
+        """Return the current backend of the wrapped dataframe."""
+        df = self._obj.copy()
+        ts_cols = _get_ts_columns(df)
+        ts_object = df[ts_cols[0]].iloc[0]
+        return ts_object.current_backend
+
     @staticmethod
     @TSWrapper.copy_signature(__init__)
     def wrap(df: DataFrame, *args, **kwargs) -> "TSDF":

@@ -90,6 +90,7 @@ def test_creation(
     )
 
     assert isinstance(tslong, tslong_classes[backend])
+    assert tslong.current_backend == backend
 
     if isinstance(tslong, TSLongDask):
         assert tslong._obj.compute().shape == df.compute().shape
