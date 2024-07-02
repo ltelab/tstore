@@ -97,6 +97,10 @@ def re_set_dataframe_index(df: DataFrame, index_var: Optional[str] = None) -> Da
         df = df.reset_index(drop=False)
 
     if index_var is not None:
+        # Cast column before setting it as index to prevent issue with PyArrow index in Dask dataframe
+        if df[index_var].dtype.name == "timestamp[ns][pyarrow]":
+            df[index_var] = df[index_var].astype("datetime64[ns]")
+
         df = df.set_index(index_var)
 
     return df

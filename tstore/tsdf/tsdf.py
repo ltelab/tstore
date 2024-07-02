@@ -1,6 +1,5 @@
 """Module defining the TSDF abstract wrapper for a dataframe of TSArray objects."""
 
-from abc import abstractmethod
 from typing import TYPE_CHECKING
 
 from tstore.backend import (
@@ -103,9 +102,12 @@ class TSDF(TSWrapper):
         type_path = f"{type(inner_df).__module__}.{type(inner_df).__qualname__}"
         raise TypeError(f"Cannot wrap type {type_path} as a TSDF object.")
 
-    @abstractmethod
     def to_tslong(self) -> "TSLong":
         """Convert the wrapper into a TSLong object."""
+        dask_tsdf = self.change_backend(new_backend="dask")
+        dask_tslong = dask_tsdf.to_tslong()
+        tslong = dask_tslong.change_backend(new_backend=self.current_backend)
+        return tslong
 
     def to_tswide(self) -> "TSWide":
         """Convert the wrapper into a TSWide object."""
