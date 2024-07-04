@@ -122,4 +122,22 @@ class TSLongDask(TSLong):
 
     def to_tswide(self) -> "TSWideDask":
         """Convert the wrapper into a TSWideDask object."""
-        raise NotImplementedError
+        from tstore.tswide.dask import TSWideDask
+
+        df = self._obj
+        df = df.reset_index()
+        df[self._tstore_id_var] = df[self._tstore_id_var].astype("category").compute()
+        df = df.pivot_table(
+            index=self._tstore_time_var,
+            columns=self._tstore_id_var,
+            values=df.columns.difference([self._tstore_id_var]),
+            aggfunc="first",
+        )
+
+        return TSWideDask(
+            df,
+            id_var=self._tstore_id_var,
+            time_var=self._tstore_time_var,
+            ts_vars=self._tstore_ts_vars,
+            static_vars=self._tstore_static_vars,
+        )

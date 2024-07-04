@@ -1,10 +1,6 @@
 """Module defining the TSLong abstract wrapper."""
 
-from abc import abstractmethod
 from typing import TYPE_CHECKING, Optional
-
-import polars as pl
-import pyarrow as pa
 
 from tstore.backend import (
     Backend,
@@ -13,6 +9,7 @@ from tstore.backend import (
     PandasDataFrame,
     PolarsDataFrame,
     PyArrowDataFrame,
+    cast_column_to_large_string,
     change_backend,
     re_set_dataframe_index,
 )
@@ -45,18 +42,7 @@ class TSLong(TSWrapper):
                 Defaults to None, which will group all columns not in `static_vars` together.
             static_vars (list[str]): List of column names that are static across time. Defaults to None.
         """
-        if isinstance(df, (DaskDataFrame, PandasDataFrame)):
-            df[id_var] = df[id_var].astype("large_string[pyarrow]")
-
-        elif isinstance(df, PolarsDataFrame):
-            df = df.cast({id_var: pl.String})
-
-        elif isinstance(df, PyArrowDataFrame):
-            schema = df.schema
-            field_index = schema.get_field_index(id_var)
-            schema = schema.remove(field_index)
-            schema = schema.insert(field_index, pa.field(id_var, pa.large_string()))
-            df = df.cast(target_schema=schema)
+        df = cast_column_to_large_string(df, id_var)
 
         # Ensure correct index column
         df = re_set_dataframe_index(df, index_var=time_var)
@@ -130,6 +116,9 @@ class TSLong(TSWrapper):
         tsdf = dask_tsdf.change_backend(new_backend=self.current_backend)
         return tsdf
 
-    @abstractmethod
     def to_tswide(self) -> "TSWide":
         """Convert the wrapper into a TSWide object."""
+        dask_tslong = self.change_backend(new_backend="dask")
+        dask_tswide = dask_tslong.to_tswide()
+        tswide = dask_tswide.change_backend(new_backend=self.current_backend)
+        return tswide

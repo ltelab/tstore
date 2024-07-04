@@ -18,7 +18,7 @@ from tstore.tslong.tslong import TSLong
 
 if TYPE_CHECKING:
     # To avoid circular imports
-    from tstore.tswide.polars import TSWidePolars
+    pass
 
 
 class TSLongPolars(TSLong):
@@ -155,7 +155,3 @@ class TSLongPolars(TSLong):
 
         # Conversion to polars
         return tslong_pyarrow.change_backend(new_backend="polars")
-
-    def to_tswide(self) -> "TSWidePolars":
-        """Convert the wrapper into a TSWide object."""
-        raise NotImplementedError

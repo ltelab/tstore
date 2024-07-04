@@ -162,4 +162,19 @@ class TSLongPandas(TSLong):
 
     def to_tswide(self) -> "TSWidePandas":
         """Convert the wrapper into a TSWide object."""
-        raise NotImplementedError
+        from tstore.tswide.pandas import TSWidePandas
+
+        df = self._obj
+        df = df.pivot_table(
+            index=self._tstore_time_var,
+            columns=self._tstore_id_var,
+            aggfunc="first",
+        )
+
+        return TSWidePandas(
+            df,
+            id_var=self._tstore_id_var,
+            time_var=self._tstore_time_var,
+            ts_vars=self._tstore_ts_vars,
+            static_vars=self._tstore_static_vars,
+        )
