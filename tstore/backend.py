@@ -314,3 +314,21 @@ def _change_series_backend_from_pyarrow(
         return series
 
     raise ValueError(f"Unsupported backend: {new_backend}")
+
+
+def cast_column_to_large_string(df: DataFrame, col: str) -> DataFrame:
+    """Cast a column to a large string type."""
+    if isinstance(df, (DaskDataFrame, PandasDataFrame)):
+        df[col] = df[col].astype("large_string[pyarrow]")
+
+    elif isinstance(df, PolarsDataFrame):
+        df = df.cast({col: pl.String})
+
+    elif isinstance(df, PyArrowDataFrame):
+        schema = df.schema
+        field_index = schema.get_field_index(col)
+        schema = schema.remove(field_index)
+        schema = schema.insert(field_index, pa.field(col, pa.large_string()))
+        df = df.cast(target_schema=schema)
+
+    return df

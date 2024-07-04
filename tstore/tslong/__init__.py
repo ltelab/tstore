@@ -11,7 +11,7 @@ from tstore.tslong.pyarrow import TSLongPyArrow
 from tstore.tslong.tslong import TSLong
 
 
-def open_tslong(base_dir: Union[str, Path], *args, backend: Backend = "pandas", **kwargs):
+def open_tslong(base_dir: Union[str, Path], *args, backend: Backend = "dask", **kwargs):
     """Read a TStore file structure as a TSLong object."""
     ts_long_classes = {
         "dask": TSLongDask,

@@ -19,7 +19,7 @@ from tstore.tslong.tslong import TSLong
 
 if TYPE_CHECKING:
     # To avoid circular imports
-    from tstore.tswide.pyarrow import TSWidePyArrow
+    pass
 
 
 class TSLongPyArrow(TSLong):
@@ -94,10 +94,6 @@ class TSLongPyArrow(TSLong):
             ts_vars=ts_variables_dict,
             static_vars=static_vars,
         )
-
-    def to_tswide(self) -> "TSWidePyArrow":
-        """Convert the wrapper into a TSWide object."""
-        raise NotImplementedError
 
 
 def _read_ts(

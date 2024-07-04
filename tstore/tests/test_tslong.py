@@ -20,6 +20,10 @@ from tstore.tslong.dask import TSLongDask
 from tstore.tslong.pandas import TSLongPandas
 from tstore.tslong.polars import TSLongPolars
 from tstore.tslong.pyarrow import TSLongPyArrow
+from tstore.tswide.dask import TSWideDask
+from tstore.tswide.pandas import TSWidePandas
+from tstore.tswide.polars import TSWidePolars
+from tstore.tswide.pyarrow import TSWidePyArrow
 
 # Imported fixtures from conftest.py:
 # - dask_long_dataframe
@@ -44,6 +48,13 @@ tsdf_classes = {
     "pandas": TSDFPandas,
     "polars": TSDFPolars,
     "pyarrow": TSDFPyArrow,
+}
+
+tswide_classes = {
+    "dask": TSWideDask,
+    "pandas": TSWidePandas,
+    "polars": TSWidePolars,
+    "pyarrow": TSWidePyArrow,
 }
 
 
@@ -231,3 +242,20 @@ def test_to_tsdf(
     np.testing.assert_array_equal(tsdf["tstore_id"], ["1", "2", "3", "4"])
     np.testing.assert_array_equal(tsdf["static_var1"], ["A", "B", "C", "D"])
     np.testing.assert_array_equal(tsdf["static_var2"], [1.0, 2.0, 3.0, 4.0])
+
+
+@pytest.mark.parametrize("backend", ["dask", "pandas", "polars", "pyarrow"])
+def test_to_tswide(
+    backend: str,
+    request,
+) -> None:
+    """Test the to_tsdf function."""
+    tslong_fixture_name = f"{backend}_tslong"
+    tslong = request.getfixturevalue(tslong_fixture_name)
+    tswide = tslong.to_tswide()
+
+    assert isinstance(tswide, tswide_classes[backend])
+    assert tswide._tstore_id_var == "tstore_id"
+    assert tswide._tstore_time_var == "time"
+    assert tswide._tstore_ts_vars == {"ts_var1": ["var1", "var2"], "ts_var2": ["var3", "var4"]}
+    assert tswide._tstore_static_vars == ["static_var1", "static_var2"]
