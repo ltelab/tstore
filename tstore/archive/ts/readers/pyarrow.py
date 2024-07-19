@@ -15,6 +15,7 @@ def open_ts(
     partitions,
     start_time=None,
     end_time=None,
+    inclusive=None,
     columns=None,
     split_row_groups=False,  # noqa: ARG001
     # pyarrow-specific
@@ -23,7 +24,7 @@ def open_ts(
 ):
     """Open a TS into a pyarrow.Table."""
     # Define filters argument
-    filters = get_time_filters(start_time=start_time, end_time=end_time)
+    filters = get_time_filters(start_time=start_time, end_time=end_time, inclusive=inclusive)
 
     # Read Option 1
     # - https://arrow.apache.org/docs/python/generated/pyarrow.parquet.read_table.html#pyarrow-parquet-read-table
