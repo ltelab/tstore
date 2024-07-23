@@ -9,10 +9,8 @@ import pytest
 
 import tstore
 from tstore.backend import Backend
-from tstore.tsdf.dask import TSDFDask
 from tstore.tsdf.pandas import TSDFPandas
-from tstore.tsdf.polars import TSDFPolars
-from tstore.tsdf.pyarrow import TSDFPyArrow
+from tstore.tsdf.tsdf import TSDF
 from tstore.tslong.dask import TSLongDask
 from tstore.tslong.pandas import TSLongPandas
 from tstore.tslong.polars import TSLongPolars
@@ -23,13 +21,6 @@ from tstore.tslong.pyarrow import TSLongPyArrow
 # - pandas_series_of_ts
 # - dask_tsdf
 
-
-tsdf_classes = {
-    "dask": TSDFDask,
-    "pandas": TSDFPandas,
-    "polars": TSDFPolars,
-    "pyarrow": TSDFPyArrow,
-}
 
 tslong_classes = {
     "dask": TSLongDask,
@@ -68,7 +59,7 @@ def test_pandas_series_concatenation(pandas_series_of_ts: pd.Series) -> None:
 def test_dask_tsdf_creation(dask_tsdf: tstore.TSDF) -> None:
     """Test the TSDF wrapper."""
     assert isinstance(dask_tsdf, tstore.TSDF)
-    assert dask_tsdf.current_backend == "dask"
+    assert dask_tsdf.get_ts_backend("ts_var1") == "dask"
     assert isinstance(dask_tsdf["ts_var1"], pd.Series)
     assert isinstance(dask_tsdf["ts_var2"], pd.Series)
     np.testing.assert_array_equal(dask_tsdf["tstore_id"], ["1", "2", "3", "4"])
@@ -145,7 +136,7 @@ class TestLoad:
     ) -> None:
         """Test loading as a Dask TSDF."""
         tsdf = tstore.open_tsdf(tstore_path, backend="dask")
-        assert type(tsdf) is TSDFDask
+        assert type(tsdf) is TSDFPandas
         assert type(tsdf._obj) is pd.DataFrame
         assert tsdf._tstore_id_var == "tstore_id"
         assert tsdf._tstore_ts_vars == {"ts_var1": ["var1", "var2"], "ts_var2": ["var3", "var4"]}
@@ -163,31 +154,37 @@ def test_change_backend(
     dask_tsdf: tstore.TSDF,
 ) -> None:
     """Test changing the backend of a TSDF."""
-    assert isinstance(dask_tsdf, TSDFDask)
-    assert dask_tsdf.current_backend == "dask"
+    assert isinstance(dask_tsdf, TSDF)
+    assert dask_tsdf.get_ts_backend("ts_var1") == "dask"
+    assert dask_tsdf.get_ts_backend("ts_var2") == "dask"
 
-    tsdf_new = dask_tsdf.change_backend(new_backend)
-    assert isinstance(tsdf_new, tsdf_classes[new_backend])
-    assert tsdf_new.current_backend == new_backend
+    # Change one of the TS variables
+    tsdf_new = dask_tsdf.change_ts_backend(new_backend, ts_cols=["ts_var1"])
+    assert tsdf_new.get_ts_backend("ts_var1") == new_backend
+    assert tsdf_new.get_ts_backend("ts_var2") == "dask"
     assert isinstance(tsdf_new["ts_var1"], pd.Series)
     assert isinstance(tsdf_new["ts_var2"], pd.Series)
     np.testing.assert_array_equal(tsdf_new["tstore_id"], ["1", "2", "3", "4"])
     np.testing.assert_array_equal(tsdf_new["static_var1"], ["A", "B", "C", "D"])
     np.testing.assert_array_equal(tsdf_new["static_var2"], [1.0, 2.0, 3.0, 4.0])
 
+    # Change all TS variables
+    tsdf_new = dask_tsdf.change_ts_backend(new_backend)
+    assert tsdf_new.get_ts_backend("ts_var1") == new_backend
+    assert tsdf_new.get_ts_backend("ts_var2") == new_backend
 
-# @pytest.mark.parametrize("backend", ["dask", "pandas", "polars", "pyarrow"])
-@pytest.mark.parametrize("backend", ["polars", "pyarrow"])
+
+@pytest.mark.parametrize("backend", ["dask", "pandas", "polars", "pyarrow"])
 def test_to_tslong(
     backend: Backend,
     dask_tsdf: tstore.TSDF,
 ) -> None:
     """Test the to_tslong function."""
-    tsdf = dask_tsdf.change_backend(backend)
-    tslong = tsdf.to_tslong()
+    tslong = dask_tsdf.to_tslong(backend=backend)
 
     assert isinstance(tslong, tslong_classes[backend])
     assert tslong.current_backend == backend
+    assert dask_tsdf.get_ts_backend("ts_var1") == "dask"
     assert tslong._tstore_id_var == "tstore_id"
     assert tslong._tstore_time_var == "time"
     assert tslong._tstore_ts_vars == {"ts_var1": ["var1", "var2"], "ts_var2": ["var3", "var4"]}

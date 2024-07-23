@@ -375,8 +375,8 @@ def pandas_series_of_ts(dask_tsarray: tstore.TSArray) -> pd.Series:
 
 
 @pytest.fixture()
-def dask_tsdf(helpers) -> tstore.tsdf.TSDFDask:
-    """Create a TSDF object."""
+def dask_tsdf(helpers) -> tstore.tsdf.TSDF:
+    """Create a TSDF object with Dask TS objects."""
     pd_series_of_ts_1 = pd.Series(helpers.create_dask_tsarray(size=4, columns_slice=slice(0, 2)))
     pd_series_of_ts_2 = pd.Series(helpers.create_dask_tsarray(size=4, columns_slice=slice(2, 4)))
     tstore_ids = np.arange(1, pd_series_of_ts_1.size + 1)

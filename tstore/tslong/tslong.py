@@ -113,7 +113,7 @@ class TSLong(TSWrapper):
         """Convert the wrapper into a TSDF object."""
         dask_tslong = self.change_backend(new_backend="dask")
         dask_tsdf = dask_tslong.to_tsdf()
-        tsdf = dask_tsdf.change_backend(new_backend=self.current_backend)
+        tsdf = dask_tsdf.change_ts_backend(new_backend=self.current_backend)
         return tsdf
 
     def to_tswide(self) -> "TSWide":
