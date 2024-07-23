@@ -9,7 +9,7 @@ import dask.dataframe as dd
 import pandas as pd
 
 from tstore.archive.partitions import add_partitioning_columns
-from tstore.backend import Backend, DataFrame, change_backend, get_backend, re_set_dataframe_index
+from tstore.backend import Backend, DataFrame, PyArrowDataFrame, change_backend, get_backend, re_set_dataframe_index
 
 
 def check_time_index(df):
@@ -50,6 +50,11 @@ class TS:
     def current_backend(self):
         """Return the backend of the wrapped dataframe."""
         return get_backend(self._obj)
+
+    @property
+    def _tstore_columns(self):
+        """Return the columns of the wrapped dataframe."""
+        return self._obj.schema.names if isinstance(self._obj, PyArrowDataFrame) else self._obj.columns
 
     @staticmethod
     def from_disk(
