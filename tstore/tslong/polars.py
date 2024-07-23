@@ -81,7 +81,8 @@ class TSLongPolars(TSLong):
         )
 
         # Write to disk per identifier
-        for tstore_id, df_group in self._obj.groupby(self._tstore_id_var):
+        for group, df_group in self._obj.group_by([self._tstore_id_var]):
+            tstore_id = group[0]
             for ts_variable, columns in ts_variables.items():
                 # Retrieve columns of the TS object
                 if columns is None:
