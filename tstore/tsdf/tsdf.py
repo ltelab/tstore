@@ -8,6 +8,7 @@ from tstore.archive.metadata.readers import read_tstore_metadata
 from tstore.backend import (
     Backend,
     DataFrame,
+    GeoPandasDataFrame,
     PandasDataFrame,
     dataframe_types,
     remove_dataframe_index,
@@ -92,7 +93,11 @@ class TSDF(TSWrapper):
     def wrap(df: DataFrame, *args, **kwargs) -> "TSDF":
         """Wrap a DataFrame in the appropriate TSDF subclass."""
         # Lazy import to avoid circular imports
+        from tstore.tsdf.geopandas import TSDFGeoPandas
         from tstore.tsdf.pandas import TSDFPandas
+
+        if isinstance(df, GeoPandasDataFrame):
+            return TSDFGeoPandas(df, *args, **kwargs)
 
         if isinstance(df, PandasDataFrame):
             return TSDFPandas(df, *args, **kwargs)
