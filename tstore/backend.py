@@ -20,6 +20,13 @@ PolarsDataFrame = pl.DataFrame
 PyArrowDataFrame = pa.Table
 DataFrame = Union[DaskDataFrame, PandasDataFrame, PolarsDataFrame, PyArrowDataFrame]
 
+dataframe_types = {
+    "dask": dd.DataFrame,
+    "pandas": pd.DataFrame,
+    "polars": pl.DataFrame,
+    "pyarrow": pa.Table,
+}
+
 DaskSeries = dd.Series
 PandasSeries = pd.Series
 PolarsSeries = pl.Series

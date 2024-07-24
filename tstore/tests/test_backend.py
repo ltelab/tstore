@@ -71,7 +71,6 @@ def test_change_dataframe_backend(
 
     # Check size
     assert df.shape[0] == df_new.shape[0]
-    print(backend_from, df.shape, backend_to, df_new.shape)
 
 
 @pytest.mark.parametrize("backend_to", backend_names)

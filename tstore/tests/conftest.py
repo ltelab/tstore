@@ -1,5 +1,6 @@
 """Fixtures for the tests."""
 
+import warnings
 from pathlib import Path
 from typing import Optional
 
@@ -44,6 +45,7 @@ class Helpers:
             - var3: float
             - var4: float
         """
+        warnings.filterwarnings("ignore", message="dask_expr does not support the DataFrameIOFunction protocol")
         df_dask = dask.datasets.timeseries(
             start="2000-01-01",
             end="2000-01-03",
