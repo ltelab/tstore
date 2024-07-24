@@ -9,6 +9,7 @@ from tstore.backend import (
     Backend,
     DataFrame,
     PandasDataFrame,
+    dataframe_types,
     remove_dataframe_index,
 )
 from tstore.tsdf.reader import _read_tsarrays
@@ -75,8 +76,8 @@ class TSDF(TSWrapper):
         if inexistent_cols:
             raise ValueError(f"TS columns {inexistent_cols} do not exist in the TSDF object.")
 
-        df[ts_cols] = df[ts_cols].applymap(lambda ts_obj: ts_obj.change_backend(new_backend))
-        df[ts_cols] = df[ts_cols].astype(TSDtype)
+        df[ts_cols] = df[ts_cols].map(lambda ts_obj: ts_obj.change_backend(new_backend))
+        df[ts_cols] = df[ts_cols].astype(TSDtype(dataframe_types[new_backend]))
 
         return self.wrap(df, self._tstore_id_var)
 
