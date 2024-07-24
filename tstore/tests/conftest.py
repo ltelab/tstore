@@ -6,11 +6,13 @@ from typing import Optional
 
 import dask
 import dask.dataframe as dd
+import geopandas as gpd
 import numpy as np
 import pandas as pd
 import polars as pl
 import pyarrow as pa
 import pytest
+from shapely.geometry import Point
 
 import tstore
 import tstore.tsdf
@@ -373,12 +375,12 @@ def pandas_series_of_ts(dask_tsarray: tstore.TSArray) -> pd.Series:
     return df_series
 
 
-## TSDF
+## TSDF DataFrames
 
 
 @pytest.fixture()
-def dask_tsdf(helpers) -> tstore.tsdf.TSDF:
-    """Create a TSDF object with Dask TS objects."""
+def pandas_tsdf_dataframe(helpers) -> pd.DataFrame:
+    """Create a Pandas dataframe with TSArray columns."""
     pd_series_of_ts_1 = pd.Series(helpers.create_dask_tsarray(size=4, columns_slice=slice(0, 2)))
     pd_series_of_ts_2 = pd.Series(helpers.create_dask_tsarray(size=4, columns_slice=slice(2, 4)))
     tstore_ids = np.arange(1, pd_series_of_ts_1.size + 1)
@@ -393,8 +395,43 @@ def dask_tsdf(helpers) -> tstore.tsdf.TSDF:
     df = pd.DataFrame(data)
     df[ID_VAR] = df[ID_VAR].astype("large_string[pyarrow]")
 
+    return df
+
+
+@pytest.fixture()
+def geopandas_tsdf_dataframe(pandas_tsdf_dataframe: pd.DataFrame) -> pd.DataFrame:
+    """Create a GeoPandas dataframe with TSArray columns and a mock geometry column."""
+    size = len(pandas_tsdf_dataframe)
+    np.random.seed(0)
+    x = np.random.uniform(-180, 180, size=size)
+    y = np.random.uniform(-90, 90, size=size)
+    pandas_tsdf_dataframe["geometry"] = [Point(x_, y_) for x_, y_ in zip(x, y)]
+
+    gdf = gpd.GeoDataFrame(pandas_tsdf_dataframe, geometry="geometry")
+
+    return gdf
+
+
+## TSDF
+
+
+@pytest.fixture()
+def tsdf_ts_dask(pandas_tsdf_dataframe) -> tstore.tsdf.TSDF:
+    """Create a TSDF object with Dask TS objects."""
     tsdf = tstore.TSDF.wrap(
-        df,
+        pandas_tsdf_dataframe,
         id_var=ID_VAR,
     )
+
+    return tsdf
+
+
+@pytest.fixture()
+def geo_tsdf_ts_dask(geopandas_tsdf_dataframe) -> tstore.tsdf.TSDF:
+    """Create a GeoPandas TSDF object with Dask TS objects."""
+    tsdf = tstore.TSDF.wrap(
+        geopandas_tsdf_dataframe,
+        id_var=ID_VAR,
+    )
+
     return tsdf

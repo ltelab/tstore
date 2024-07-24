@@ -57,6 +57,7 @@ dev = [
     "pytest-mock",
     "pytest-sugar",
     "setuptools",
+    "shapely",
     "twine",
 ]
 

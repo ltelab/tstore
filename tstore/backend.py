@@ -3,35 +3,40 @@
 from typing import Callable, Literal, Optional, TypeVar, Union
 
 import dask.dataframe as dd
+import geopandas as gpd
 import pandas as pd
 import polars as pl
 import pyarrow as pa
 
 Backend = Literal[
     "dask",
+    "geopandas",
     "pandas",
     "polars",
     "pyarrow",
 ]
 
 DaskDataFrame = dd.DataFrame
+GeoPandasDataFrame = gpd.GeoDataFrame
 PandasDataFrame = pd.DataFrame
 PolarsDataFrame = pl.DataFrame
 PyArrowDataFrame = pa.Table
-DataFrame = Union[DaskDataFrame, PandasDataFrame, PolarsDataFrame, PyArrowDataFrame]
+DataFrame = Union[DaskDataFrame, GeoPandasDataFrame, PandasDataFrame, PolarsDataFrame, PyArrowDataFrame]
 
 dataframe_types = {
     "dask": dd.DataFrame,
+    "geopandas": gpd.GeoDataFrame,
     "pandas": pd.DataFrame,
     "polars": pl.DataFrame,
     "pyarrow": pa.Table,
 }
 
 DaskSeries = dd.Series
+GeoPandasSeries = gpd.GeoSeries
 PandasSeries = pd.Series
 PolarsSeries = pl.Series
 PyArrowSeries = pa.Array
-Series = Union[DaskSeries, PandasSeries, PolarsSeries, PyArrowSeries]
+Series = Union[DaskSeries, GeoPandasSeries, PandasSeries, PolarsSeries, PyArrowSeries]
 
 
 T = TypeVar("T", DataFrame, Series)
