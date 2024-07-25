@@ -1,7 +1,7 @@
 """Test the tsdf subpackage."""
 
 import os
-from pathlib import Path
+from typing import Literal
 
 import geopandas as gpd
 import numpy as np
@@ -22,6 +22,7 @@ from tstore.tslong.pyarrow import TSLongPyArrow
 # - dask_tsarray
 # - pandas_series_of_ts
 # - tsdf_ts_dask
+# - geo_tsdf_ts_dask
 
 
 tslong_classes = {
@@ -30,6 +31,8 @@ tslong_classes = {
     "polars": TSLongPolars,
     "pyarrow": TSLongPyArrow,
 }
+
+WithGeo = Literal["without_geo", "with_geo"]
 
 
 def test_tsarray_creation(dask_tsarray: tstore.TSArray) -> None:
@@ -109,16 +112,21 @@ def test_iloc(tsdf_ts_dask: tstore.TSDF) -> None:
     assert isinstance(tsdf, tstore.TSDF)
 
 
+@pytest.mark.parametrize("with_geo", ["without_geo", "with_geo"])
 def test_store(
-    tsdf_ts_dask: tstore.TSDF,
+    with_geo: WithGeo,
     tmp_path,
+    request,
 ) -> None:
     """Test the to_store method."""
+    tsdf_fixture_name = "geo_tsdf_ts_dask" if with_geo else "tsdf_ts_dask"
+    tsdf = request.getfixturevalue(tsdf_fixture_name)
+
     dirpath = tmp_path / "test_tstore"
     partitioning = None
     tstore_structure = "id-var"
     overwrite = True
-    tsdf_ts_dask.to_tstore(
+    tsdf.to_tstore(
         str(dirpath),
         partitioning=partitioning,
         tstore_structure=tstore_structure,
@@ -141,12 +149,17 @@ def test_store(
 class TestLoad:
     """Test the from_tstore function."""
 
+    @pytest.mark.parametrize("with_geo", ["without_geo", "with_geo"])
     def test_dask(
         self,
-        tstore_path: Path,
+        with_geo: WithGeo,
+        request,
     ) -> None:
-        """Test loading as a Dask TSDF."""
+        """Test loading as a TSDF using Dask TS objects."""
+        tstore_path_fixture_name = "geo_tstore_path" if with_geo == "with_geo" else "tstore_path"
+        tstore_path = request.getfixturevalue(tstore_path_fixture_name)
         tsdf = tstore.open_tsdf(tstore_path, backend="dask")
+
         assert type(tsdf) is TSDFPandas
         assert type(tsdf._obj) is pd.DataFrame
         assert tsdf._tstore_id_var == "tstore_id"
@@ -157,6 +170,10 @@ class TestLoad:
         np.testing.assert_array_equal(tsdf["tstore_id"], ["1", "2", "3", "4"])
         np.testing.assert_array_equal(tsdf["static_var1"], ["A", "B", "C", "D"])
         np.testing.assert_array_equal(tsdf["static_var2"], [1.0, 2.0, 3.0, 4.0])
+
+        if with_geo == "with_geo":
+            assert isinstance(tsdf, TSDFGeoPandas)
+            assert isinstance(tsdf["geometry"], gpd.GeoSeries)
 
 
 @pytest.mark.parametrize("new_backend", ["pandas", "polars", "pyarrow"])
