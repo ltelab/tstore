@@ -88,6 +88,14 @@ class Helpers:
         tsarray = tstore.TSArray(ts_list)
         return tsarray
 
+    @staticmethod
+    def create_geometry_list(size: int) -> list[Point]:
+        """Create a list of Point objects."""
+        x = np.random.uniform(-180, 180, size=size)
+        y = np.random.uniform(-90, 90, size=size)
+        points = [Point(x_, y_) for x_, y_ in zip(x, y)]
+        return points
+
 
 @pytest.fixture()
 def helpers() -> type[Helpers]:
@@ -259,6 +267,39 @@ def tstore_path(tmp_path: Path, pandas_long_dataframe: pd.DataFrame) -> Path:
     return dirpath
 
 
+@pytest.fixture()
+def geo_tstore_path(tmp_path: Path, geopandas_long_dataframe: pd.DataFrame) -> Path:
+    """Store a GeoPandas long DataFrame (with a geometry column) as a TStore."""
+    # TODO: Rewrite without using tstore to not depend on implementation
+    from tstore.tslong.pandas import TSLongPandas
+
+    dirpath = tmp_path / "test_tstore"
+    tstore_structure = "id-var"
+    overwrite = True
+
+    # Same partitioning for all TS
+    partitioning = "year/month"
+    # Partitioning specific to each TS
+    partitioning = {TS_VAR1: "year/month", TS_VAR2: "year/month"}
+
+    tslong = TSLongPandas(
+        geopandas_long_dataframe,
+        id_var=ID_VAR,
+        time_var=TIME_VAR,
+        ts_vars=TS_VARS,
+        static_vars=STATIC_VARS,
+    )
+
+    tslong.to_tstore(
+        str(dirpath),
+        partitioning=partitioning,
+        tstore_structure=tstore_structure,
+        overwrite=overwrite,
+    )
+
+    return dirpath
+
+
 ## Long DataFrames
 
 
@@ -267,6 +308,20 @@ def dask_long_dataframe(pandas_long_dataframe: pd.DataFrame) -> dd.DataFrame:
     """Create a long Dask DataFrame."""
     df_dask = dd.from_pandas(pandas_long_dataframe)
     return df_dask
+
+
+@pytest.fixture()
+def geopandas_long_dataframe(
+    helpers,
+    pandas_long_dataframe: pd.DataFrame,
+) -> gpd.GeoDataFrame:
+    """Create a long GeoPandas DataFrame with a mock geometry column."""
+    np.random.seed(0)
+    size = len(pandas_long_dataframe)
+    points = helpers.create_geometry_list(size)
+    pandas_long_dataframe["geometry"] = points
+
+    return gpd.GeoDataFrame(pandas_long_dataframe, geometry="geometry")
 
 
 @pytest.fixture()
@@ -399,13 +454,15 @@ def pandas_tsdf_dataframe(helpers) -> pd.DataFrame:
 
 
 @pytest.fixture()
-def geopandas_tsdf_dataframe(pandas_tsdf_dataframe: pd.DataFrame) -> pd.DataFrame:
+def geopandas_tsdf_dataframe(
+    helpers,
+    pandas_tsdf_dataframe: pd.DataFrame,
+) -> pd.DataFrame:
     """Create a GeoPandas dataframe with TSArray columns and a mock geometry column."""
-    size = len(pandas_tsdf_dataframe)
     np.random.seed(0)
-    x = np.random.uniform(-180, 180, size=size)
-    y = np.random.uniform(-90, 90, size=size)
-    pandas_tsdf_dataframe["geometry"] = [Point(x_, y_) for x_, y_ in zip(x, y)]
+    size = len(pandas_tsdf_dataframe)
+    points = helpers.create_geometry_list(size)
+    pandas_tsdf_dataframe["geometry"] = points
 
     gdf = gpd.GeoDataFrame(pandas_tsdf_dataframe, geometry="geometry")
 
