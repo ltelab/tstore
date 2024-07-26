@@ -164,7 +164,6 @@ class TestLoad:
         assert type(tsdf._obj) is pd.DataFrame
         assert tsdf._tstore_id_var == "tstore_id"
         assert tsdf._tstore_ts_vars == {"ts_var1": ["var1", "var2"], "ts_var2": ["var3", "var4"]}
-        assert tsdf._tstore_static_vars == ["static_var1", "static_var2"]
         assert isinstance(tsdf["ts_var1"], pd.Series)
         assert isinstance(tsdf["ts_var2"], pd.Series)
         np.testing.assert_array_equal(tsdf["tstore_id"], ["1", "2", "3", "4"])
@@ -174,6 +173,10 @@ class TestLoad:
         if with_geo == "with_geo":
             assert isinstance(tsdf, TSDFGeoPandas)
             assert isinstance(tsdf["geometry"], gpd.GeoSeries)
+            assert tsdf._tstore_static_vars == ["static_var1", "static_var2", "geometry"]
+
+        else:
+            assert tsdf._tstore_static_vars == ["static_var1", "static_var2"]
 
 
 @pytest.mark.parametrize("new_backend", ["pandas", "polars", "pyarrow"])

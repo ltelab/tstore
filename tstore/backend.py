@@ -89,6 +89,14 @@ def change_backend(
     raise TypeError(f"Unsupported type: {type(obj).__module__}.{type(obj).__qualname__}")
 
 
+def get_dataframe_index(df: DataFrame) -> Optional[str]:
+    """Get the name of the index of a DataFrame."""
+    if isinstance(df, (DaskDataFrame, PandasDataFrame)):
+        return df.index.name
+
+    return None
+
+
 def remove_dataframe_index(df: DataFrame) -> DataFrame:
     """Remove the index of a DataFrame and keep it as a regular column."""
     if isinstance(df, (PolarsDataFrame, PyArrowDataFrame)):
@@ -344,3 +352,11 @@ def cast_column_to_large_string(df: DataFrame, col: str) -> DataFrame:
         df = df.cast(target_schema=schema)
 
     return df
+
+
+def get_column_names(df: DataFrame) -> list[str]:
+    """Get the column names of a DataFrame."""
+    if isinstance(df, PyArrowDataFrame):
+        return df.schema.names
+
+    return df.columns

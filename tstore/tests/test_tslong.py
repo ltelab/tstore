@@ -111,6 +111,115 @@ def test_creation(
         assert tslong["tstore_id"].type == pa.large_string()
 
 
+@pytest.mark.parametrize("backend", ["dask", "pandas", "polars", "pyarrow"])
+class TestCreationArgs:
+    """Test the creation of a TSLong object with various arguments."""
+
+    @pytest.fixture()
+    def base_kwargs(self, backend: Backend, request) -> dict:
+        """Return a template of keyword arguments for the TSLong wrapper."""
+        dataframe_fixture_name = f"{backend}_long_dataframe"
+        df = request.getfixturevalue(dataframe_fixture_name)
+
+        return {
+            "df": df,
+            "id_var": "tstore_id",
+            "time_var": "time",
+            "ts_vars": {"ts_var1": ["var1", "var2"], "ts_var2": ["var3", "var4"]},
+            "static_vars": ["static_var1", "static_var2"],
+        }
+
+    def test_ts_vars_none(
+        self,
+        base_kwargs: dict,
+    ) -> None:
+        """Test the creation of a TSLong object with ts_vars=None."""
+        kwargs = base_kwargs.copy()
+        kwargs["ts_vars"] = None
+        tslong = tstore.TSLong.wrap(**kwargs)
+        assert tslong._tstore_ts_vars == {"ts_variable": ["var1", "var2", "var3", "var4"]}
+
+    def test_ts_vars_list(
+        self,
+        base_kwargs: dict,
+    ) -> None:
+        """Test the creation of a TSLong object with ts_vars as a list."""
+        kwargs = base_kwargs.copy()
+        kwargs["ts_vars"] = ["var1", "var2", "var3", "var4"]
+        tslong = tstore.TSLong.wrap(**kwargs)
+        assert tslong._tstore_ts_vars == {"var1": ["var1"], "var2": ["var2"], "var3": ["var3"], "var4": ["var4"]}
+
+    def test_ts_vars_incomplete_list(
+        self,
+        base_kwargs: dict,
+    ) -> None:
+        """Test the creation of a TSLong object with ts_vars as a list not covering all columns."""
+        kwargs = base_kwargs.copy()
+        kwargs["ts_vars"] = ["var1", "var2"]
+        with pytest.raises(ValueError):
+            tstore.TSLong.wrap(**kwargs)
+
+    def test_ts_vars_list_with_unknown_columns(
+        self,
+        base_kwargs: dict,
+    ) -> None:
+        """Test the creation of a TSLong object with ts_vars as a list containing unknown columns."""
+        kwargs = base_kwargs.copy()
+        kwargs["ts_vars"] = ["var1", "var2", "var3", "var4", "var5"]
+        with pytest.raises(ValueError):
+            tstore.TSLong.wrap(**kwargs)
+
+    def test_ts_vars_list_with_id_var(
+        self,
+        base_kwargs: dict,
+    ) -> None:
+        """Test the creation of a TSLong object with ts_vars as a list containing the id_var."""
+        kwargs = base_kwargs.copy()
+        kwargs["ts_vars"] = ["var1", "var2", "var3", "var4", "tstore_id"]
+        with pytest.raises(ValueError):
+            tstore.TSLong.wrap(**kwargs)
+
+    def test_ts_vars_list_with_time_var(
+        self,
+        base_kwargs: dict,
+    ) -> None:
+        """Test the creation of a TSLong object with ts_vars as a list containing the time_var."""
+        kwargs = base_kwargs.copy()
+        kwargs["ts_vars"] = ["var1", "var2", "var3", "var4", "time"]
+        with pytest.raises(ValueError):
+            tstore.TSLong.wrap(**kwargs)
+
+    def test_ts_vars_dict(
+        self,
+        base_kwargs: dict,
+    ) -> None:
+        """Test the creation of a TSLong object with ts_vars as a dict."""
+        kwargs = base_kwargs.copy()
+        kwargs["ts_vars"] = {"ts_var1": ["var1", "var2"], "ts_var2": ["var3", "var4"]}
+        tslong = tstore.TSLong.wrap(**kwargs)
+        assert tslong._tstore_ts_vars == {"ts_var1": ["var1", "var2"], "ts_var2": ["var3", "var4"]}
+
+    def test_invalid_time_var(
+        self,
+        base_kwargs: dict,
+    ) -> None:
+        """Test the creation of a TSLong object with an invalid time_var."""
+        kwargs = base_kwargs.copy()
+        kwargs["time_var"] = "invalid_time"
+        with pytest.raises(ValueError):
+            tstore.TSLong.wrap(**kwargs)
+
+    def test_invalid_id_var(
+        self,
+        base_kwargs: dict,
+    ) -> None:
+        """Test the creation of a TSLong object with an invalid id_var."""
+        kwargs = base_kwargs.copy()
+        kwargs["id_var"] = "invalid_id"
+        with pytest.raises(ValueError):
+            tstore.TSLong.wrap(**kwargs)
+
+
 @pytest.mark.parametrize(
     "dataframe_fixture_name",
     [
