@@ -1,6 +1,6 @@
 """Module defining the TSLong abstract wrapper."""
 
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Optional, Union
 
 from tstore.backend import (
     Backend,
@@ -11,6 +11,8 @@ from tstore.backend import (
     PyArrowDataFrame,
     cast_column_to_large_string,
     change_backend,
+    get_column_names,
+    get_dataframe_index,
     re_set_dataframe_index,
 )
 from tstore.tswrapper.tswrapper import TSWrapper
@@ -29,7 +31,7 @@ class TSLong(TSWrapper):
         df: DataFrame,
         id_var: str,
         time_var: str = "time",
-        ts_vars: Optional[dict[str, list[str]]] = None,
+        ts_vars: Union[dict[str, list[str]], list[str], None] = None,
         static_vars: Optional[list[str]] = None,
     ) -> None:
         """Wrap a long-form timeseries DataFrame as a TSLong object.
@@ -38,26 +40,34 @@ class TSLong(TSWrapper):
             df (DataFrame): DataFrame to wrap.
             id_var (str): Name of the column containing the identifier variable.
             time_var (str): Name of the column containing the time variable. Defaults to "time".
-            ts_vars (dict[str, list[str]]): Dictionary of named groups of column names.
-                Defaults to None, which will group all columns not in `static_vars` together.
-            static_vars (list[str]): List of column names that are static across time. Defaults to None.
+            ts_vars (Union[dict[str, list[str]], list[str], None]): Dictionary of named groups of column names or list
+                of column names (which will create one group per entry).
+                Defaults to None, which will group all columns not in `static_vars` together under a group called
+                "ts_variable".
+            static_vars (Optional[list[str]]): List of column names that are static across time. Defaults to None.
         """
+        _check_id_var(id_var=id_var, df=df)
+        _check_time_var(time_var=time_var, df=df)
+
+        if static_vars is None:
+            static_vars = []
+        else:
+            _check_static_vars(static_vars=static_vars, df=df, id_var=id_var, time_var=time_var)
+
+        ts_vars = _ts_vars_as_checked_dict(
+            ts_vars=ts_vars,
+            df=df,
+            id_var=id_var,
+            time_var=time_var,
+            static_vars=static_vars,
+        )
+
         df = cast_column_to_large_string(df, id_var)
 
         # Ensure correct index column
         df = re_set_dataframe_index(df, index_var=time_var)
 
         super().__init__(df)
-
-        if static_vars is None:
-            static_vars = []
-
-        if ts_vars is None:
-            ts_vars = {
-                "ts_variable": [
-                    col for col in df.columns if col != id_var and col != time_var and col not in static_vars
-                ],
-            }
 
         # Set attributes using __dict__ to not trigger __setattr__
         self.__dict__.update(
@@ -122,3 +132,99 @@ class TSLong(TSWrapper):
         dask_tswide = dask_tslong.to_tswide()
         tswide = dask_tswide.change_backend(new_backend=self.current_backend)
         return tswide
+
+
+def _check_id_var(id_var: str, df: DataFrame) -> None:
+    """Check that the `id_var` argument is a column in the DataFrame.
+
+    Raises
+    ------
+        ValueError: If the `id_var` argument is not a column in the DataFrame.
+    """
+    cols = get_column_names(df)
+
+    if id_var not in cols:
+        raise ValueError(f"Column name {id_var} is not available in the DataFrame.")
+
+
+def _check_time_var(time_var: str, df: DataFrame) -> None:
+    """Check that the `time_var` argument is a column in the DataFrame or the index.
+
+    Raises
+    ------
+        ValueError: If the `time_var` argument is not a column in the DataFrame.
+    """
+    cols = get_column_names(df)
+
+    if time_var not in cols and time_var != get_dataframe_index(df):
+        raise ValueError(f"Column name {time_var} is not available in the DataFrame.")
+
+
+def _check_static_vars(
+    static_vars: list[str],
+    df: DataFrame,
+    id_var: str,
+    time_var: str,
+) -> None:
+    """Check that the `static_vars` contains only columns available in the DataFrame, excluding `id_var` and `time_var`.
+
+    Raises
+    ------
+        ValueError: If the `static_vars` argument contains column names not available in the DataFrame.
+    """
+    available_cols = set(get_column_names(df)) - {id_var, time_var}
+
+    if set(static_vars) - available_cols:
+        raise ValueError(f"Column names {set(static_vars) - available_cols} are not available in the DataFrame.")
+
+
+def _ts_vars_as_checked_dict(
+    ts_vars: Union[dict[str, list[str]], list[str], None],
+    df: DataFrame,
+    id_var: str,
+    time_var: str,
+    static_vars: list[str],
+) -> dict[str, list[str]]:
+    """Convert the `ts_vars` argument to a dictionary if it is not already and check column names."""
+    if ts_vars is None:
+        return {
+            "ts_variable": [
+                col for col in get_column_names(df) if col != id_var and col != time_var and col not in static_vars
+            ],
+        }
+
+    if isinstance(ts_vars, list):
+        ts_vars = {col: [col] for col in ts_vars}
+
+    _check_ts_vars(ts_vars=ts_vars, df=df, id_var=id_var, time_var=time_var, static_vars=static_vars)
+
+    return ts_vars
+
+
+def _check_ts_vars(
+    ts_vars: dict[str, list[str]],
+    df: DataFrame,
+    id_var: str,
+    time_var: str,
+    static_vars: list[str],
+) -> None:
+    """Check that the `ts_vars` argument does not contain repeated or unavailable column names.
+
+    Raises
+    ------
+        ValueError: If the `ts_vars` argument contains repeated or unavailable column names.
+    """
+    available_cols = set(get_column_names(df)) - {id_var, time_var} - set(static_vars)
+
+    requested_cols = set()
+    for cols in ts_vars.values():
+        new_cols = set(cols)
+        if new_cols & requested_cols:
+            raise ValueError(f"Column names {new_cols & available_cols} is duplicated in the `ts_vars` argument.")
+        requested_cols.update(new_cols)
+
+    if requested_cols - available_cols:
+        raise ValueError(f"Column names {requested_cols - available_cols} are not available in the DataFrame.")
+
+    if available_cols - requested_cols:
+        raise ValueError(f"Column names {available_cols - requested_cols} are not specified in the arguments.")

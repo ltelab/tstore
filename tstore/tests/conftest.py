@@ -29,6 +29,8 @@ TS_VARS = {TS_VAR1: ["var1", "var2"], TS_VAR2: ["var3", "var4"]}
 STATIC_VAR1 = "static_var1"
 STATIC_VAR2 = "static_var2"
 STATIC_VARS = [STATIC_VAR1, STATIC_VAR2]
+GEO_VAR = "geometry"
+STATIC_VARS_GEO = [STATIC_VAR1, STATIC_VAR2, GEO_VAR]
 
 
 # Functions
@@ -287,7 +289,7 @@ def geo_tstore_path(tmp_path: Path, geopandas_long_dataframe: pd.DataFrame) -> P
         id_var=ID_VAR,
         time_var=TIME_VAR,
         ts_vars=TS_VARS,
-        static_vars=STATIC_VARS,
+        static_vars=STATIC_VARS_GEO,
     )
 
     tslong.to_tstore(
@@ -319,9 +321,9 @@ def geopandas_long_dataframe(
     np.random.seed(0)
     size = len(pandas_long_dataframe)
     points = helpers.create_geometry_list(size)
-    pandas_long_dataframe["geometry"] = points
+    pandas_long_dataframe[GEO_VAR] = points
 
-    return gpd.GeoDataFrame(pandas_long_dataframe, geometry="geometry")
+    return gpd.GeoDataFrame(pandas_long_dataframe, geometry=GEO_VAR)
 
 
 @pytest.fixture()
@@ -462,9 +464,9 @@ def geopandas_tsdf_dataframe(
     np.random.seed(0)
     size = len(pandas_tsdf_dataframe)
     points = helpers.create_geometry_list(size)
-    pandas_tsdf_dataframe["geometry"] = points
+    pandas_tsdf_dataframe[GEO_VAR] = points
 
-    gdf = gpd.GeoDataFrame(pandas_tsdf_dataframe, geometry="geometry")
+    gdf = gpd.GeoDataFrame(pandas_tsdf_dataframe, geometry=GEO_VAR)
 
     return gdf
 
