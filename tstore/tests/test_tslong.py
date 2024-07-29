@@ -243,9 +243,9 @@ class TestCreationArgs:
         """Test the creation of a TSLong object with a geometry_var."""
         kwargs = base_kwargs.copy()
         kwargs["geometry_var"] = "static_var1"
-        kwargs["static_vars"] = ["static_var2"]
         tslong = tstore.TSLong.wrap(**kwargs)
         assert tslong._tstore_geometry_var == "static_var1"
+        assert tslong._tstore_static_vars == ["static_var1", "static_var2"]
 
     def test_invalid_geometry_var(
         self,
@@ -302,7 +302,7 @@ def test_store(
 class TestLoad:
     """Test the from_tstore function."""
 
-    def common_checks(self, tslong: tstore.TSLong) -> None:
+    def common_checks(self, tslong: tstore.TSLong, with_geo: WithGeo) -> None:
         if isinstance(tslong, TSLongDask):
             assert tslong._obj.compute().shape[0] == 192
         else:
@@ -310,7 +310,10 @@ class TestLoad:
         assert tslong._tstore_id_var == "tstore_id"
         assert tslong._tstore_time_var == "time"
         assert tslong._tstore_ts_vars == {"ts_var1": ["var1", "var2"], "ts_var2": ["var3", "var4"]}
-        assert tslong._tstore_static_vars == ["static_var1", "static_var2"]
+        if with_geo == "with_geo":
+            assert tslong._tstore_static_vars == ["static_var1", "static_var2", "geometry"]
+        else:
+            assert tslong._tstore_static_vars == ["static_var1", "static_var2"]
 
     def test_dask(
         self,
@@ -323,7 +326,7 @@ class TestLoad:
         tslong = tstore.open_tslong(tstore_path, backend="dask", ts_variables=["ts_var1", "ts_var2"])
         assert type(tslong) is TSLongDask
         assert type(tslong._obj) is dd.DataFrame
-        self.common_checks(tslong)
+        self.common_checks(tslong, with_geo)
 
     def test_pandas(
         self,
@@ -336,7 +339,7 @@ class TestLoad:
         tslong = tstore.open_tslong(tstore_path, backend="pandas", ts_variables=["ts_var1", "ts_var2"])
         assert type(tslong) is TSLongPandas
         assert type(tslong._obj) is pd.DataFrame
-        self.common_checks(tslong)
+        self.common_checks(tslong, with_geo)
         # TODO: time column is counted
         # TODO: line order is not preserved
         # TODO: column order is not preserved
@@ -352,7 +355,7 @@ class TestLoad:
         tslong = tstore.open_tslong(tstore_path, backend="polars", ts_variables=["ts_var1", "ts_var2"])
         assert type(tslong) is TSLongPolars
         assert type(tslong._obj) is pl.DataFrame
-        self.common_checks(tslong)
+        self.common_checks(tslong, with_geo)
         # TODO: time column is counted
         # TODO: line order is not preserved
         # TODO: column order is not preserved
@@ -368,7 +371,7 @@ class TestLoad:
         tslong = tstore.open_tslong(tstore_path, backend="polars", ts_variables=["ts_var1", "ts_var2"])
         assert type(tslong) is TSLongPolars
         assert type(tslong._obj) is pl.DataFrame
-        self.common_checks(tslong)
+        self.common_checks(tslong, with_geo)
 
 
 @pytest.mark.parametrize("backend_to", ["dask", "pandas", "polars", "pyarrow"])

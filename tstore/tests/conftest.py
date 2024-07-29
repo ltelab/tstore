@@ -30,6 +30,7 @@ STATIC_VAR1 = "static_var1"
 STATIC_VAR2 = "static_var2"
 STATIC_VARS = [STATIC_VAR1, STATIC_VAR2]
 GEOMETRY_VAR = "geometry"
+GEO_STATIC_VARS = [STATIC_VAR1, STATIC_VAR2, GEOMETRY_VAR]
 
 
 # Functions
@@ -269,10 +270,11 @@ def tstore_path(tmp_path: Path, pandas_long_dataframe: pd.DataFrame) -> Path:
 
 
 @pytest.fixture()
-def geo_tstore_path(tmp_path: Path, pandas_long_geo_dataframe: pd.DataFrame) -> Path:
+def geo_tstore_path(tmp_path: Path, dask_long_geo_dataframe: pd.DataFrame) -> Path:
     """Store a GeoPandas long DataFrame (with a geometry column) as a TStore."""
     # TODO: Rewrite without using tstore to not depend on implementation
-    from tstore.tslong.pandas import TSLongPandas
+    # from tstore.tslong.pandas import TSLongPandas
+    from tstore.tslong.dask import TSLongDask
 
     dirpath = tmp_path / "test_tstore"
     tstore_structure = "id-var"
@@ -283,12 +285,12 @@ def geo_tstore_path(tmp_path: Path, pandas_long_geo_dataframe: pd.DataFrame) -> 
     # Partitioning specific to each TS
     partitioning = {TS_VAR1: "year/month", TS_VAR2: "year/month"}
 
-    tslong = TSLongPandas(
-        pandas_long_geo_dataframe,
+    tslong = TSLongDask(
+        dask_long_geo_dataframe,
         id_var=ID_VAR,
         time_var=TIME_VAR,
         ts_vars=TS_VARS,
-        static_vars=STATIC_VARS,
+        static_vars=GEO_STATIC_VARS,
         geometry_var=GEOMETRY_VAR,
     )
 
@@ -451,7 +453,7 @@ def dask_geo_tslong(dask_long_geo_dataframe: pd.DataFrame) -> tstore.tslong.TSLo
         id_var=ID_VAR,
         time_var=TIME_VAR,
         ts_vars=TS_VARS,
-        static_vars=STATIC_VARS,
+        static_vars=GEO_STATIC_VARS,
         geometry_var=GEOMETRY_VAR,
     )
     return tslong
@@ -465,7 +467,7 @@ def pandas_geo_tslong(pandas_long_geo_dataframe: pd.DataFrame) -> tstore.tslong.
         id_var=ID_VAR,
         time_var=TIME_VAR,
         ts_vars=TS_VARS,
-        static_vars=STATIC_VARS,
+        static_vars=GEO_STATIC_VARS,
         geometry_var=GEOMETRY_VAR,
     )
     return tslong
@@ -479,7 +481,7 @@ def polars_geo_tslong(polars_long_geo_dataframe: pl.DataFrame) -> tstore.tslong.
         id_var=ID_VAR,
         time_var=TIME_VAR,
         ts_vars=TS_VARS,
-        static_vars=STATIC_VARS,
+        static_vars=GEO_STATIC_VARS,
         geometry_var=GEOMETRY_VAR,
     )
     return tslong
@@ -493,7 +495,7 @@ def pyarrow_geo_tslong(pyarrow_long_geo_dataframe: pa.Table) -> tstore.tslong.TS
         id_var=ID_VAR,
         time_var=TIME_VAR,
         ts_vars=TS_VARS,
-        static_vars=STATIC_VARS,
+        static_vars=GEO_STATIC_VARS,
         geometry_var=GEOMETRY_VAR,
     )
     return tslong
