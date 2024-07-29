@@ -74,7 +74,7 @@ def _write_metadata(base_dir, tstore_structure, id_var, ts_variables, partitioni
     write_tstore_metadata(
         base_dir=base_dir,
         id_var=id_var,
-        ts_variables=ts_variables,
+        ts_vars=ts_variables,
         tstore_structure=tstore_structure,
         partitioning=partitioning,
     )
