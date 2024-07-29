@@ -3,6 +3,7 @@
 import glob
 import os
 import shutil
+from typing import Optional
 
 
 def check_tstore_structure(tstore_structure):
@@ -62,6 +63,14 @@ def get_id_var(base_dir):
 
     metadata = read_tstore_metadata(base_dir=base_dir)
     return metadata["id_var"]
+
+
+def get_geometry_var(base_dir) -> Optional[str]:
+    """Get TStore geometry variable."""
+    from tstore.archive.metadata.readers import read_tstore_metadata
+
+    metadata = read_tstore_metadata(base_dir=base_dir)
+    return metadata.get("geometry_var", None)
 
 
 def get_partitions(base_dir, ts_variable):

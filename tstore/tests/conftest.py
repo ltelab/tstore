@@ -29,8 +29,7 @@ TS_VARS = {TS_VAR1: ["var1", "var2"], TS_VAR2: ["var3", "var4"]}
 STATIC_VAR1 = "static_var1"
 STATIC_VAR2 = "static_var2"
 STATIC_VARS = [STATIC_VAR1, STATIC_VAR2]
-GEO_VAR = "geometry"
-STATIC_VARS_GEO = [STATIC_VAR1, STATIC_VAR2, GEO_VAR]
+GEOMETRY_VAR = "geometry"
 
 
 # Functions
@@ -270,7 +269,7 @@ def tstore_path(tmp_path: Path, pandas_long_dataframe: pd.DataFrame) -> Path:
 
 
 @pytest.fixture()
-def geo_tstore_path(tmp_path: Path, geopandas_long_dataframe: pd.DataFrame) -> Path:
+def geo_tstore_path(tmp_path: Path, pandas_long_geo_dataframe: pd.DataFrame) -> Path:
     """Store a GeoPandas long DataFrame (with a geometry column) as a TStore."""
     # TODO: Rewrite without using tstore to not depend on implementation
     from tstore.tslong.pandas import TSLongPandas
@@ -285,11 +284,12 @@ def geo_tstore_path(tmp_path: Path, geopandas_long_dataframe: pd.DataFrame) -> P
     partitioning = {TS_VAR1: "year/month", TS_VAR2: "year/month"}
 
     tslong = TSLongPandas(
-        geopandas_long_dataframe,
+        pandas_long_geo_dataframe,
         id_var=ID_VAR,
         time_var=TIME_VAR,
         ts_vars=TS_VARS,
-        static_vars=STATIC_VARS_GEO,
+        static_vars=STATIC_VARS,
+        geometry_var=GEOMETRY_VAR,
     )
 
     tslong.to_tstore(
@@ -310,20 +310,6 @@ def dask_long_dataframe(pandas_long_dataframe: pd.DataFrame) -> dd.DataFrame:
     """Create a long Dask DataFrame."""
     df_dask = dd.from_pandas(pandas_long_dataframe)
     return df_dask
-
-
-@pytest.fixture()
-def geopandas_long_dataframe(
-    helpers,
-    pandas_long_dataframe: pd.DataFrame,
-) -> gpd.GeoDataFrame:
-    """Create a long GeoPandas DataFrame with a mock geometry column."""
-    np.random.seed(0)
-    size = len(pandas_long_dataframe)
-    points = helpers.create_geometry_list(size)
-    pandas_long_dataframe[GEO_VAR] = points
-
-    return gpd.GeoDataFrame(pandas_long_dataframe, geometry=GEO_VAR)
 
 
 @pytest.fixture()
@@ -356,6 +342,47 @@ def pyarrow_long_dataframe(pandas_long_dataframe: pd.DataFrame) -> pa.Table:
     """Create a long Pyarrow Table."""
     df_pa = pa.Table.from_pandas(pandas_long_dataframe, preserve_index=True)
     return df_pa
+
+
+### Long DataFrames with geometry data
+
+
+@pytest.fixture()
+def dask_long_geo_dataframe(
+    pandas_long_geo_dataframe: pd.DataFrame,
+) -> dd.DataFrame:
+    """Create a long Dask DataFrame with a mock geometry column."""
+    return dd.from_pandas(pandas_long_geo_dataframe)
+
+
+@pytest.fixture()
+def pandas_long_geo_dataframe(
+    helpers,
+    pandas_long_dataframe: pd.DataFrame,
+) -> pd.DataFrame:
+    """Create a long Pandas DataFrame with a mock geometry column."""
+    np.random.seed(0)
+    size = len(pandas_long_dataframe)
+    points = helpers.create_geometry_list(size)
+    pandas_long_dataframe[GEOMETRY_VAR] = points
+
+    return pandas_long_dataframe
+
+
+@pytest.fixture()
+def polars_long_geo_dataframe(
+    pandas_long_geo_dataframe: pd.DataFrame,
+) -> pl.DataFrame:
+    """Create a long Polars DataFrame with a mock geometry column."""
+    return pl.from_pandas(pandas_long_geo_dataframe, include_index=True)
+
+
+@pytest.fixture()
+def pyarrow_long_geo_dataframe(
+    pandas_long_geo_dataframe: pd.DataFrame,
+) -> pa.Table:
+    """Create a long PyArrow Table with a mock geometry column."""
+    return pa.Table.from_pandas(pandas_long_geo_dataframe, preserve_index=True)
 
 
 ## TSLong
@@ -413,6 +440,65 @@ def pyarrow_tslong(pyarrow_long_dataframe: pa.Table) -> tstore.tslong.TSLongPyAr
     return tslong
 
 
+### TSLong with geometry data
+
+
+@pytest.fixture()
+def dask_geo_tslong(dask_long_geo_dataframe: pd.DataFrame) -> tstore.tslong.TSLongDask:
+    """Create a Dask TSLong object with a geometry_var attribute."""
+    tslong = tstore.TSLong.wrap(
+        dask_long_geo_dataframe,
+        id_var=ID_VAR,
+        time_var=TIME_VAR,
+        ts_vars=TS_VARS,
+        static_vars=STATIC_VARS,
+        geometry_var=GEOMETRY_VAR,
+    )
+    return tslong
+
+
+@pytest.fixture()
+def pandas_geo_tslong(pandas_long_geo_dataframe: pd.DataFrame) -> tstore.tslong.TSLongPandas:
+    """Create a Pandas TSLong object with a geometry_var attribute."""
+    tslong = tstore.TSLong.wrap(
+        pandas_long_geo_dataframe,
+        id_var=ID_VAR,
+        time_var=TIME_VAR,
+        ts_vars=TS_VARS,
+        static_vars=STATIC_VARS,
+        geometry_var=GEOMETRY_VAR,
+    )
+    return tslong
+
+
+@pytest.fixture()
+def polars_geo_tslong(polars_long_geo_dataframe: pl.DataFrame) -> tstore.tslong.TSLongPolars:
+    """Create a Polars TSLong object with a geometry_var attribute."""
+    tslong = tstore.TSLong.wrap(
+        polars_long_geo_dataframe,
+        id_var=ID_VAR,
+        time_var=TIME_VAR,
+        ts_vars=TS_VARS,
+        static_vars=STATIC_VARS,
+        geometry_var=GEOMETRY_VAR,
+    )
+    return tslong
+
+
+@pytest.fixture()
+def pyarrow_geo_tslong(pyarrow_long_geo_dataframe: pa.Table) -> tstore.tslong.TSLongPyArrow:
+    """Create a PyArrow TSLong object with a geometry_var attribute."""
+    tslong = tstore.TSLong.wrap(
+        pyarrow_long_geo_dataframe,
+        id_var=ID_VAR,
+        time_var=TIME_VAR,
+        ts_vars=TS_VARS,
+        static_vars=STATIC_VARS,
+        geometry_var=GEOMETRY_VAR,
+    )
+    return tslong
+
+
 ## TSArrays
 
 
@@ -464,9 +550,9 @@ def geopandas_tsdf_dataframe(
     np.random.seed(0)
     size = len(pandas_tsdf_dataframe)
     points = helpers.create_geometry_list(size)
-    pandas_tsdf_dataframe[GEO_VAR] = points
+    pandas_tsdf_dataframe[GEOMETRY_VAR] = points
 
-    gdf = gpd.GeoDataFrame(pandas_tsdf_dataframe, geometry=GEO_VAR)
+    gdf = gpd.GeoDataFrame(pandas_tsdf_dataframe, geometry=GEOMETRY_VAR)
 
     return gdf
 

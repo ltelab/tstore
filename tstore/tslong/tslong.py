@@ -33,6 +33,7 @@ class TSLong(TSWrapper):
         time_var: str = "time",
         ts_vars: Union[dict[str, list[str]], list[str], None] = None,
         static_vars: Optional[list[str]] = None,
+        geometry_var: Optional[str] = None,
     ) -> None:
         """Wrap a long-form timeseries DataFrame as a TSLong object.
 
@@ -45,14 +46,22 @@ class TSLong(TSWrapper):
                 Defaults to None, which will group all columns not in `static_vars` together under a group called
                 "ts_variable".
             static_vars (Optional[list[str]]): List of column names that are static across time. Defaults to None.
+            geometry_var (Optional[str]): Name of the column containing a geometry static over time. Defaults to None.
         """
         _check_id_var(id_var=id_var, df=df)
-        _check_time_var(time_var=time_var, df=df)
+        _check_time_var(time_var=time_var, df=df, id_var=id_var)
+        _check_geometry_var(geometry_var=geometry_var, df=df, id_var=id_var, time_var=time_var)
 
         if static_vars is None:
             static_vars = []
         else:
-            _check_static_vars(static_vars=static_vars, df=df, id_var=id_var, time_var=time_var)
+            _check_static_vars(
+                static_vars=static_vars,
+                df=df,
+                id_var=id_var,
+                time_var=time_var,
+                geometry_var=geometry_var,
+            )
 
         ts_vars = _ts_vars_as_checked_dict(
             ts_vars=ts_vars,
@@ -60,6 +69,7 @@ class TSLong(TSWrapper):
             id_var=id_var,
             time_var=time_var,
             static_vars=static_vars,
+            geometry_var=geometry_var,
         )
 
         df = cast_column_to_large_string(df, id_var)
@@ -76,6 +86,7 @@ class TSLong(TSWrapper):
                 "_tstore_time_var": time_var,
                 "_tstore_ts_vars": ts_vars,
                 "_tstore_static_vars": static_vars,
+                "_tstore_geometry_var": geometry_var,
             },
         )
 
@@ -147,17 +158,42 @@ def _check_id_var(id_var: str, df: DataFrame) -> None:
         raise ValueError(f"Column name {id_var} is not available in the DataFrame.")
 
 
-def _check_time_var(time_var: str, df: DataFrame) -> None:
+def _check_time_var(
+    time_var: str,
+    df: DataFrame,
+    id_var: str,
+) -> None:
     """Check that the `time_var` argument is a column in the DataFrame or the index.
 
     Raises
     ------
-        ValueError: If the `time_var` argument is not a column in the DataFrame.
+        ValueError: If the `time_var` argument is not an available column or the index in the DataFrame.
     """
-    cols = get_column_names(df)
+    available_cols = set(get_column_names(df)) | {get_dataframe_index(df)} - {id_var}
 
-    if time_var not in cols and time_var != get_dataframe_index(df):
+    if time_var not in available_cols:
         raise ValueError(f"Column name {time_var} is not available in the DataFrame.")
+
+
+def _check_geometry_var(
+    geometry_var: Optional[str],
+    df: DataFrame,
+    id_var: str,
+    time_var: str,
+) -> None:
+    """Check that the `geometry_var` argument is a column in the DataFrame, excluding `id_var` and `time_var`.
+
+    Raises
+    ------
+        ValueError: If the `geometry_var` argument is not an available column in the DataFrame.
+    """
+    if geometry_var is None:
+        return
+
+    available_cols = set(get_column_names(df)) - {id_var, time_var}
+
+    if geometry_var not in available_cols:
+        raise ValueError(f"Column name {geometry_var} is not available in the DataFrame.")
 
 
 def _check_static_vars(
@@ -165,6 +201,7 @@ def _check_static_vars(
     df: DataFrame,
     id_var: str,
     time_var: str,
+    geometry_var: Optional[str],
 ) -> None:
     """Check that the `static_vars` contains only columns available in the DataFrame, excluding `id_var` and `time_var`.
 
@@ -173,6 +210,9 @@ def _check_static_vars(
         ValueError: If the `static_vars` argument contains column names not available in the DataFrame.
     """
     available_cols = set(get_column_names(df)) - {id_var, time_var}
+
+    if geometry_var is not None:
+        available_cols -= {geometry_var}
 
     if set(static_vars) - available_cols:
         raise ValueError(f"Column names {set(static_vars) - available_cols} are not available in the DataFrame.")
@@ -184,19 +224,24 @@ def _ts_vars_as_checked_dict(
     id_var: str,
     time_var: str,
     static_vars: list[str],
+    geometry_var: Optional[str],
 ) -> dict[str, list[str]]:
     """Convert the `ts_vars` argument to a dictionary if it is not already and check column names."""
     if ts_vars is None:
         return {
             "ts_variable": [
-                col for col in get_column_names(df) if col != id_var and col != time_var and col not in static_vars
+                col
+                for col in get_column_names(df)
+                if col != id_var and col != time_var and col not in static_vars and col != geometry_var
             ],
         }
 
     if isinstance(ts_vars, list):
         ts_vars = {col: [col] for col in ts_vars}
 
-    _check_ts_vars(ts_vars=ts_vars, df=df, id_var=id_var, time_var=time_var, static_vars=static_vars)
+    _check_ts_vars(
+        ts_vars=ts_vars, df=df, id_var=id_var, time_var=time_var, static_vars=static_vars, geometry_var=geometry_var
+    )
 
     return ts_vars
 
@@ -207,6 +252,7 @@ def _check_ts_vars(
     id_var: str,
     time_var: str,
     static_vars: list[str],
+    geometry_var: Optional[str],
 ) -> None:
     """Check that the `ts_vars` argument does not contain repeated or unavailable column names.
 
@@ -214,7 +260,7 @@ def _check_ts_vars(
     ------
         ValueError: If the `ts_vars` argument contains repeated or unavailable column names.
     """
-    available_cols = set(get_column_names(df)) - {id_var, time_var} - set(static_vars)
+    available_cols = set(get_column_names(df)) - {id_var, time_var, geometry_var} - set(static_vars)
 
     requested_cols = set()
     for cols in ts_vars.values():

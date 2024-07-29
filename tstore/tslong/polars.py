@@ -75,9 +75,10 @@ class TSLongPolars(TSLong):
         write_tstore_metadata(
             base_dir=base_dir,
             id_var=self._tstore_id_var,
-            ts_variables=list(ts_variables),
+            ts_vars=list(ts_variables),
             tstore_structure=tstore_structure,
             partitioning=partitioning,
+            geometry_var=self._tstore_geometry_var,
         )
 
         # Write to disk per identifier
