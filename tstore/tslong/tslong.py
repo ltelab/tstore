@@ -240,7 +240,12 @@ def _ts_vars_as_checked_dict(
         ts_vars = {col: [col] for col in ts_vars}
 
     _check_ts_vars(
-        ts_vars=ts_vars, df=df, id_var=id_var, time_var=time_var, static_vars=static_vars, geometry_var=geometry_var
+        ts_vars=ts_vars,
+        df=df,
+        id_var=id_var,
+        time_var=time_var,
+        static_vars=static_vars,
+        geometry_var=geometry_var,
     )
 
     return ts_vars
