@@ -6,6 +6,7 @@ from tstore.backend import (
     Backend,
     DaskDataFrame,
     DataFrame,
+    GeoPandasDataFrame,
     PandasDataFrame,
     PolarsDataFrame,
     PyArrowDataFrame,
@@ -33,7 +34,8 @@ class TSLong(TSWrapper):
         time_var: str = "time",
         ts_vars: Union[dict[str, list[str]], list[str], None] = None,
         static_vars: Optional[list[str]] = None,
-        geometry_var: Optional[str] = None,
+        geometry: Optional[GeoPandasDataFrame] = None,
+        ensure_time_index: bool = True,
     ) -> None:
         """Wrap a long-form timeseries DataFrame as a TSLong object.
 
@@ -46,8 +48,8 @@ class TSLong(TSWrapper):
                 Defaults to None, which will group all columns not in `static_vars` together under a group called
                 "ts_variable".
             static_vars (Optional[list[str]]): List of column names that are static across time. Defaults to None.
-            geometry_var (Optional[str]): Name of the column containing a geometry static over time.
-                Must be one of `static_vars`. Defaults to None.
+            geometry (Optional[GeoPandasDataFrame]): GeoPandas DataFrame containing geometry information for each id.
+                Defaults to None.
         """
         _check_id_var(id_var=id_var, df=df)
         _check_time_var(time_var=time_var, df=df, id_var=id_var)
@@ -62,8 +64,6 @@ class TSLong(TSWrapper):
                 time_var=time_var,
             )
 
-        _check_geometry_var(geometry_var=geometry_var, static_vars=static_vars)
-
         ts_vars = _ts_vars_as_checked_dict(
             ts_vars=ts_vars,
             df=df,
@@ -72,10 +72,14 @@ class TSLong(TSWrapper):
             static_vars=static_vars,
         )
 
-        df = cast_column_to_large_string(df, id_var)
+        _check_geometry(geometry=geometry, df=df, id_var=id_var)
 
-        # Ensure correct index column
-        df = re_set_dataframe_index(df, index_var=time_var)
+        df = cast_column_to_large_string(df, id_var)
+        if geometry is not None:
+            geometry = cast_column_to_large_string(geometry, id_var)
+
+        if ensure_time_index:
+            df = re_set_dataframe_index(df, index_var=time_var)
 
         super().__init__(df)
 
@@ -86,7 +90,7 @@ class TSLong(TSWrapper):
                 "_tstore_time_var": time_var,
                 "_tstore_ts_vars": ts_vars,
                 "_tstore_static_vars": static_vars,
-                "_tstore_geometry_var": geometry_var,
+                "_tstore_geometry": geometry,
             },
         )
 
@@ -193,23 +197,6 @@ def _check_static_vars(
         raise ValueError(f"Column names {set(static_vars) - available_cols} are not available in the DataFrame.")
 
 
-def _check_geometry_var(
-    geometry_var: Optional[str],
-    static_vars: list[str],
-) -> None:
-    """Check that the `geometry_var` argument is one of the `static_vars` column names.
-
-    Raises
-    ------
-        ValueError: If the `geometry_var` argument is not one of the `static_vars` column names.
-    """
-    if geometry_var is None:
-        return
-
-    if geometry_var not in static_vars:
-        raise ValueError(f"Column name {geometry_var} is not one of the `static_vars` column names.")
-
-
 def _ts_vars_as_checked_dict(
     ts_vars: Union[dict[str, list[str]], list[str], None],
     df: DataFrame,
@@ -266,3 +253,35 @@ def _check_ts_vars(
 
     if available_cols - requested_cols:
         raise ValueError(f"Column names {available_cols - requested_cols} are not specified in the arguments.")
+
+
+def _check_geometry(
+    geometry: GeoPandasDataFrame,
+    df: DataFrame,
+    id_var: str,
+) -> None:
+    """Check that the `geometry` has the same `id_var` as the DataFrame.
+
+    Raises
+    ------
+        TypeError: If the `geometry` argument is not a GeoPandas DataFrame.
+        ValueError: If the `geometry` argument has a different `id_var` than the DataFrame.
+    """
+    if geometry is None:
+        return
+
+    if isinstance(df, PyArrowDataFrame):
+        ids_df = set(change_backend(df[id_var], "pandas").unique())
+    else:
+        ids_df = set(df[id_var].unique())
+
+    ids_geo = set(geometry[id_var].unique())
+
+    if not isinstance(geometry, GeoPandasDataFrame):
+        raise TypeError("The `geometry` argument must be a GeoPandas DataFrame.")
+
+    if ids_df != ids_geo:
+        raise ValueError("The `geometry` argument does not have the same identifiers as the DataFrame.")
+
+    if len(geometry) != len(ids_geo):
+        raise ValueError("The `geometry` argument has duplicated identifiers.")
