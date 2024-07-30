@@ -12,6 +12,7 @@ import polars as pl
 import pyarrow as pa
 import pytest
 import yaml
+from shapely.geometry import Point
 
 import tstore
 from tstore.backend import Backend
@@ -297,6 +298,24 @@ def test_store(
 
     assert metadata == expected_metadata
 
+    # Check static variables
+    if with_geo == "without_geo":
+        attributes = pd.read_parquet(dirpath / "_attributes.parquet")
+    else:
+        attributes = gpd.read_parquet(dirpath / "_attributes.parquet")
+
+    if with_geo == "without_geo":
+        assert attributes.columns.to_list() == ["tstore_id", "static_var1", "static_var2"]
+    else:
+        assert attributes.columns.to_list() == ["tstore_id", "static_var1", "static_var2", "geometry"]
+
+    assert sorted(attributes["tstore_id"].to_list()) == ["1", "2", "3", "4"]
+    assert sorted(attributes["static_var1"].to_list()) == ["A", "B", "C", "D"]
+    assert sorted(attributes["static_var2"].to_list()) == [1.0, 2.0, 3.0, 4.0]
+    if with_geo == "with_geo":
+        assert isinstance(attributes["geometry"].dtype, gpd.array.GeometryDtype)
+        assert isinstance(attributes["geometry"].iloc[0], Point)
+
 
 @pytest.mark.parametrize("with_geo", ["without_geo", "with_geo"])
 class TestLoad:
@@ -311,8 +330,12 @@ class TestLoad:
         assert tslong._tstore_time_var == "time"
         assert tslong._tstore_ts_vars == {"ts_var1": ["var1", "var2"], "ts_var2": ["var3", "var4"]}
         assert tslong._tstore_static_vars == ["static_var1", "static_var2"]
-        if with_geo == "with_geo":
-            pass
+        if with_geo == "without_geo":
+            assert tslong._tstore_geometry is None
+        else:
+            assert tslong._tstore_geometry is not None
+            assert isinstance(tslong._tstore_geometry.dtype, gpd.array.GeometryDtype)
+            assert isinstance(tslong._tstore_geometry.iloc[0], Point)
 
     def test_dask(
         self,
