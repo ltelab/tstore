@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Literal
 
 import dask.dataframe as dd
+import geopandas as gpd
 import numpy as np
 import pandas as pd
 import polars as pl
@@ -26,16 +27,17 @@ from tstore.tswide.pyarrow import TSWidePyArrow
 
 # Imported fixtures from conftest.py:
 # - dask_long_dataframe
-# - dask_long_geo_dataframe
+# - dask_geo_tslong
 # - dask_tslong
+# - geopandas_dataframe
 # - pandas_long_dataframe
-# - pandas_long_geo_dataframe
+# - pandas_geo_tslong
 # - pandas_tslong
 # - polars_long_dataframe
-# - polars_long_geo_dataframe
+# - polars_geo_tslong
 # - polars_tslong
 # - pyarrow_long_dataframe
-# - pyarrow_long_geo_dataframe
+# - pyarrow_geo_tslong
 # - pyarrow_tslong
 
 
@@ -236,24 +238,26 @@ class TestCreationArgs:
         with pytest.raises(ValueError):
             tstore.TSLong.wrap(**kwargs)
 
-    def test_geometry_var(
+    def test_geometry(
         self,
         base_kwargs: dict,
+        geopandas_dataframe: gpd.GeoDataFrame,
     ) -> None:
-        """Test the creation of a TSLong object with a geometry_var."""
+        """Test the creation of a TSLong object with geometry data."""
         kwargs = base_kwargs.copy()
-        kwargs["geometry_var"] = "static_var1"
+        kwargs["geometry"] = geopandas_dataframe
         tslong = tstore.TSLong.wrap(**kwargs)
-        assert tslong._tstore_geometry_var == "static_var1"
-        assert tslong._tstore_static_vars == ["static_var1", "static_var2"]
+        assert tslong._tstore_geometry is geopandas_dataframe
 
-    def test_invalid_geometry_var(
+    def test_geometry_invalid_ids(
         self,
         base_kwargs: dict,
+        geopandas_dataframe: gpd.GeoDataFrame,
     ) -> None:
-        """Test the creation of a TSLong object with an invalid geometry_var."""
+        """Test the creation of a TSLong object with invalid geometry data."""
         kwargs = base_kwargs.copy()
-        kwargs["geometry_var"] = "invalid_geometry"
+        geopandas_dataframe = geopandas_dataframe.iloc[:3]
+        kwargs["geometry"] = geopandas_dataframe
         with pytest.raises(ValueError):
             tstore.TSLong.wrap(**kwargs)
 
@@ -287,13 +291,9 @@ def test_store(
     expected_metadata = {
         "id_var": "tstore_id",
         "ts_variables": ["ts_var1", "ts_var2"],
-        "geometry_var": None,
         "partitioning": {"ts_var1": "year/month", "ts_var2": "year/month"},
         "tstore_structure": "id-var",
     }
-
-    if with_geo == "with_geo":
-        expected_metadata["geometry_var"] = "geometry"
 
     assert metadata == expected_metadata
 
@@ -310,10 +310,9 @@ class TestLoad:
         assert tslong._tstore_id_var == "tstore_id"
         assert tslong._tstore_time_var == "time"
         assert tslong._tstore_ts_vars == {"ts_var1": ["var1", "var2"], "ts_var2": ["var3", "var4"]}
+        assert tslong._tstore_static_vars == ["static_var1", "static_var2"]
         if with_geo == "with_geo":
-            assert tslong._tstore_static_vars == ["static_var1", "static_var2", "geometry"]
-        else:
-            assert tslong._tstore_static_vars == ["static_var1", "static_var2"]
+            pass
 
     def test_dask(
         self,

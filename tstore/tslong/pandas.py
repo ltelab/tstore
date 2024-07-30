@@ -81,7 +81,6 @@ class TSLongPandas(TSLong):
             ts_vars=list(ts_variables),
             tstore_structure=tstore_structure,
             partitioning=partitioning,
-            geometry_var=self._tstore_geometry_var,
         )
 
         # Write to disk per identifier

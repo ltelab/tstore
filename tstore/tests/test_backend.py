@@ -36,7 +36,8 @@ series_types = {
     "pyarrow": pa.Array,
 }
 
-backend_names = list(dataframe_types.keys())
+backend_names_with_geo = list(dataframe_types.keys())
+backend_names = [name for name in backend_names_with_geo if name != "geopandas"]
 
 
 def test_types() -> None:
@@ -51,8 +52,8 @@ def test_types() -> None:
     assert backend.PyArrowSeries is pa.Array
 
 
-@pytest.mark.parametrize("backend_to", backend_names)
-@pytest.mark.parametrize("backend_from", backend_names)
+@pytest.mark.parametrize("backend_to", backend_names_with_geo)
+@pytest.mark.parametrize("backend_from", backend_names_with_geo)
 def test_change_dataframe_backend(
     backend_from: backend.Backend,
     backend_to: backend.Backend,
@@ -76,8 +77,8 @@ def test_change_dataframe_backend(
     assert df.shape[0] == df_new.shape[0]
 
 
-@pytest.mark.parametrize("backend_to", list(series_types.keys()))
-@pytest.mark.parametrize("backend_from", list(series_types.keys()))
+@pytest.mark.parametrize("backend_to", backend_names)
+@pytest.mark.parametrize("backend_from", backend_names)
 def test_change_series_backend(
     backend_from: backend.Backend,
     backend_to: backend.Backend,

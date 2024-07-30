@@ -24,7 +24,6 @@ def write_tstore_metadata(
     id_var: str,
     tstore_structure: str,
     partitioning: Optional[str] = None,
-    geometry_var: Optional[str] = None,
 ):
     """Write TStore metadata file."""
     metadata_fpath = define_metadata_filepath(base_dir)
@@ -33,5 +32,4 @@ def write_tstore_metadata(
     metadata["id_var"] = id_var
     metadata["tstore_structure"] = tstore_structure
     metadata["partitioning"] = partitioning
-    metadata["geometry_var"] = geometry_var
     _write_yaml_metadata(metadata=metadata, fpath=metadata_fpath)

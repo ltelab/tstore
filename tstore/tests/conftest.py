@@ -30,7 +30,6 @@ STATIC_VAR1 = "static_var1"
 STATIC_VAR2 = "static_var2"
 STATIC_VARS = [STATIC_VAR1, STATIC_VAR2]
 GEOMETRY_VAR = "geometry"
-GEO_STATIC_VARS = [STATIC_VAR1, STATIC_VAR2, GEOMETRY_VAR]
 
 
 # Functions
@@ -124,16 +123,12 @@ def dask_dataframe_no_index(dask_dataframe: dd.DataFrame) -> dd.DataFrame:
 
 
 @pytest.fixture()
-def geopandas_dataframe(pandas_dataframe: pd.DataFrame) -> gpd.GeoDataFrame:
-    """Create a GeoPandas DataFrame with a dummy time series (with time index)."""
-    gdf = gpd.GeoDataFrame(pandas_dataframe)
-    return gdf
-
-
-@pytest.fixture()
-def geopandas_dataframe_no_index(pandas_dataframe_no_index: pd.DataFrame) -> gpd.GeoDataFrame:
-    """Create a GeoPandas DataFrame with a dummy time series (without time index)."""
-    gdf = gpd.GeoDataFrame(pandas_dataframe_no_index)
+def geopandas_dataframe(helpers) -> gpd.GeoDataFrame:
+    """Create a GeoPandas DataFrame with dummy attributes."""
+    gdf = gpd.GeoDataFrame()
+    gdf[ID_VAR] = [1, 2, 3, 4]
+    gdf[GEOMETRY_VAR] = helpers.create_geometry_list(size=4)
+    gdf.set_geometry(GEOMETRY_VAR, inplace=True)
     return gdf
 
 
@@ -283,8 +278,12 @@ def tstore_path(tmp_path: Path, pandas_long_dataframe: pd.DataFrame) -> Path:
 
 
 @pytest.fixture()
-def geo_tstore_path(tmp_path: Path, geopandas_long_geo_dataframe: pd.DataFrame) -> Path:
-    """Store a GeoPandas long DataFrame (with a geometry column) as a TStore."""
+def geo_tstore_path(
+    tmp_path: Path,
+    pandas_long_dataframe: pd.DataFrame,
+    geopandas_dataframe: gpd.GeoDataFrame,
+) -> Path:
+    """Store a Pandas long DataFrame with geometry data as a TStore."""
     # TODO: Rewrite without using tstore to not depend on implementation
     from tstore.tslong.pandas import TSLongPandas
 
@@ -298,12 +297,12 @@ def geo_tstore_path(tmp_path: Path, geopandas_long_geo_dataframe: pd.DataFrame) 
     partitioning = {TS_VAR1: "year/month", TS_VAR2: "year/month"}
 
     tslong = TSLongPandas(
-        geopandas_long_geo_dataframe,
+        pandas_long_dataframe,
         id_var=ID_VAR,
         time_var=TIME_VAR,
         ts_vars=TS_VARS,
-        static_vars=GEO_STATIC_VARS,
-        geometry_var=GEOMETRY_VAR,
+        static_vars=STATIC_VARS,
+        geometry=geopandas_dataframe,
     )
 
     tslong.to_tstore(
@@ -356,55 +355,6 @@ def pyarrow_long_dataframe(pandas_long_dataframe: pd.DataFrame) -> pa.Table:
     """Create a long Pyarrow Table."""
     df_pa = pa.Table.from_pandas(pandas_long_dataframe, preserve_index=True)
     return df_pa
-
-
-### Long DataFrames with geometry data
-
-
-@pytest.fixture()
-def dask_long_geo_dataframe(
-    pandas_long_geo_dataframe: pd.DataFrame,
-) -> dd.DataFrame:
-    """Create a long Dask DataFrame with a mock geometry column."""
-    return dd.from_pandas(pandas_long_geo_dataframe)
-
-
-@pytest.fixture()
-def geopandas_long_geo_dataframe(
-    pandas_long_geo_dataframe: pd.DataFrame,
-) -> gpd.GeoDataFrame:
-    """Create a long GeoPandas DataFrame with a mock geometry column."""
-    return gpd.GeoDataFrame(pandas_long_geo_dataframe, geometry=GEOMETRY_VAR)
-
-
-@pytest.fixture()
-def pandas_long_geo_dataframe(
-    helpers,
-    pandas_long_dataframe: pd.DataFrame,
-) -> pd.DataFrame:
-    """Create a long Pandas DataFrame with a mock geometry column."""
-    np.random.seed(0)
-    size = len(pandas_long_dataframe)
-    points = helpers.create_geometry_list(size)
-    pandas_long_dataframe[GEOMETRY_VAR] = points
-
-    return pandas_long_dataframe
-
-
-@pytest.fixture()
-def polars_long_geo_dataframe(
-    pandas_long_geo_dataframe: pd.DataFrame,
-) -> pl.DataFrame:
-    """Create a long Polars DataFrame with a mock geometry column."""
-    return pl.from_pandas(pandas_long_geo_dataframe, include_index=True)
-
-
-@pytest.fixture()
-def pyarrow_long_geo_dataframe(
-    pandas_long_geo_dataframe: pd.DataFrame,
-) -> pa.Table:
-    """Create a long PyArrow Table with a mock geometry column."""
-    return pa.Table.from_pandas(pandas_long_geo_dataframe, preserve_index=True)
 
 
 ## TSLong
@@ -466,57 +416,69 @@ def pyarrow_tslong(pyarrow_long_dataframe: pa.Table) -> tstore.tslong.TSLongPyAr
 
 
 @pytest.fixture()
-def dask_geo_tslong(dask_long_geo_dataframe: pd.DataFrame) -> tstore.tslong.TSLongDask:
-    """Create a Dask TSLong object with a geometry_var attribute."""
+def dask_geo_tslong(
+    dask_long_dataframe: dd.DataFrame,
+    geopandas_dataframe: gpd.GeoDataFrame,
+) -> tstore.tslong.TSLongDask:
+    """Create a Dask TSLong object with geometry data."""
     tslong = tstore.TSLong.wrap(
-        dask_long_geo_dataframe,
+        dask_long_dataframe,
         id_var=ID_VAR,
         time_var=TIME_VAR,
         ts_vars=TS_VARS,
-        static_vars=GEO_STATIC_VARS,
-        geometry_var=GEOMETRY_VAR,
+        static_vars=STATIC_VARS,
+        geometry=geopandas_dataframe,
     )
     return tslong
 
 
 @pytest.fixture()
-def pandas_geo_tslong(pandas_long_geo_dataframe: pd.DataFrame) -> tstore.tslong.TSLongPandas:
-    """Create a Pandas TSLong object with a geometry_var attribute."""
+def pandas_geo_tslong(
+    pandas_long_dataframe: dd.DataFrame,
+    geopandas_dataframe: gpd.GeoDataFrame,
+) -> tstore.tslong.TSLongPandas:
+    """Create a Pandas TSLong object with geometry data."""
     tslong = tstore.TSLong.wrap(
-        pandas_long_geo_dataframe,
+        pandas_long_dataframe,
         id_var=ID_VAR,
         time_var=TIME_VAR,
         ts_vars=TS_VARS,
-        static_vars=GEO_STATIC_VARS,
-        geometry_var=GEOMETRY_VAR,
+        static_vars=STATIC_VARS,
+        geometry=geopandas_dataframe,
     )
     return tslong
 
 
 @pytest.fixture()
-def polars_geo_tslong(polars_long_geo_dataframe: pl.DataFrame) -> tstore.tslong.TSLongPolars:
-    """Create a Polars TSLong object with a geometry_var attribute."""
+def polars_geo_tslong(
+    polars_long_dataframe: dd.DataFrame,
+    geopandas_dataframe: gpd.GeoDataFrame,
+) -> tstore.tslong.TSLongPolars:
+    """Create a Polars TSLong object with geometry data."""
     tslong = tstore.TSLong.wrap(
-        polars_long_geo_dataframe,
+        polars_long_dataframe,
         id_var=ID_VAR,
         time_var=TIME_VAR,
         ts_vars=TS_VARS,
-        static_vars=GEO_STATIC_VARS,
-        geometry_var=GEOMETRY_VAR,
+        static_vars=STATIC_VARS,
+        geometry=geopandas_dataframe,
     )
     return tslong
 
 
 @pytest.fixture()
-def pyarrow_geo_tslong(pyarrow_long_geo_dataframe: pa.Table) -> tstore.tslong.TSLongPyArrow:
-    """Create a PyArrow TSLong object with a geometry_var attribute."""
+def pyarrow_geo_tslong(
+    pyarrow_long_dataframe: dd.DataFrame,
+    geopandas_dataframe: gpd.GeoDataFrame,
+) -> tstore.tslong.TSLongPyArrow:
+    """Create a PyArrow TSLong object with geometry data."""
     tslong = tstore.TSLong.wrap(
-        pyarrow_long_geo_dataframe,
+        pyarrow_long_dataframe,
         id_var=ID_VAR,
         time_var=TIME_VAR,
         ts_vars=TS_VARS,
-        static_vars=GEO_STATIC_VARS,
-        geometry_var=GEOMETRY_VAR,
+        static_vars=STATIC_VARS,
+        geometry=geopandas_dataframe,
     )
     return tslong
 

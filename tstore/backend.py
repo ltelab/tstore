@@ -85,6 +85,7 @@ def change_backend(
         PandasSeries: _change_series_backend_from_pandas,
         PolarsSeries: _change_series_backend_from_polars,
         PyArrowSeries: _change_series_backend_from_pyarrow,
+        pa.ChunkedArray: _change_series_backend_from_pyarrow,
     }
 
     for supported_type, change_backend_function in change_backend_functions.items():
