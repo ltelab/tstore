@@ -124,6 +124,20 @@ def dask_dataframe_no_index(dask_dataframe: dd.DataFrame) -> dd.DataFrame:
 
 
 @pytest.fixture()
+def geopandas_dataframe(pandas_dataframe: pd.DataFrame) -> gpd.GeoDataFrame:
+    """Create a GeoPandas DataFrame with a dummy time series (with time index)."""
+    gdf = gpd.GeoDataFrame(pandas_dataframe)
+    return gdf
+
+
+@pytest.fixture()
+def geopandas_dataframe_no_index(pandas_dataframe_no_index: pd.DataFrame) -> gpd.GeoDataFrame:
+    """Create a GeoPandas DataFrame with a dummy time series (without time index)."""
+    gdf = gpd.GeoDataFrame(pandas_dataframe_no_index)
+    return gdf
+
+
+@pytest.fixture()
 def pandas_dataframe(dask_dataframe: dd.DataFrame) -> pd.DataFrame:
     """Create a Pandas DataFrame with a dummy time series (with time index)."""
     df_pd = dask_dataframe.compute()
@@ -244,7 +258,6 @@ def tstore_path(tmp_path: Path, pandas_long_dataframe: pd.DataFrame) -> Path:
     dirpath = tmp_path / "test_tstore"
     tstore_structure = "id-var"
     overwrite = True
-    # geometry = None  # NOT IMPLEMENTED YET
 
     # Same partitioning for all TS
     partitioning = "year/month"
@@ -270,11 +283,10 @@ def tstore_path(tmp_path: Path, pandas_long_dataframe: pd.DataFrame) -> Path:
 
 
 @pytest.fixture()
-def geo_tstore_path(tmp_path: Path, dask_long_geo_dataframe: pd.DataFrame) -> Path:
+def geo_tstore_path(tmp_path: Path, geopandas_long_geo_dataframe: pd.DataFrame) -> Path:
     """Store a GeoPandas long DataFrame (with a geometry column) as a TStore."""
     # TODO: Rewrite without using tstore to not depend on implementation
-    # from tstore.tslong.pandas import TSLongPandas
-    from tstore.tslong.dask import TSLongDask
+    from tstore.tslong.pandas import TSLongPandas
 
     dirpath = tmp_path / "test_tstore"
     tstore_structure = "id-var"
@@ -285,8 +297,8 @@ def geo_tstore_path(tmp_path: Path, dask_long_geo_dataframe: pd.DataFrame) -> Pa
     # Partitioning specific to each TS
     partitioning = {TS_VAR1: "year/month", TS_VAR2: "year/month"}
 
-    tslong = TSLongDask(
-        dask_long_geo_dataframe,
+    tslong = TSLongPandas(
+        geopandas_long_geo_dataframe,
         id_var=ID_VAR,
         time_var=TIME_VAR,
         ts_vars=TS_VARS,
@@ -355,6 +367,14 @@ def dask_long_geo_dataframe(
 ) -> dd.DataFrame:
     """Create a long Dask DataFrame with a mock geometry column."""
     return dd.from_pandas(pandas_long_geo_dataframe)
+
+
+@pytest.fixture()
+def geopandas_long_geo_dataframe(
+    pandas_long_geo_dataframe: pd.DataFrame,
+) -> gpd.GeoDataFrame:
+    """Create a long GeoPandas DataFrame with a mock geometry column."""
+    return gpd.GeoDataFrame(pandas_long_geo_dataframe, geometry=GEOMETRY_VAR)
 
 
 @pytest.fixture()

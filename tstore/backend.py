@@ -47,6 +47,9 @@ def get_backend(obj: T) -> Backend:
     if isinstance(obj, (DaskDataFrame, DaskSeries)):
         return "dask"
 
+    if isinstance(obj, (GeoPandasDataFrame, GeoPandasSeries)):  # Must be before Pandas
+        return "geopandas"
+
     if isinstance(obj, (PandasDataFrame, PandasSeries)):
         return "pandas"
 
@@ -73,10 +76,12 @@ def change_backend(
     """
     change_backend_functions = {
         DaskDataFrame: _change_dataframe_backend_from_dask,
+        GeoPandasDataFrame: _change_dataframe_backend_from_pandas,
         PandasDataFrame: _change_dataframe_backend_from_pandas,
         PolarsDataFrame: _change_dataframe_backend_from_polars,
         PyArrowDataFrame: _change_dataframe_backend_from_pyarrow,
         DaskSeries: _change_series_backend_from_dask,
+        GeoPandasSeries: _change_series_backend_from_pandas,
         PandasSeries: _change_series_backend_from_pandas,
         PolarsSeries: _change_series_backend_from_polars,
         PyArrowSeries: _change_series_backend_from_pyarrow,
@@ -84,7 +89,21 @@ def change_backend(
 
     for supported_type, change_backend_function in change_backend_functions.items():
         if isinstance(obj, supported_type):
-            return change_backend_function(obj, new_backend, index_var=index_var, **backend_kwargs)
+            new_obj = change_backend_function(
+                obj,
+                new_backend=new_backend.replace("geopandas", "pandas"),
+                index_var=index_var,
+                **backend_kwargs,
+            )
+
+            if new_backend != "geopandas":
+                return new_obj
+
+            if isinstance(new_obj, PandasDataFrame):
+                return gpd.GeoDataFrame(new_obj)
+
+            if isinstance(new_obj, PandasSeries):
+                return gpd.GeoSeries(new_obj)
 
     raise TypeError(f"Unsupported type: {type(obj).__module__}.{type(obj).__qualname__}")
 
