@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 import pyarrow as pa
 
+from tstore.archive.attributes.geopandas import read_geometry
 from tstore.archive.attributes.pyarrow import read_attributes
 from tstore.archive.checks import (
     check_is_tstore,
@@ -84,6 +85,15 @@ class TSLongPyArrow(TSLong):
         static_vars = table_attrs.schema.names
         static_vars.remove(id_var)
 
+        # Read geometry data
+        geometry = read_geometry(
+            base_dir=base_dir,
+            id_var=id_var,
+        )
+        if geometry is not None:
+            table_attrs = table_attrs.drop(geometry.geometry.name)
+            static_vars.remove(geometry.geometry.name)
+
         # Join (duplicate) table_attrs on table
         tslong = table.join(table_attrs, keys=[id_var], join_type="full outer")
 
@@ -93,6 +103,7 @@ class TSLongPyArrow(TSLong):
             time_var=time_var,
             ts_vars=ts_variables_dict,
             static_vars=static_vars,
+            geometry=geometry,
         )
 
 
