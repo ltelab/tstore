@@ -53,7 +53,7 @@ def test_types() -> None:
 
 
 @pytest.mark.parametrize("backend_to", backend_names_with_geo)
-@pytest.mark.parametrize("backend_from", backend_names_with_geo)
+@pytest.mark.parametrize("backend_from", backend_names)
 def test_change_dataframe_backend(
     backend_from: backend.Backend,
     backend_to: backend.Backend,
