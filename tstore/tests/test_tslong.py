@@ -334,8 +334,9 @@ class TestLoad:
             assert tslong._tstore_geometry is None
         else:
             assert tslong._tstore_geometry is not None
-            assert isinstance(tslong._tstore_geometry.dtype, gpd.array.GeometryDtype)
-            assert isinstance(tslong._tstore_geometry.iloc[0], Point)
+            geometry_col = tslong._tstore_geometry.geometry
+            assert isinstance(geometry_col.dtype, gpd.array.GeometryDtype)
+            assert isinstance(geometry_col.iloc[0], Point)
 
     def test_dask(
         self,
