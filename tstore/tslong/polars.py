@@ -2,7 +2,7 @@
 
 from typing import TYPE_CHECKING
 
-import pandas as pd
+import geopandas as gpd
 
 from tstore.archive.io import (
     check_tstore_directory,
@@ -13,6 +13,7 @@ from tstore.archive.io import (
 from tstore.archive.metadata.writers import write_tstore_metadata
 from tstore.archive.partitions import add_partitioning_columns, check_partitioning
 from tstore.archive.ts.writers.pyarrow import write_partitioned_dataset
+from tstore.backend import change_backend
 from tstore.tslong.pyarrow import TSLongPyArrow
 from tstore.tslong.tslong import TSLong
 
@@ -63,8 +64,13 @@ class TSLongPolars(TSLong):
         # TODO: use https://arrow.apache.org/docs/python/generated/pyarrow.parquet.write_table.html
 
         # Conversion to pandas
-        df_pd = df_attrs.to_arrow().to_pandas(types_mapper=pd.ArrowDtype)
-        df_pd.to_parquet(
+        df_attrs = change_backend(df_attrs, new_backend="pandas")
+        # Add geometry data
+        if self._tstore_geometry is not None:
+            df_attrs = df_attrs.merge(self._tstore_geometry, on=self._tstore_id_var, how="left")
+            df_attrs = gpd.GeoDataFrame(df_attrs, geometry=self._tstore_geometry.geometry.name)
+
+        df_attrs.to_parquet(
             attrs_fpath,
             engine="pyarrow",
             compression="snappy",
