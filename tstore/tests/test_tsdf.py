@@ -7,6 +7,8 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 import pytest
+import yaml
+from shapely.geometry import Point
 
 import tstore
 from tstore.backend import Backend
@@ -119,7 +121,7 @@ def test_store(
     request,
 ) -> None:
     """Test the to_store method."""
-    tsdf_fixture_name = "geo_tsdf_ts_dask" if with_geo else "tsdf_ts_dask"
+    tsdf_fixture_name = "tsdf_ts_dask" if with_geo == "without_geo" else "geo_tsdf_ts_dask"
     tsdf = request.getfixturevalue(tsdf_fixture_name)
 
     dirpath = tmp_path / "test_tstore"
@@ -137,13 +139,44 @@ def test_store(
     assert dirpath.is_dir()
 
     # Check directory content
+    assert sorted(os.listdir(dirpath)) == ["1", "2", "3", "4", "_attributes.parquet", "tstore_metadata.yaml"]
     for ts_var in ["ts_var1", "ts_var2"]:
         assert sorted(os.listdir(dirpath / "1" / ts_var)) == [
             "_common_metadata",
             "_metadata",
             "part.0.parquet",
         ]
-    assert sorted(os.listdir(dirpath)) == ["1", "2", "3", "4", "_attributes.parquet", "tstore_metadata.yaml"]
+
+    # Check metadata
+    with open(dirpath / "tstore_metadata.yaml") as file:
+        metadata = yaml.safe_load(file)
+
+    expected_metadata = {
+        "id_var": "tstore_id",
+        "ts_variables": ["ts_var1", "ts_var2"],
+        "partitioning": {"ts_var1": None, "ts_var2": None},
+        "tstore_structure": "id-var",
+    }
+
+    assert metadata == expected_metadata
+
+    # Check static variables
+    if with_geo == "without_geo":
+        attributes = pd.read_parquet(dirpath / "_attributes.parquet")
+    else:
+        attributes = gpd.read_parquet(dirpath / "_attributes.parquet")
+
+    if with_geo == "without_geo":
+        assert sorted(attributes.columns.to_list()) == ["static_var1", "static_var2", "tstore_id"]
+    else:
+        assert sorted(attributes.columns.to_list()) == ["geometry", "static_var1", "static_var2", "tstore_id"]
+
+    assert sorted(attributes["tstore_id"].to_list()) == ["1", "2", "3", "4"]
+    assert sorted(attributes["static_var1"].to_list()) == ["A", "B", "C", "D"]
+    assert sorted(attributes["static_var2"].to_list()) == [1.0, 2.0, 3.0, 4.0]
+    if with_geo == "with_geo":
+        assert isinstance(attributes["geometry"].dtype, gpd.array.GeometryDtype)
+        assert isinstance(attributes["geometry"].iloc[0], Point)
 
 
 class TestLoad:
