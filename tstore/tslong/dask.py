@@ -2,6 +2,7 @@
 
 from typing import TYPE_CHECKING
 
+import geopandas as gpd
 import pandas as pd
 
 from tstore.tsdf.ts_class import TS
@@ -72,6 +73,11 @@ class TSLongDask(TSLong):
         data = {**pd_series, **static_values, self._tstore_id_var: tstore_ids}
 
         df = pd.DataFrame(data)
+
+        if self._tstore_geometry is not None:
+            df = df.merge(self._tstore_geometry, on=self._tstore_id_var, how="left")
+            df = gpd.GeoDataFrame(df, geometry=self._tstore_geometry.geometry.name)
+
         return TSDF(
             df,
             id_var=self._tstore_id_var,
