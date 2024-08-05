@@ -3,7 +3,9 @@
 from typing import TYPE_CHECKING, Optional
 
 import dask.dataframe as dd
+import geopandas as gpd
 
+from tstore.archive.attributes.geopandas import read_geometry
 from tstore.archive.metadata.readers import read_tstore_metadata
 from tstore.backend import (
     Backend,
@@ -160,9 +162,10 @@ class TSDF(TSWrapper):
 
         # Read TStore metadata
         metadata = read_tstore_metadata(base_dir=base_dir)
+        id_var = metadata["id_var"]
 
         # Read TStore attributes
-        df = read_attributes(base_dir).set_index(metadata["id_var"])
+        df = read_attributes(base_dir).set_index(id_var)
 
         # Get list of TSArrays
         list_ts_series = _read_tsarrays(base_dir, metadata)
@@ -171,6 +174,16 @@ class TSDF(TSWrapper):
         for ts_series in list_ts_series:
             df = df.join(ts_series, how="left")
             #  pd.merge(df_attrs, df_series, left_index=True, right_index=True)
+
+        # Read geometry data
+        geometry = read_geometry(
+            base_dir=base_dir,
+            id_var=id_var,
+        )
+        if geometry is not None:
+            df = df.drop(columns=geometry.geometry.name)
+            df = df.merge(geometry, on=id_var, how="left")
+            df = gpd.GeoDataFrame(df, geometry=geometry.geometry.name)
 
         # Return the TSDF
         return TSDF(
