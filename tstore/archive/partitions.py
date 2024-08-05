@@ -6,32 +6,37 @@ Created on Mon Apr  8 17:05:26 2024.
 """
 
 
+def get_datetime_properties(df, time_var):
+    """Get datetime properties from time column or index."""
+    return df[time_var].dt if time_var in df.columns else df.index
+
+
 def get_partitioning_mapping_dict(time_var, backend="pandas"):
     """Get partitioning mapping dict."""
     # Mapping of partitioning components to corresponding pandas attributes
     if backend == "pandas":
         partitioning_mapping = {
-            "year": lambda df: df[time_var].dt.year,
-            "month": lambda df: df[time_var].dt.month,
-            "day": lambda df: df[time_var].dt.day,
-            "doy": lambda df: df[time_var].dt.dayofyear,
-            "dow": lambda df: df[time_var].dt.dayofweek,
+            "year": lambda df: get_datetime_properties(df, time_var).year,
+            "month": lambda df: get_datetime_properties(df, time_var).month,
+            "day": lambda df: get_datetime_properties(df, time_var).day,
+            "doy": lambda df: get_datetime_properties(df, time_var).dayofyear,
+            "dow": lambda df: get_datetime_properties(df, time_var).dayofweek,
             # week TODO
-            "hh": lambda df: df[time_var].dt.hour,
-            "mm": lambda df: df[time_var].dt.minute,
-            "ss": lambda df: df[time_var].dt.second,
+            "hh": lambda df: get_datetime_properties(df, time_var).hour,
+            "mm": lambda df: get_datetime_properties(df, time_var).minute,
+            "ss": lambda df: get_datetime_properties(df, time_var).second,
         }
     elif backend == "polars":
         partitioning_mapping = {
-            "year": lambda df: df[time_var].dt.year(),
-            "month": lambda df: df[time_var].dt.month(),
-            "day": lambda df: df[time_var].dt.day(),
-            "doy": lambda df: df[time_var].dt.ordinal_day(),
-            "dow": lambda df: df[time_var].dt.weekday(),
-            # 'week': lambda df: df[time_var].dt.week(),
-            "hh": lambda df: df[time_var].dt.hour(),
-            "mm": lambda df: df[time_var].dt.minute(),
-            "ss": lambda df: df[time_var].dt.second(),
+            "year": lambda df: get_datetime_properties(df, time_var).year(),
+            "month": lambda df: get_datetime_properties(df, time_var).month(),
+            "day": lambda df: get_datetime_properties(df, time_var).day(),
+            "doy": lambda df: get_datetime_properties(df, time_var).ordinal_day(),
+            "dow": lambda df: get_datetime_properties(df, time_var).weekday(),
+            # 'week': lambda df: get_time_var(df).week(),
+            "hh": lambda df: get_datetime_properties(df, time_var).hour(),
+            "mm": lambda df: get_datetime_properties(df, time_var).minute(),
+            "ss": lambda df: get_datetime_properties(df, time_var).second(),
         }
 
     else:
