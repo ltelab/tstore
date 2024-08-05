@@ -125,7 +125,7 @@ def test_store(
     tsdf = request.getfixturevalue(tsdf_fixture_name)
 
     dirpath = tmp_path / "test_tstore"
-    partitioning = None
+    partitioning = {"ts_var1": "year/month", "ts_var2": "year/month"}
     tstore_structure = "id-var"
     overwrite = True
     tsdf.to_tstore(
@@ -141,11 +141,7 @@ def test_store(
     # Check directory content
     assert sorted(os.listdir(dirpath)) == ["1", "2", "3", "4", "_attributes.parquet", "tstore_metadata.yaml"]
     for ts_var in ["ts_var1", "ts_var2"]:
-        assert sorted(os.listdir(dirpath / "1" / ts_var)) == [
-            "_common_metadata",
-            "_metadata",
-            "part.0.parquet",
-        ]
+        assert os.listdir(dirpath / "1" / ts_var / "year=2000" / "month=1") == ["part-0.parquet"]
 
     # Check metadata
     with open(dirpath / "tstore_metadata.yaml") as file:
@@ -154,7 +150,7 @@ def test_store(
     expected_metadata = {
         "id_var": "tstore_id",
         "ts_variables": ["ts_var1", "ts_var2"],
-        "partitioning": {"ts_var1": None, "ts_var2": None},
+        "partitioning": {"ts_var1": "year/month", "ts_var2": "year/month"},
         "tstore_structure": "id-var",
     }
 

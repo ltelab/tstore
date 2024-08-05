@@ -229,7 +229,7 @@ def parquet_timeseries(tmp_path: Path, dask_dataframe: dd.DataFrame) -> Path:
         custom_metadata=None,
         write_metadata_file=True,  # enable writing the _metadata file
         # File structure
-        name_function=lambda i: f"part.{i}.parquet",  # default naming scheme
+        name_function=lambda i: f"part-{i}.parquet",  # default naming scheme
         partition_on=None,
         # Encoding
         schema="infer",
