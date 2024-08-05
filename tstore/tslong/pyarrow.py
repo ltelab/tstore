@@ -91,7 +91,7 @@ class TSLongPyArrow(TSLong):
             id_var=id_var,
         )
         if geometry is not None:
-            table_attrs = table_attrs.drop(geometry.geometry.name)
+            table_attrs = table_attrs.drop(columns=geometry.geometry.name)
             static_vars.remove(geometry.geometry.name)
 
         # Join (duplicate) table_attrs on table
