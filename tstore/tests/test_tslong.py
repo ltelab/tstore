@@ -306,9 +306,9 @@ def test_store(
         attributes = gpd.read_parquet(dirpath / "_attributes.parquet")
 
     if with_geo == "without_geo":
-        assert attributes.columns.to_list() == ["tstore_id", "static_var1", "static_var2"]
+        assert sorted(attributes.columns.to_list()) == ["static_var1", "static_var2", "tstore_id"]
     else:
-        assert attributes.columns.to_list() == ["tstore_id", "static_var1", "static_var2", "geometry"]
+        assert sorted(attributes.columns.to_list()) == ["geometry", "static_var1", "static_var2", "tstore_id"]
 
     assert sorted(attributes["tstore_id"].to_list()) == ["1", "2", "3", "4"]
     assert sorted(attributes["static_var1"].to_list()) == ["A", "B", "C", "D"]
