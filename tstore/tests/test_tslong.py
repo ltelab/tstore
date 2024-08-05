@@ -16,6 +16,7 @@ from shapely.geometry import Point
 
 import tstore
 from tstore.backend import Backend
+from tstore.tsdf.geopandas import TSDFGeoPandas
 from tstore.tsdf.pandas import TSDFPandas
 from tstore.tslong.dask import TSLongDask
 from tstore.tslong.pandas import TSLongPandas
@@ -412,16 +413,21 @@ def test_change_backend(
 
 
 @pytest.mark.parametrize("backend", ["dask", "pandas", "polars", "pyarrow"])
+@pytest.mark.parametrize("with_geo", ["without_geo", "with_geo"])
 def test_to_tsdf(
     backend: str,
+    with_geo: WithGeo,
     request,
 ) -> None:
     """Test the to_tsdf function."""
-    tslong_fixture_name = f"{backend}_tslong"
+    tslong_fixture_name = f"{backend}_tslong" if with_geo == "without_geo" else f"{backend}_geo_tslong"
     tslong = request.getfixturevalue(tslong_fixture_name)
     tsdf = tslong.to_tsdf()
 
-    assert isinstance(tsdf, TSDFPandas)
+    if with_geo == "without_geo":
+        assert isinstance(tsdf, TSDFPandas)
+    else:
+        assert isinstance(tsdf, TSDFGeoPandas)
     assert tsdf.get_ts_backend("ts_var1") == backend
     assert tsdf.get_ts_backend("ts_var2") == backend
     assert tsdf._tstore_id_var == "tstore_id"
@@ -432,6 +438,9 @@ def test_to_tsdf(
     np.testing.assert_array_equal(tsdf["tstore_id"], ["1", "2", "3", "4"])
     np.testing.assert_array_equal(tsdf["static_var1"], ["A", "B", "C", "D"])
     np.testing.assert_array_equal(tsdf["static_var2"], [1.0, 2.0, 3.0, 4.0])
+    if with_geo == "with_geo":
+        assert isinstance(tsdf._tstore_geometry, gpd.GeoSeries)
+        assert isinstance(tsdf._tstore_geometry.iloc[0], Point)
 
 
 @pytest.mark.parametrize("backend", ["dask", "pandas", "polars", "pyarrow"])
