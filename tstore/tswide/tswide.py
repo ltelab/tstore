@@ -6,9 +6,11 @@ from typing import TYPE_CHECKING, Optional
 from tstore.backend import (
     DaskDataFrame,
     DataFrame,
+    GeoPandasDataFrame,
     PandasDataFrame,
     PolarsDataFrame,
     PyArrowDataFrame,
+    cast_column_to_large_string,
 )
 from tstore.tswrapper.tswrapper import TSWrapper
 
@@ -28,6 +30,7 @@ class TSWide(TSWrapper):
         time_var: str = "time",
         ts_vars: Optional[dict[str, list[str]]] = None,
         static_vars: Optional[list[str]] = None,
+        geometry: Optional[GeoPandasDataFrame] = None,
     ) -> None:
         """Wrap a wide-form timeseries DataFrame as a TSWide object.
 
@@ -45,8 +48,6 @@ class TSWide(TSWrapper):
         # TODO: Ensure correct index column
         # df = re_set_dataframe_index(df, index_var=time_var)
 
-        super().__init__(df)
-
         if static_vars is None:
             static_vars = []
 
@@ -57,6 +58,13 @@ class TSWide(TSWrapper):
                 ],
             }
 
+        _check_geometry(geometry=geometry, df=df, id_var=id_var)
+
+        if geometry is not None:
+            geometry = cast_column_to_large_string(geometry, id_var)
+
+        super().__init__(df)
+
         # Set attributes using __dict__ to not trigger __setattr__
         self.__dict__.update(
             {
@@ -64,6 +72,7 @@ class TSWide(TSWrapper):
                 "_tstore_time_var": time_var,
                 "_tstore_ts_vars": ts_vars,
                 "_tstore_static_vars": static_vars,
+                "_tstore_geometry": geometry,
             },
         )
 
@@ -106,3 +115,39 @@ class TSWide(TSWrapper):
     @abstractmethod
     def to_tslong(self) -> "TSLong":
         """Convert the wrapper into a TSLong object."""
+
+
+def _check_geometry(
+    geometry: GeoPandasDataFrame,
+    df: DataFrame,
+    id_var: str,
+) -> None:
+    """Check that the `geometry` has the same `id_var` as the DataFrame.
+
+    Raises
+    ------
+        TypeError: If the `geometry` argument is not a GeoPandas DataFrame.
+        ValueError: If the `geometry` argument has a different `id_var` than the DataFrame.
+    """
+    if geometry is None:
+        return
+
+    if isinstance(df, PolarsDataFrame):
+        raise NotImplementedError("Polars backend not supported for TSWide.")
+        # TODO: multiple index columns are tuples of unspecified structure
+
+    if isinstance(df, PyArrowDataFrame):
+        raise NotImplementedError("PyArrow backend not supported for TSWide.")
+        # TODO: multiple index columns are tuples of unspecified structure
+
+    ids_df = set(df.columns.get_level_values(id_var).unique())
+    ids_geo = set(geometry[id_var].unique())
+
+    if not isinstance(geometry, GeoPandasDataFrame):
+        raise TypeError("The `geometry` argument must be a GeoPandas DataFrame.")
+
+    if ids_df != ids_geo:
+        raise ValueError("The `geometry` argument does not have the same identifiers as the DataFrame.")
+
+    if len(geometry) != len(ids_geo):
+        raise ValueError("The `geometry` argument has duplicated identifiers.")

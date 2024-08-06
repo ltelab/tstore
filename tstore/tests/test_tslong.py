@@ -443,13 +443,15 @@ def test_to_tsdf(
         assert isinstance(tsdf._tstore_geometry.iloc[0], Point)
 
 
-@pytest.mark.parametrize("backend", ["dask", "pandas", "polars", "pyarrow"])
+@pytest.mark.parametrize("backend", ["dask", "pandas"])
+@pytest.mark.parametrize("with_geo", ["without_geo", "with_geo"])
 def test_to_tswide(
     backend: str,
+    with_geo: WithGeo,
     request,
 ) -> None:
     """Test the to_wide function."""
-    tslong_fixture_name = f"{backend}_tslong"
+    tslong_fixture_name = f"{backend}_tslong" if with_geo == "without_geo" else f"{backend}_geo_tslong"
     tslong = request.getfixturevalue(tslong_fixture_name)
     tswide = tslong.to_tswide()
 
@@ -458,3 +460,11 @@ def test_to_tswide(
     assert tswide._tstore_time_var == "time"
     assert tswide._tstore_ts_vars == {"ts_var1": ["var1", "var2"], "ts_var2": ["var3", "var4"]}
     assert tswide._tstore_static_vars == ["static_var1", "static_var2"]
+
+    if with_geo == "without_geo":
+        assert tswide._tstore_geometry is None
+    else:
+        assert tswide._tstore_geometry is not None
+        geometry_col = tswide._tstore_geometry.geometry
+        assert isinstance(geometry_col.dtype, gpd.array.GeometryDtype)
+        assert isinstance(geometry_col.iloc[0], Point)

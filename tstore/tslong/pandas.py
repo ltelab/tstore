@@ -183,4 +183,5 @@ class TSLongPandas(TSLong):
             time_var=self._tstore_time_var,
             ts_vars=self._tstore_ts_vars,
             static_vars=self._tstore_static_vars,
+            geometry=self._tstore_geometry,
         )
