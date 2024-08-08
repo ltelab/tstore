@@ -133,7 +133,7 @@ class TSDF(TSWrapper):
         # geometry
     ):
         """Write TStore from TSDF object with Dask backend for TS objects."""
-        _ = write_tstore(
+        write_tstore(
             self._obj,
             base_dir=base_dir,
             id_var=self._tstore_id_var,
