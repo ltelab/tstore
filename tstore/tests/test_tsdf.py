@@ -188,11 +188,11 @@ def test_load(
     tsdf = tstore.open_tsdf(tstore_path, backend=backend)
 
     if with_geo == "without_geo":
-        assert type(tsdf) is TSDFPandas
-        assert type(tsdf._obj) is pd.DataFrame
+        assert isinstance(tsdf, TSDFPandas)
+        assert isinstance(tsdf._obj, pd.DataFrame)
     else:
-        assert type(tsdf) is TSDFGeoPandas
-        assert type(tsdf._obj) is gpd.GeoDataFrame
+        assert isinstance(tsdf, TSDFGeoPandas)
+        assert isinstance(tsdf._obj, gpd.GeoDataFrame)
     assert tsdf._tstore_id_var == "tstore_id"
     assert tsdf._tstore_ts_vars == {"ts_var1": ["var1", "var2"], "ts_var2": ["var3", "var4"]}
     assert isinstance(tsdf["ts_var1"], pd.Series)
