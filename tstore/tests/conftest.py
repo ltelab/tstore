@@ -1,15 +1,18 @@
 """Fixtures for the tests."""
 
+import warnings
 from pathlib import Path
 from typing import Optional
 
 import dask
 import dask.dataframe as dd
+import geopandas as gpd
 import numpy as np
 import pandas as pd
 import polars as pl
 import pyarrow as pa
 import pytest
+from shapely.geometry import Point
 
 import tstore
 import tstore.tsdf
@@ -26,6 +29,7 @@ TS_VARS = {TS_VAR1: ["var1", "var2"], TS_VAR2: ["var3", "var4"]}
 STATIC_VAR1 = "static_var1"
 STATIC_VAR2 = "static_var2"
 STATIC_VARS = [STATIC_VAR1, STATIC_VAR2]
+GEOMETRY_VAR = "geometry"
 
 
 # Functions
@@ -44,6 +48,7 @@ class Helpers:
             - var3: float
             - var4: float
         """
+        warnings.filterwarnings("ignore", message="dask_expr does not support the DataFrameIOFunction protocol")
         df_dask = dask.datasets.timeseries(
             start="2000-01-01",
             end="2000-01-03",
@@ -84,6 +89,14 @@ class Helpers:
         tsarray = tstore.TSArray(ts_list)
         return tsarray
 
+    @staticmethod
+    def create_geometry_list(size: int) -> list[Point]:
+        """Create a list of Point objects."""
+        x = np.random.uniform(-180, 180, size=size)
+        y = np.random.uniform(-90, 90, size=size)
+        points = [Point(x_, y_) for x_, y_ in zip(x, y)]
+        return points
+
 
 @pytest.fixture()
 def helpers() -> type[Helpers]:
@@ -107,6 +120,16 @@ def dask_dataframe_no_index(dask_dataframe: dd.DataFrame) -> dd.DataFrame:
     """Create a Dask DataFrame with a dummy time series (without time index)."""
     df_dask = dask_dataframe.reset_index()
     return df_dask
+
+
+@pytest.fixture()
+def geopandas_dataframe(helpers) -> gpd.GeoDataFrame:
+    """Create a GeoPandas DataFrame with dummy attributes."""
+    gdf = gpd.GeoDataFrame()
+    gdf[ID_VAR] = [1, 2, 3, 4]
+    gdf[GEOMETRY_VAR] = helpers.create_geometry_list(size=4)
+    gdf.set_geometry(GEOMETRY_VAR, inplace=True)
+    return gdf
 
 
 @pytest.fixture()
@@ -206,7 +229,7 @@ def parquet_timeseries(tmp_path: Path, dask_dataframe: dd.DataFrame) -> Path:
         custom_metadata=None,
         write_metadata_file=True,  # enable writing the _metadata file
         # File structure
-        name_function=lambda i: f"part.{i}.parquet",  # default naming scheme
+        name_function=lambda i: f"part-{i}.parquet",  # default naming scheme
         partition_on=None,
         # Encoding
         schema="infer",
@@ -230,7 +253,6 @@ def tstore_path(tmp_path: Path, pandas_long_dataframe: pd.DataFrame) -> Path:
     dirpath = tmp_path / "test_tstore"
     tstore_structure = "id-var"
     overwrite = True
-    # geometry = None  # NOT IMPLEMENTED YET
 
     # Same partitioning for all TS
     partitioning = "year/month"
@@ -243,6 +265,44 @@ def tstore_path(tmp_path: Path, pandas_long_dataframe: pd.DataFrame) -> Path:
         time_var=TIME_VAR,
         ts_vars=TS_VARS,
         static_vars=STATIC_VARS,
+    )
+
+    tslong.to_tstore(
+        str(dirpath),
+        partitioning=partitioning,
+        tstore_structure=tstore_structure,
+        overwrite=overwrite,
+    )
+
+    return dirpath
+
+
+@pytest.fixture()
+def geo_tstore_path(
+    tmp_path: Path,
+    pandas_long_dataframe: pd.DataFrame,
+    geopandas_dataframe: gpd.GeoDataFrame,
+) -> Path:
+    """Store a Pandas long DataFrame with geometry data as a TStore."""
+    # TODO: Rewrite without using tstore to not depend on implementation
+    from tstore.tslong.pandas import TSLongPandas
+
+    dirpath = tmp_path / "test_tstore"
+    tstore_structure = "id-var"
+    overwrite = True
+
+    # Same partitioning for all TS
+    partitioning = "year/month"
+    # Partitioning specific to each TS
+    partitioning = {TS_VAR1: "year/month", TS_VAR2: "year/month"}
+
+    tslong = TSLongPandas(
+        pandas_long_dataframe,
+        id_var=ID_VAR,
+        time_var=TIME_VAR,
+        ts_vars=TS_VARS,
+        static_vars=STATIC_VARS,
+        geometry=geopandas_dataframe,
     )
 
     tslong.to_tstore(
@@ -352,6 +412,77 @@ def pyarrow_tslong(pyarrow_long_dataframe: pa.Table) -> tstore.tslong.TSLongPyAr
     return tslong
 
 
+### TSLong with geometry data
+
+
+@pytest.fixture()
+def dask_geo_tslong(
+    dask_long_dataframe: dd.DataFrame,
+    geopandas_dataframe: gpd.GeoDataFrame,
+) -> tstore.tslong.TSLongDask:
+    """Create a Dask TSLong object with geometry data."""
+    tslong = tstore.TSLong.wrap(
+        dask_long_dataframe,
+        id_var=ID_VAR,
+        time_var=TIME_VAR,
+        ts_vars=TS_VARS,
+        static_vars=STATIC_VARS,
+        geometry=geopandas_dataframe,
+    )
+    return tslong
+
+
+@pytest.fixture()
+def pandas_geo_tslong(
+    pandas_long_dataframe: dd.DataFrame,
+    geopandas_dataframe: gpd.GeoDataFrame,
+) -> tstore.tslong.TSLongPandas:
+    """Create a Pandas TSLong object with geometry data."""
+    tslong = tstore.TSLong.wrap(
+        pandas_long_dataframe,
+        id_var=ID_VAR,
+        time_var=TIME_VAR,
+        ts_vars=TS_VARS,
+        static_vars=STATIC_VARS,
+        geometry=geopandas_dataframe,
+    )
+    return tslong
+
+
+@pytest.fixture()
+def polars_geo_tslong(
+    polars_long_dataframe: dd.DataFrame,
+    geopandas_dataframe: gpd.GeoDataFrame,
+) -> tstore.tslong.TSLongPolars:
+    """Create a Polars TSLong object with geometry data."""
+    tslong = tstore.TSLong.wrap(
+        polars_long_dataframe,
+        id_var=ID_VAR,
+        time_var=TIME_VAR,
+        ts_vars=TS_VARS,
+        static_vars=STATIC_VARS,
+        geometry=geopandas_dataframe,
+    )
+    return tslong
+
+
+@pytest.fixture()
+def pyarrow_geo_tslong(
+    pyarrow_long_dataframe: dd.DataFrame,
+    geopandas_dataframe: gpd.GeoDataFrame,
+) -> tstore.tslong.TSLongPyArrow:
+    """Create a PyArrow TSLong object with geometry data."""
+    tslong = tstore.TSLong.wrap(
+        pyarrow_long_dataframe,
+        id_var=ID_VAR,
+        time_var=TIME_VAR,
+        ts_vars=TS_VARS,
+        static_vars=STATIC_VARS,
+        geometry=geopandas_dataframe,
+    )
+    return tslong
+
+
 ## TSArrays
 
 
@@ -371,12 +502,12 @@ def pandas_series_of_ts(dask_tsarray: tstore.TSArray) -> pd.Series:
     return df_series
 
 
-## TSDF
+## TSDF DataFrames
 
 
 @pytest.fixture()
-def dask_tsdf(helpers) -> tstore.tsdf.TSDFDask:
-    """Create a TSDF object."""
+def pandas_tsdf_dataframe(helpers) -> pd.DataFrame:
+    """Create a Pandas dataframe with TSArray columns."""
     pd_series_of_ts_1 = pd.Series(helpers.create_dask_tsarray(size=4, columns_slice=slice(0, 2)))
     pd_series_of_ts_2 = pd.Series(helpers.create_dask_tsarray(size=4, columns_slice=slice(2, 4)))
     tstore_ids = np.arange(1, pd_series_of_ts_1.size + 1)
@@ -391,8 +522,45 @@ def dask_tsdf(helpers) -> tstore.tsdf.TSDFDask:
     df = pd.DataFrame(data)
     df[ID_VAR] = df[ID_VAR].astype("large_string[pyarrow]")
 
+    return df
+
+
+@pytest.fixture()
+def geopandas_tsdf_dataframe(
+    helpers,
+    pandas_tsdf_dataframe: pd.DataFrame,
+) -> pd.DataFrame:
+    """Create a GeoPandas dataframe with TSArray columns and a mock geometry column."""
+    np.random.seed(0)
+    size = len(pandas_tsdf_dataframe)
+    points = helpers.create_geometry_list(size)
+    pandas_tsdf_dataframe[GEOMETRY_VAR] = points
+
+    gdf = gpd.GeoDataFrame(pandas_tsdf_dataframe, geometry=GEOMETRY_VAR)
+
+    return gdf
+
+
+## TSDF
+
+
+@pytest.fixture()
+def tsdf_ts_dask(pandas_tsdf_dataframe) -> tstore.tsdf.TSDF:
+    """Create a TSDF object with Dask TS objects."""
     tsdf = tstore.TSDF.wrap(
-        df,
+        pandas_tsdf_dataframe,
         id_var=ID_VAR,
     )
+
+    return tsdf
+
+
+@pytest.fixture()
+def geo_tsdf_ts_dask(geopandas_tsdf_dataframe) -> tstore.tsdf.TSDF:
+    """Create a GeoPandas TSDF object with Dask TS objects."""
+    tsdf = tstore.TSDF.wrap(
+        geopandas_tsdf_dataframe,
+        id_var=ID_VAR,
+    )
+
     return tsdf

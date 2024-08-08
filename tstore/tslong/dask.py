@@ -2,6 +2,7 @@
 
 from typing import TYPE_CHECKING
 
+import geopandas as gpd
 import pandas as pd
 
 from tstore.tsdf.ts_class import TS
@@ -11,7 +12,7 @@ from tstore.tslong.tslong import TSLong
 
 if TYPE_CHECKING:
     # To avoid circular imports
-    from tstore.tsdf.dask import TSDFDask
+    from tstore.tsdf.tsdf import TSDF
     from tstore.tswide.dask import TSWideDask
 
 
@@ -61,9 +62,9 @@ class TSLongDask(TSLong):
         # Conversion to pandas
         return tslong_pyarrow.change_backend(new_backend="dask")
 
-    def to_tsdf(self) -> "TSDFDask":
-        """Convert the wrapper into a TSDFDask object."""
-        from tstore.tsdf.dask import TSDFDask
+    def to_tsdf(self) -> "TSDF":
+        """Convert the wrapper into a TSDF object with Dask TS objects."""
+        from tstore.tsdf.tsdf import TSDF
 
         tstore_ids = self._get_tstore_ids()
         ts_arrays = self._get_ts_arrays()
@@ -72,7 +73,12 @@ class TSLongDask(TSLong):
         data = {**pd_series, **static_values, self._tstore_id_var: tstore_ids}
 
         df = pd.DataFrame(data)
-        return TSDFDask(
+
+        if self._tstore_geometry is not None:
+            df = df.merge(self._tstore_geometry, on=self._tstore_id_var, how="left")
+            df = gpd.GeoDataFrame(df, geometry=self._tstore_geometry.geometry.name)
+
+        return TSDF(
             df,
             id_var=self._tstore_id_var,
         )
@@ -140,4 +146,5 @@ class TSLongDask(TSLong):
             time_var=self._tstore_time_var,
             ts_vars=self._tstore_ts_vars,
             static_vars=self._tstore_static_vars,
+            geometry=self._tstore_geometry,
         )

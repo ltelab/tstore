@@ -1,6 +1,7 @@
 """Test the backend management package."""
 
 import dask.dataframe as dd
+import geopandas as gpd
 import pandas as pd
 import polars as pl
 import pyarrow as pa
@@ -11,6 +12,7 @@ from tstore import backend
 # Fixtures imported from conftest.py:
 # - dask_dataframe
 # - dask_series
+# - geopandas_dataframe
 # - pandas_dataframe
 # - pandas_series
 # - polars_dataframe
@@ -21,6 +23,7 @@ from tstore import backend
 
 dataframe_types = {
     "dask": dd.DataFrame,
+    "geopandas": gpd.GeoDataFrame,
     "pandas": pd.DataFrame,
     "polars": pl.DataFrame,
     "pyarrow": pa.Table,
@@ -33,7 +36,8 @@ series_types = {
     "pyarrow": pa.Array,
 }
 
-backend_names = list(dataframe_types.keys())
+backend_names_with_geo = list(dataframe_types.keys())
+backend_names = [name for name in backend_names_with_geo if name != "geopandas"]
 
 
 def test_types() -> None:
@@ -48,7 +52,7 @@ def test_types() -> None:
     assert backend.PyArrowSeries is pa.Array
 
 
-@pytest.mark.parametrize("backend_to", backend_names)
+@pytest.mark.parametrize("backend_to", backend_names_with_geo)
 @pytest.mark.parametrize("backend_from", backend_names)
 def test_change_dataframe_backend(
     backend_from: backend.Backend,
@@ -71,7 +75,6 @@ def test_change_dataframe_backend(
 
     # Check size
     assert df.shape[0] == df_new.shape[0]
-    print(backend_from, df.shape, backend_to, df_new.shape)
 
 
 @pytest.mark.parametrize("backend_to", backend_names)

@@ -3,28 +3,40 @@
 from typing import Callable, Literal, Optional, TypeVar, Union
 
 import dask.dataframe as dd
+import geopandas as gpd
 import pandas as pd
 import polars as pl
 import pyarrow as pa
 
 Backend = Literal[
     "dask",
+    "geopandas",
     "pandas",
     "polars",
     "pyarrow",
 ]
 
 DaskDataFrame = dd.DataFrame
+GeoPandasDataFrame = gpd.GeoDataFrame
 PandasDataFrame = pd.DataFrame
 PolarsDataFrame = pl.DataFrame
 PyArrowDataFrame = pa.Table
-DataFrame = Union[DaskDataFrame, PandasDataFrame, PolarsDataFrame, PyArrowDataFrame]
+DataFrame = Union[DaskDataFrame, GeoPandasDataFrame, PandasDataFrame, PolarsDataFrame, PyArrowDataFrame]
+
+dataframe_types = {
+    "dask": dd.DataFrame,
+    "geopandas": gpd.GeoDataFrame,
+    "pandas": pd.DataFrame,
+    "polars": pl.DataFrame,
+    "pyarrow": pa.Table,
+}
 
 DaskSeries = dd.Series
+GeoPandasSeries = gpd.GeoSeries
 PandasSeries = pd.Series
 PolarsSeries = pl.Series
 PyArrowSeries = pa.Array
-Series = Union[DaskSeries, PandasSeries, PolarsSeries, PyArrowSeries]
+Series = Union[DaskSeries, GeoPandasSeries, PandasSeries, PolarsSeries, PyArrowSeries]
 
 
 T = TypeVar("T", DataFrame, Series)
@@ -34,6 +46,9 @@ def get_backend(obj: T) -> Backend:
     """Get the backend of a dataframe or a series."""
     if isinstance(obj, (DaskDataFrame, DaskSeries)):
         return "dask"
+
+    if isinstance(obj, (GeoPandasDataFrame, GeoPandasSeries)):  # Must be before Pandas
+        return "geopandas"
 
     if isinstance(obj, (PandasDataFrame, PandasSeries)):
         return "pandas"
@@ -61,20 +76,45 @@ def change_backend(
     """
     change_backend_functions = {
         DaskDataFrame: _change_dataframe_backend_from_dask,
+        GeoPandasDataFrame: _change_dataframe_backend_from_pandas,
         PandasDataFrame: _change_dataframe_backend_from_pandas,
         PolarsDataFrame: _change_dataframe_backend_from_polars,
         PyArrowDataFrame: _change_dataframe_backend_from_pyarrow,
         DaskSeries: _change_series_backend_from_dask,
+        GeoPandasSeries: _change_series_backend_from_pandas,
         PandasSeries: _change_series_backend_from_pandas,
         PolarsSeries: _change_series_backend_from_polars,
         PyArrowSeries: _change_series_backend_from_pyarrow,
+        pa.ChunkedArray: _change_series_backend_from_pyarrow,
     }
 
     for supported_type, change_backend_function in change_backend_functions.items():
         if isinstance(obj, supported_type):
-            return change_backend_function(obj, new_backend, index_var=index_var, **backend_kwargs)
+            new_obj = change_backend_function(
+                obj,
+                new_backend=new_backend.replace("geopandas", "pandas"),
+                index_var=index_var,
+                **backend_kwargs,
+            )
+
+            if new_backend != "geopandas":
+                return new_obj
+
+            if isinstance(new_obj, PandasDataFrame):
+                return gpd.GeoDataFrame(new_obj)
+
+            if isinstance(new_obj, PandasSeries):
+                return gpd.GeoSeries(new_obj)
 
     raise TypeError(f"Unsupported type: {type(obj).__module__}.{type(obj).__qualname__}")
+
+
+def get_dataframe_index(df: DataFrame) -> Optional[str]:
+    """Get the name of the index of a DataFrame."""
+    if isinstance(df, (DaskDataFrame, PandasDataFrame)):
+        return df.index.name
+
+    return None
 
 
 def remove_dataframe_index(df: DataFrame) -> DataFrame:
@@ -332,3 +372,11 @@ def cast_column_to_large_string(df: DataFrame, col: str) -> DataFrame:
         df = df.cast(target_schema=schema)
 
     return df
+
+
+def get_column_names(df: DataFrame) -> list[str]:
+    """Get the column names of a DataFrame."""
+    if isinstance(df, PyArrowDataFrame):
+        return df.schema.names
+
+    return df.columns

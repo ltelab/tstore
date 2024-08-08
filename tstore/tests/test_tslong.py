@@ -2,20 +2,22 @@
 
 import os
 from pathlib import Path
+from typing import Literal
 
 import dask.dataframe as dd
+import geopandas as gpd
 import numpy as np
 import pandas as pd
 import polars as pl
 import pyarrow as pa
 import pytest
+import yaml
+from shapely.geometry import Point
 
 import tstore
 from tstore.backend import Backend
-from tstore.tsdf.dask import TSDFDask
+from tstore.tsdf.geopandas import TSDFGeoPandas
 from tstore.tsdf.pandas import TSDFPandas
-from tstore.tsdf.polars import TSDFPolars
-from tstore.tsdf.pyarrow import TSDFPyArrow
 from tstore.tslong.dask import TSLongDask
 from tstore.tslong.pandas import TSLongPandas
 from tstore.tslong.polars import TSLongPolars
@@ -27,27 +29,27 @@ from tstore.tswide.pyarrow import TSWidePyArrow
 
 # Imported fixtures from conftest.py:
 # - dask_long_dataframe
+# - dask_geo_tslong
 # - dask_tslong
+# - geopandas_dataframe
 # - pandas_long_dataframe
+# - pandas_geo_tslong
 # - pandas_tslong
 # - polars_long_dataframe
+# - polars_geo_tslong
 # - polars_tslong
 # - pyarrow_long_dataframe
+# - pyarrow_geo_tslong
 # - pyarrow_tslong
 
+
+WithGeo = Literal["without_geo", "with_geo"]
 
 tslong_classes = {
     "dask": TSLongDask,
     "pandas": TSLongPandas,
     "polars": TSLongPolars,
     "pyarrow": TSLongPyArrow,
-}
-
-tsdf_classes = {
-    "dask": TSDFDask,
-    "pandas": TSDFPandas,
-    "polars": TSDFPolars,
-    "pyarrow": TSDFPyArrow,
 }
 
 tswide_classes = {
@@ -64,7 +66,6 @@ tswide_classes = {
 def store_tslong(tslong: tstore.TSLong, dirpath: str) -> None:
     tstore_structure = "id-var"
     overwrite = True
-    # geometry = None  # NOT IMPLEMENTED YET
 
     # Same partitioning for all TS
     partitioning = "year/month"
@@ -121,22 +122,159 @@ def test_creation(
         assert tslong["tstore_id"].type == pa.large_string()
 
 
-@pytest.mark.parametrize(
-    "dataframe_fixture_name",
-    [
-        "dask_tslong",
-        "pandas_tslong",
-        "polars_tslong",
-        "pyarrow_tslong",
-    ],
-)
+@pytest.mark.parametrize("backend", ["dask", "pandas", "polars", "pyarrow"])
+class TestCreationArgs:
+    """Test the creation of a TSLong object with various arguments."""
+
+    @pytest.fixture()
+    def base_kwargs(self, backend: Backend, request) -> dict:
+        """Return a template of keyword arguments for the TSLong wrapper."""
+        dataframe_fixture_name = f"{backend}_long_dataframe"
+        df = request.getfixturevalue(dataframe_fixture_name)
+
+        return {
+            "df": df,
+            "id_var": "tstore_id",
+            "time_var": "time",
+            "ts_vars": {"ts_var1": ["var1", "var2"], "ts_var2": ["var3", "var4"]},
+            "static_vars": ["static_var1", "static_var2"],
+        }
+
+    def test_ts_vars_none(
+        self,
+        base_kwargs: dict,
+    ) -> None:
+        """Test the creation of a TSLong object with ts_vars=None."""
+        kwargs = base_kwargs.copy()
+        kwargs["ts_vars"] = None
+        tslong = tstore.TSLong.wrap(**kwargs)
+        assert tslong._tstore_ts_vars == {"ts_variable": ["var1", "var2", "var3", "var4"]}
+
+    def test_ts_vars_list(
+        self,
+        base_kwargs: dict,
+    ) -> None:
+        """Test the creation of a TSLong object with ts_vars as a list."""
+        kwargs = base_kwargs.copy()
+        kwargs["ts_vars"] = ["var1", "var2", "var3", "var4"]
+        tslong = tstore.TSLong.wrap(**kwargs)
+        assert tslong._tstore_ts_vars == {"var1": ["var1"], "var2": ["var2"], "var3": ["var3"], "var4": ["var4"]}
+
+    def test_ts_vars_incomplete_list(
+        self,
+        base_kwargs: dict,
+    ) -> None:
+        """Test the creation of a TSLong object with ts_vars as a list not covering all columns."""
+        kwargs = base_kwargs.copy()
+        kwargs["ts_vars"] = ["var1", "var2"]
+        with pytest.raises(ValueError):
+            tstore.TSLong.wrap(**kwargs)
+
+    def test_ts_vars_list_with_unknown_columns(
+        self,
+        base_kwargs: dict,
+    ) -> None:
+        """Test the creation of a TSLong object with ts_vars as a list containing unknown columns."""
+        kwargs = base_kwargs.copy()
+        kwargs["ts_vars"] = ["var1", "var2", "var3", "var4", "var5"]
+        with pytest.raises(ValueError):
+            tstore.TSLong.wrap(**kwargs)
+
+    def test_ts_vars_list_with_id_var(
+        self,
+        base_kwargs: dict,
+    ) -> None:
+        """Test the creation of a TSLong object with ts_vars as a list containing the id_var."""
+        kwargs = base_kwargs.copy()
+        kwargs["ts_vars"] = ["var1", "var2", "var3", "var4", "tstore_id"]
+        with pytest.raises(ValueError):
+            tstore.TSLong.wrap(**kwargs)
+
+    def test_ts_vars_list_with_time_var(
+        self,
+        base_kwargs: dict,
+    ) -> None:
+        """Test the creation of a TSLong object with ts_vars as a list containing the time_var."""
+        kwargs = base_kwargs.copy()
+        kwargs["ts_vars"] = ["var1", "var2", "var3", "var4", "time"]
+        with pytest.raises(ValueError):
+            tstore.TSLong.wrap(**kwargs)
+
+    def test_ts_vars_dict(
+        self,
+        base_kwargs: dict,
+    ) -> None:
+        """Test the creation of a TSLong object with ts_vars as a dict."""
+        kwargs = base_kwargs.copy()
+        kwargs["ts_vars"] = {"ts_var1": ["var1", "var2"], "ts_var2": ["var3", "var4"]}
+        tslong = tstore.TSLong.wrap(**kwargs)
+        assert tslong._tstore_ts_vars == {"ts_var1": ["var1", "var2"], "ts_var2": ["var3", "var4"]}
+
+    def test_invalid_time_var(
+        self,
+        base_kwargs: dict,
+    ) -> None:
+        """Test the creation of a TSLong object with an invalid time_var."""
+        kwargs = base_kwargs.copy()
+        kwargs["time_var"] = "invalid_time"
+        with pytest.raises(ValueError):
+            tstore.TSLong.wrap(**kwargs)
+
+    def test_invalid_id_var(
+        self,
+        base_kwargs: dict,
+    ) -> None:
+        """Test the creation of a TSLong object with an invalid id_var."""
+        kwargs = base_kwargs.copy()
+        kwargs["id_var"] = "invalid_id"
+        with pytest.raises(ValueError):
+            tstore.TSLong.wrap(**kwargs)
+
+    def test_invalid_static_vars(
+        self,
+        base_kwargs: dict,
+    ) -> None:
+        """Test the creation of a TSLong object with invalid static_vars."""
+        kwargs = base_kwargs.copy()
+        kwargs["static_vars"] = ["invalid_static"]
+        with pytest.raises(ValueError):
+            tstore.TSLong.wrap(**kwargs)
+
+    def test_geometry(
+        self,
+        base_kwargs: dict,
+        geopandas_dataframe: gpd.GeoDataFrame,
+    ) -> None:
+        """Test the creation of a TSLong object with geometry data."""
+        kwargs = base_kwargs.copy()
+        kwargs["geometry"] = geopandas_dataframe
+        tslong = tstore.TSLong.wrap(**kwargs)
+        assert tslong._tstore_geometry is geopandas_dataframe
+
+    def test_geometry_invalid_ids(
+        self,
+        base_kwargs: dict,
+        geopandas_dataframe: gpd.GeoDataFrame,
+    ) -> None:
+        """Test the creation of a TSLong object with invalid geometry data."""
+        kwargs = base_kwargs.copy()
+        geopandas_dataframe = geopandas_dataframe.iloc[:3]
+        kwargs["geometry"] = geopandas_dataframe
+        with pytest.raises(ValueError):
+            tstore.TSLong.wrap(**kwargs)
+
+
+@pytest.mark.parametrize("backend", ["dask", "pandas", "polars", "pyarrow"])
+@pytest.mark.parametrize("with_geo", ["without_geo", "with_geo"])
 def test_store(
     tmp_path: Path,
-    dataframe_fixture_name: str,
+    backend: Backend,
+    with_geo: WithGeo,
     request,
 ) -> None:
     """Test the to_tstore function."""
-    tslong = request.getfixturevalue(dataframe_fixture_name)
+    tslong_fixture_name = f"{backend}_tslong" if with_geo == "without_geo" else f"{backend}_geo_tslong"
+    tslong = request.getfixturevalue(tslong_fixture_name)
     dirpath = tmp_path / "test_tstore"
     store_tslong(tslong, str(dirpath))
 
@@ -148,11 +286,43 @@ def test_store(
     for ts_var in ["ts_var1", "ts_var2"]:
         assert os.listdir(dirpath / "1" / ts_var / "year=2000" / "month=1") == ["part-0.parquet"]
 
+    # Check metadata
+    with open(dirpath / "tstore_metadata.yaml") as file:
+        metadata = yaml.safe_load(file)
 
+    expected_metadata = {
+        "id_var": "tstore_id",
+        "ts_variables": ["ts_var1", "ts_var2"],
+        "partitioning": {"ts_var1": "year/month", "ts_var2": "year/month"},
+        "tstore_structure": "id-var",
+    }
+
+    assert metadata == expected_metadata
+
+    # Check static variables
+    if with_geo == "without_geo":
+        attributes = pd.read_parquet(dirpath / "_attributes.parquet")
+    else:
+        attributes = gpd.read_parquet(dirpath / "_attributes.parquet")
+
+    if with_geo == "without_geo":
+        assert sorted(attributes.columns.to_list()) == ["static_var1", "static_var2", "tstore_id"]
+    else:
+        assert sorted(attributes.columns.to_list()) == ["geometry", "static_var1", "static_var2", "tstore_id"]
+
+    assert sorted(attributes["tstore_id"].to_list()) == ["1", "2", "3", "4"]
+    assert sorted(attributes["static_var1"].to_list()) == ["A", "B", "C", "D"]
+    assert sorted(attributes["static_var2"].to_list()) == [1.0, 2.0, 3.0, 4.0]
+    if with_geo == "with_geo":
+        assert isinstance(attributes["geometry"].dtype, gpd.array.GeometryDtype)
+        assert isinstance(attributes["geometry"].iloc[0], Point)
+
+
+@pytest.mark.parametrize("with_geo", ["without_geo", "with_geo"])
 class TestLoad:
     """Test the from_tstore function."""
 
-    def common_checks(self, tslong: tstore.TSLong) -> None:
+    def common_checks(self, tslong: tstore.TSLong, with_geo: WithGeo) -> None:
         if isinstance(tslong, TSLongDask):
             assert tslong._obj.compute().shape[0] == 192
         else:
@@ -161,52 +331,71 @@ class TestLoad:
         assert tslong._tstore_time_var == "time"
         assert tslong._tstore_ts_vars == {"ts_var1": ["var1", "var2"], "ts_var2": ["var3", "var4"]}
         assert tslong._tstore_static_vars == ["static_var1", "static_var2"]
+        if with_geo == "without_geo":
+            assert tslong._tstore_geometry is None
+        else:
+            assert tslong._tstore_geometry is not None
+            geometry_col = tslong._tstore_geometry.geometry
+            assert isinstance(geometry_col.dtype, gpd.array.GeometryDtype)
+            assert isinstance(geometry_col.iloc[0], Point)
 
     def test_dask(
         self,
-        tstore_path: Path,
+        with_geo: WithGeo,
+        request,
     ) -> None:
         """Test loading as a Dask DataFrame."""
+        tstore_path_fixture_name = "tstore_path" if with_geo == "without_geo" else "geo_tstore_path"
+        tstore_path = request.getfixturevalue(tstore_path_fixture_name)
         tslong = tstore.open_tslong(tstore_path, backend="dask", ts_variables=["ts_var1", "ts_var2"])
         assert type(tslong) is TSLongDask
         assert type(tslong._obj) is dd.DataFrame
-        self.common_checks(tslong)
+        self.common_checks(tslong, with_geo)
 
     def test_pandas(
         self,
-        tstore_path: Path,
+        with_geo: WithGeo,
+        request,
     ) -> None:
         """Test loading as a Pandas DataFrame."""
+        tstore_path_fixture_name = "tstore_path" if with_geo == "without_geo" else "geo_tstore_path"
+        tstore_path = request.getfixturevalue(tstore_path_fixture_name)
         tslong = tstore.open_tslong(tstore_path, backend="pandas", ts_variables=["ts_var1", "ts_var2"])
         assert type(tslong) is TSLongPandas
         assert type(tslong._obj) is pd.DataFrame
-        self.common_checks(tslong)
+        self.common_checks(tslong, with_geo)
         # TODO: time column is counted
         # TODO: line order is not preserved
         # TODO: column order is not preserved
 
     def test_polars(
         self,
-        tstore_path: Path,
+        with_geo: WithGeo,
+        request,
     ) -> None:
         """Test loading as a Polars DataFrame."""
+        tstore_path_fixture_name = "tstore_path" if with_geo == "without_geo" else "geo_tstore_path"
+        tstore_path = request.getfixturevalue(tstore_path_fixture_name)
         tslong = tstore.open_tslong(tstore_path, backend="polars", ts_variables=["ts_var1", "ts_var2"])
         assert type(tslong) is TSLongPolars
         assert type(tslong._obj) is pl.DataFrame
-        self.common_checks(tslong)
+        self.common_checks(tslong, with_geo)
         # TODO: time column is counted
         # TODO: line order is not preserved
         # TODO: column order is not preserved
 
     def test_pyarrow(
         self,
-        tstore_path: Path,
+        with_geo: WithGeo,
+        request,
     ) -> None:
         """Test loading as a PyArrow Table."""
+        tstore_path_fixture_name = "tstore_path" if with_geo == "without_geo" else "geo_tstore_path"
+        tstore_path = request.getfixturevalue(tstore_path_fixture_name)
         tslong = tstore.open_tslong(tstore_path, backend="polars", ts_variables=["ts_var1", "ts_var2"])
         assert type(tslong) is TSLongPolars
         assert type(tslong._obj) is pl.DataFrame
-        self.common_checks(tslong)
+        self.common_checks(tslong, with_geo)
 
 
 @pytest.mark.parametrize("backend_to", ["dask", "pandas", "polars", "pyarrow"])
@@ -224,16 +413,23 @@ def test_change_backend(
 
 
 @pytest.mark.parametrize("backend", ["dask", "pandas", "polars", "pyarrow"])
+@pytest.mark.parametrize("with_geo", ["without_geo", "with_geo"])
 def test_to_tsdf(
     backend: str,
+    with_geo: WithGeo,
     request,
 ) -> None:
     """Test the to_tsdf function."""
-    tslong_fixture_name = f"{backend}_tslong"
+    tslong_fixture_name = f"{backend}_tslong" if with_geo == "without_geo" else f"{backend}_geo_tslong"
     tslong = request.getfixturevalue(tslong_fixture_name)
     tsdf = tslong.to_tsdf()
 
-    assert isinstance(tsdf, tsdf_classes[backend])
+    if with_geo == "without_geo":
+        assert isinstance(tsdf, TSDFPandas)
+    else:
+        assert isinstance(tsdf, TSDFGeoPandas)
+    assert tsdf.get_ts_backend("ts_var1") == backend
+    assert tsdf.get_ts_backend("ts_var2") == backend
     assert tsdf._tstore_id_var == "tstore_id"
     assert tsdf._tstore_ts_vars == {"ts_var1": ["var1", "var2"], "ts_var2": ["var3", "var4"]}
     assert tsdf._tstore_static_vars == ["static_var1", "static_var2"]
@@ -242,15 +438,20 @@ def test_to_tsdf(
     np.testing.assert_array_equal(tsdf["tstore_id"], ["1", "2", "3", "4"])
     np.testing.assert_array_equal(tsdf["static_var1"], ["A", "B", "C", "D"])
     np.testing.assert_array_equal(tsdf["static_var2"], [1.0, 2.0, 3.0, 4.0])
+    if with_geo == "with_geo":
+        assert isinstance(tsdf._tstore_geometry, gpd.GeoSeries)
+        assert isinstance(tsdf._tstore_geometry.iloc[0], Point)
 
 
-@pytest.mark.parametrize("backend", ["dask", "pandas", "polars", "pyarrow"])
+@pytest.mark.parametrize("backend", ["dask", "pandas"])
+@pytest.mark.parametrize("with_geo", ["without_geo", "with_geo"])
 def test_to_tswide(
     backend: str,
+    with_geo: WithGeo,
     request,
 ) -> None:
-    """Test the to_tsdf function."""
-    tslong_fixture_name = f"{backend}_tslong"
+    """Test the to_wide function."""
+    tslong_fixture_name = f"{backend}_tslong" if with_geo == "without_geo" else f"{backend}_geo_tslong"
     tslong = request.getfixturevalue(tslong_fixture_name)
     tswide = tslong.to_tswide()
 
@@ -259,3 +460,11 @@ def test_to_tswide(
     assert tswide._tstore_time_var == "time"
     assert tswide._tstore_ts_vars == {"ts_var1": ["var1", "var2"], "ts_var2": ["var3", "var4"]}
     assert tswide._tstore_static_vars == ["static_var1", "static_var2"]
+
+    if with_geo == "without_geo":
+        assert tswide._tstore_geometry is None
+    else:
+        assert tswide._tstore_geometry is not None
+        geometry_col = tswide._tstore_geometry.geometry
+        assert isinstance(geometry_col.dtype, gpd.array.GeometryDtype)
+        assert isinstance(geometry_col.iloc[0], Point)

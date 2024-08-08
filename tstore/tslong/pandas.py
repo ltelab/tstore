@@ -2,6 +2,7 @@
 
 from typing import TYPE_CHECKING
 
+import geopandas as gpd
 import pyarrow as pa
 
 from tstore.archive.io import (
@@ -64,6 +65,11 @@ class TSLongPandas(TSLong):
         df_attrs = df_attrs.drop_duplicates(subset=self._tstore_id_var)
         df_attrs = df_attrs.reset_index(drop=True)
 
+        # Add geometry data
+        if self._tstore_geometry is not None:
+            df_attrs = df_attrs.merge(self._tstore_geometry, on=self._tstore_id_var, how="left")
+            df_attrs = gpd.GeoDataFrame(df_attrs, geometry=self._tstore_geometry.geometry.name)
+
         # Write static attributes
         # --> Need to test that save id_var as large_string !
         attrs_fpath = define_attributes_filepath(base_dir)
@@ -78,7 +84,7 @@ class TSLongPandas(TSLong):
         write_tstore_metadata(
             base_dir=base_dir,
             id_var=self._tstore_id_var,
-            ts_variables=list(ts_variables),
+            ts_vars=list(ts_variables),
             tstore_structure=tstore_structure,
             partitioning=partitioning,
         )
@@ -177,4 +183,5 @@ class TSLongPandas(TSLong):
             time_var=self._tstore_time_var,
             ts_vars=self._tstore_ts_vars,
             static_vars=self._tstore_static_vars,
+            geometry=self._tstore_geometry,
         )
