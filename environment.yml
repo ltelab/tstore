@@ -1,16 +1,14 @@
 name: tstore
 channels:
 - conda-forge
-- bioconda
 dependencies:
-- git
-- ipykernel
+- contextily
 - osmnx
-- papermill
 - pip
-- pre-commit
-- python=3.10
-- snakemake
+- python=3.12
+- xarray
+- xvec=0.3.0
+- zarr
 - pip:
   - -e .
-  - agrometeo-geopy>=0.2
+  - git+https://github.com/martibosch/meteostations-geopy.git@feat-multivar-df#egg=meteostations
