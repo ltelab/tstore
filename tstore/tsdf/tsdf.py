@@ -215,13 +215,12 @@ class TSDF(TSWrapper):
 
         df = None
         tstore_ids = self._obj[self._tstore_id_var].unique()
-
         long_rows = [self._get_long_rows(tstore_id) for tstore_id in tstore_ids]
         df = dd.concat(long_rows)
         time_var = df.index.name
 
         return TSLongDask(
-            df,
+            df.reset_index(),
             id_var=self._tstore_id_var,
             time_var=time_var,
             ts_vars=self._tstore_ts_vars,

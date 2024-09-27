@@ -132,6 +132,7 @@ class TestStoreAndLoad:
     ) -> None:
         """Test on a Pandas TS object."""
         filepath = str(tmp_path / "test.parquet")
+
         ts = TS(polars_dataframe)
         ts.to_disk(filepath)
         ts_loaded = TS.from_disk(filepath, partitions=[], backend="polars")

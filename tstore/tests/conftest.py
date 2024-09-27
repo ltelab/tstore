@@ -333,7 +333,7 @@ def pandas_long_dataframe(helpers) -> pd.DataFrame:
     df_list = []
 
     for store_id in store_ids:
-        df = helpers.create_dask_dataframe().compute()
+        df = helpers.create_dask_dataframe().compute().reset_index()
         df[ID_VAR] = store_id
         df[STATIC_VAR1] = chr(64 + store_id)  # A, B, C, D
         df[STATIC_VAR2] = float(store_id)  # 1.0, 2.0, 3.0, 4.0
@@ -346,14 +346,14 @@ def pandas_long_dataframe(helpers) -> pd.DataFrame:
 @pytest.fixture()
 def polars_long_dataframe(pandas_long_dataframe: pd.DataFrame) -> pl.DataFrame:
     """Create a long Polars DataFrame."""
-    df_pl = pl.from_pandas(pandas_long_dataframe, include_index=True)
+    df_pl = pl.from_pandas(pandas_long_dataframe)
     return df_pl
 
 
 @pytest.fixture()
 def pyarrow_long_dataframe(pandas_long_dataframe: pd.DataFrame) -> pa.Table:
     """Create a long Pyarrow Table."""
-    df_pa = pa.Table.from_pandas(pandas_long_dataframe, preserve_index=True)
+    df_pa = pa.Table.from_pandas(pandas_long_dataframe, preserve_index=False)
     return df_pa
 
 

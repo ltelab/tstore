@@ -89,7 +89,9 @@ class TS:
             **kwargs,
         )
 
-        df = change_backend(df, new_backend=backend)
+        # unlike for long data frames (where time is usually not unique), here it makes sense to set the time as index
+        # TODO: avoid hardcoding "time" here?
+        df = change_backend(df, new_backend=backend, index_var="time")
 
         # Create the TS object
         return TS(df)

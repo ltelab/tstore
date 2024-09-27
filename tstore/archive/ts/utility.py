@@ -43,11 +43,13 @@ def get_time_filters(
         start_op = ">"
         if inclusive in ["both", "left"]:
             start_op += "="
+        # TODO: avoid hardcoding "time" here?
         filters.append(("time", start_op, start_time))
     if end_time is not None:
         end_op = "<"
         if inclusive in ["both", "right"]:
             end_op += "="
+        # TODO: avoid hardcoding "time" here?
         filters.append(("time", end_op, end_time))
 
     if filters:
