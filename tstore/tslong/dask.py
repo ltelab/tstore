@@ -102,9 +102,8 @@ class TSLongDask(TSLong):
     def _get_ts(self, tstore_id: str, variables: list[str]) -> TS:
         """Create a TS object for a given tstore_id and a set of variables."""
         df = self._obj
-        df = df[df[self._tstore_id_var] == tstore_id]
-        df = df[variables]
-        return TS(df)
+        # filter df by id and select only provided variables (and time)
+        return TS(df[df[self._tstore_id_var] == tstore_id][[*variables, self._tstore_time_var]])
 
     def _get_static_values(self) -> dict[str, list]:
         """Retrieve the static values."""

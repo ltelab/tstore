@@ -14,7 +14,6 @@ from tstore.backend import (
     change_backend,
     get_column_names,
     get_dataframe_index,
-    re_set_dataframe_index,
 )
 from tstore.tswrapper.tswrapper import TSWrapper
 
@@ -35,7 +34,6 @@ class TSLong(TSWrapper):
         ts_vars: Union[dict[str, list[str]], list[str], None] = None,
         static_vars: Optional[list[str]] = None,
         geometry: Optional[GeoPandasDataFrame] = None,
-        ensure_time_index: bool = True,
     ) -> None:
         """Wrap a long-form timeseries DataFrame as a TSLong object.
 
@@ -78,8 +76,8 @@ class TSLong(TSWrapper):
         if geometry is not None:
             geometry = cast_column_to_large_string(geometry, id_var)
 
-        if ensure_time_index:
-            df = re_set_dataframe_index(df, index_var=time_var)
+        # if ensure_time_index:
+        #     df = re_set_dataframe_index(df, index_var=time_var)
 
         super().__init__(df)
 
@@ -103,7 +101,8 @@ class TSLong(TSWrapper):
 
     def change_backend(self, new_backend: Backend) -> "TSLong":
         """Return a new wrapper with the dataframe converted to a different backend."""
-        new_df = change_backend(self._obj, new_backend, index_var=self._tstore_time_var)
+        # new_df = change_backend(self._obj, new_backend, index_var=self._tstore_time_var)
+        new_df = change_backend(self._obj, new_backend)
         return self._rewrap(new_df)
 
     @staticmethod
@@ -240,7 +239,6 @@ def _check_ts_vars(
         ValueError: If the `ts_vars` argument contains repeated or unavailable column names.
     """
     available_cols = set(get_column_names(df)) - {id_var, time_var} - set(static_vars)
-
     requested_cols = set()
     for cols in ts_vars.values():
         new_cols = set(cols)

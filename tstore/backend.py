@@ -88,8 +88,17 @@ def change_backend(
         pa.ChunkedArray: _change_series_backend_from_pyarrow,
     }
 
+    no_index_types = [DaskDataFrame, PandasDataFrame]
+    no_index_kwargs = {
+        "polars": {"include_index": False},
+        "pyarrow": {"preserve_index": False},
+    }
     for supported_type, change_backend_function in change_backend_functions.items():
         if isinstance(obj, supported_type):
+            if index_var is None and supported_type in no_index_types and new_backend in no_index_kwargs:
+                backend_kwargs = backend_kwargs.copy()
+                backend_kwargs.update(no_index_kwargs[new_backend])
+
             new_obj = change_backend_function(
                 obj,
                 new_backend=new_backend.replace("geopandas", "pandas"),
