@@ -31,6 +31,7 @@ root_path = os.path.dirname(os.path.dirname(os.getcwd()))
 filenames = [
     # "00-key-concepts.ipynb",
     "01-your-first-tstore.ipynb",
+    "02-benchmark.ipynb",
 ]
 out_dir = os.path.join(os.getcwd(), "tutorials")
 if not os.path.exists(out_dir):
