@@ -3,6 +3,7 @@ channels:
 - conda-forge
 dependencies:
 - contextily
+- geopandas>=1
 - osmnx
 - pip
 - python=3.12
@@ -11,4 +12,4 @@ dependencies:
 - zarr
 - pip:
   - -e .
-  - git+https://github.com/martibosch/meteostations-geopy.git@feat-multivar-df#egg=meteostations
+  - meteora
