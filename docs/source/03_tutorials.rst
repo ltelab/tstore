@@ -11,6 +11,7 @@ The tutorials are available in the `tutorials <https://github.com/ltelab/tstore/
    :maxdepth: 1
 
    tutorials/01-your-first-tstore
+   tutorials/02-benchmark
 
 
 .. warning::
