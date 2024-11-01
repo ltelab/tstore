@@ -31,7 +31,7 @@ jobs:
           submodules: 'recursive'
 
       - name: Set up micromamba
-        uses: mamba-org/setup-micromamba@v1
+        uses: mamba-org/setup-micromamba@v2
         with:
           environment-file: ${{ matrix.experimental && 'ci/environment_latest.yml' || 'ci/environment.yml' }}
           create-args: >-
