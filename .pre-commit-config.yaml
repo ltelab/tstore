@@ -1,20 +1,20 @@
-default_stages: [commit]
+default_stages: [pre-commit]
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0
+    rev: v6.0.0
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
       - id: check-yaml
 
   - repo: https://github.com/kieran-ryan/pyprojectsort
-    rev: v0.3.0
+    rev: v0.4.0
     hooks:
       - id: pyprojectsort
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.4.4
+    rev: v0.16.6
     hooks:
       # Run the linter.
       - id: ruff
@@ -23,13 +23,13 @@ repos:
       - id: ruff-format
 
   - repo: https://github.com/keewis/blackdoc
-    rev: v0.3.9
+    rev: v0.4.6
     hooks:
     - id: blackdoc
       additional_dependencies: ["black[jupyter]"]
 
   - repo: https://github.com/codespell-project/codespell
-    rev: v2.2.6
+    rev: v2.4.3
     hooks:
     - id: codespell
       types_or: [python, markdown, rst]
@@ -44,7 +44,7 @@ repos:
   #       args: ["-d relaxed"]
 
   - repo: https://github.com/executablebooks/mdformat
-    rev: 0.7.17
+    rev: 1.0.0
     hooks:
       - id: mdformat
         additional_dependencies:
@@ -61,18 +61,18 @@ repos:
       - id: check-execution-order
 
   - repo: https://github.com/asottile/pyupgrade
-    rev: v3.15.2
+    rev: v3.21.2
     hooks:
       - id: pyupgrade
 
   - repo: https://github.com/kynan/nbstripout
-    rev: 0.7.1
+    rev: 0.9.1
     hooks:
       - id: nbstripout
         args: ["--keep-output"]
 
   - repo: https://github.com/nbQA-dev/nbQA
-    rev: 1.8.5
+    rev: 1.9.1
     hooks:
       - id: nbqa-black
       - id: nbqa-ruff
@@ -80,7 +80,7 @@ repos:
       - id: nbqa-ruff
 
   - repo: https://github.com/compilerla/conventional-pre-commit
-    rev: v3.2.0
+    rev: v4.4.0
     hooks:
       - id: conventional-pre-commit
         stages: [commit-msg]
