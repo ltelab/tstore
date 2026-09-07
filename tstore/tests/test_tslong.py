@@ -127,7 +127,7 @@ def test_creation(
 class TestCreationArgs:
     """Test the creation of a TSLong object with various arguments."""
 
-    @pytest.fixture()
+    @pytest.fixture
     def base_kwargs(self, backend: Backend, request) -> dict:
         """Return a template of keyword arguments for the TSLong wrapper."""
         dataframe_fixture_name = f"{backend}_long_dataframe"
