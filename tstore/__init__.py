@@ -11,15 +11,15 @@ from tstore.tslong import TSLong, open_tslong
 from tstore.tswide import TSWide, open_tswide
 
 __all__ = [
-    "open_tsdf",
-    "open_tslong",
-    "open_tswide",
     "TS",
-    "TSArray",
     "TSDF",
+    "TSArray",
     "TSDtype",
     "TSLong",
     "TSWide",
+    "open_tsdf",
+    "open_tslong",
+    "open_tswide",
 ]
 
 # Get version
