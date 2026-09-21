@@ -27,6 +27,6 @@ def open_tslong(base_dir: Union[str, Path], *args, backend: Backend = "dask", **
 
 
 __all__ = [
-    "open_tslong",
     "TSLong",
+    "open_tslong",
 ]
