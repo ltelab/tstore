@@ -89,7 +89,7 @@ def check_partitioning(partitioning, ts_variables):
     if not isinstance(partitioning, (dict, str, type(None))):
         raise TypeError("")
     if isinstance(partitioning, str) or partitioning is None:
-        partitioning = {ts_variable: partitioning for ts_variable in ts_variables}
+        partitioning = dict.fromkeys(ts_variables, partitioning)
     for ts_variable, partitioning_str in partitioning.items():
         try:
             partitions = check_partitions(partitioning_str)
