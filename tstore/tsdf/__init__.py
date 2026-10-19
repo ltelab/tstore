@@ -13,6 +13,6 @@ def open_tsdf(base_dir: Union[str, Path], *args, backend: Backend = "dask", **kw
 
 
 __all__ = [
-    "open_tsdf",
     "TSDF",
+    "open_tsdf",
 ]
