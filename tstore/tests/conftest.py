@@ -98,7 +98,7 @@ class Helpers:
         return points
 
 
-@pytest.fixture()
+@pytest.fixture
 def helpers() -> type[Helpers]:
     """Return the class of helper functions."""
     return Helpers
@@ -109,20 +109,20 @@ def helpers() -> type[Helpers]:
 ## DataFrames
 
 
-@pytest.fixture()
+@pytest.fixture
 def dask_dataframe(helpers) -> dd.DataFrame:
     """Create a Dask DataFrame with a dummy time series (with time index)."""
     return helpers.create_dask_dataframe()
 
 
-@pytest.fixture()
+@pytest.fixture
 def dask_dataframe_no_index(dask_dataframe: dd.DataFrame) -> dd.DataFrame:
     """Create a Dask DataFrame with a dummy time series (without time index)."""
     df_dask = dask_dataframe.reset_index()
     return df_dask
 
 
-@pytest.fixture()
+@pytest.fixture
 def geopandas_dataframe(helpers) -> gpd.GeoDataFrame:
     """Create a GeoPandas DataFrame with dummy attributes."""
     gdf = gpd.GeoDataFrame()
@@ -132,35 +132,35 @@ def geopandas_dataframe(helpers) -> gpd.GeoDataFrame:
     return gdf
 
 
-@pytest.fixture()
+@pytest.fixture
 def pandas_dataframe(dask_dataframe: dd.DataFrame) -> pd.DataFrame:
     """Create a Pandas DataFrame with a dummy time series (with time index)."""
     df_pd = dask_dataframe.compute()
     return df_pd
 
 
-@pytest.fixture()
+@pytest.fixture
 def pandas_dataframe_no_index(dask_dataframe_no_index: dd.DataFrame) -> pd.DataFrame:
     """Create a Pandas DataFrame with a dummy time series (without time index)."""
     df_pd = dask_dataframe_no_index.compute()
     return df_pd
 
 
-@pytest.fixture()
+@pytest.fixture
 def pyarrow_dataframe(pandas_dataframe: pd.DataFrame) -> pa.Table:
     """Create an PyArrow Table with a dummy time series (without index)."""
     df_pyarrow = pa.Table.from_pandas(pandas_dataframe)
     return df_pyarrow
 
 
-@pytest.fixture()
+@pytest.fixture
 def polars_dataframe(pyarrow_dataframe: pa.Table) -> pl.DataFrame:
     """Create a Polars DataFrame with a dummy time series (without index)."""
     df_pl = pl.from_arrow(pyarrow_dataframe)
     return df_pl
 
 
-@pytest.fixture()
+@pytest.fixture
 def pandas_dataframe_arrow_dtypes(pyarrow_dataframe: pa.Table) -> pd.DataFrame:
     """Create a Pandas DataFrame with Arrow dtypes (with index)."""
     df_pd = pyarrow_dataframe.to_pandas(types_mapper=pd.ArrowDtype)
@@ -170,42 +170,42 @@ def pandas_dataframe_arrow_dtypes(pyarrow_dataframe: pa.Table) -> pd.DataFrame:
 ## Series
 
 
-@pytest.fixture()
+@pytest.fixture
 def pandas_series(pandas_dataframe: pd.DataFrame) -> pd.Series:
     """Create a dummy Pandas Series of floats (with index)."""
     series = pandas_dataframe["var3"]
     return series
 
 
-@pytest.fixture()
+@pytest.fixture
 def pandas_series_no_index(pandas_series: pd.Series) -> pd.Series:
     """Create a dummy Pandas Series of floats (without index)."""
     series = pandas_series.reset_index(drop=True)
     return series
 
 
-@pytest.fixture()
+@pytest.fixture
 def dask_series(pandas_series: pd.Series) -> dd.DataFrame:
     """Create a Dask Series from a Pandas Series (with index)."""
     series = dd.from_pandas(pandas_series)
     return series
 
 
-@pytest.fixture()
+@pytest.fixture
 def dask_series_no_index(pandas_series_no_index: pd.Series) -> dd.DataFrame:
     """Create a Dask Series from a Pandas Series (without index)."""
     series = dd.from_pandas(pandas_series_no_index)
     return series
 
 
-@pytest.fixture()
+@pytest.fixture
 def polars_series(pandas_series: pd.Series) -> pl.Series:
     """Create a Polars Series from a Pandas Series (without index)."""
     series = pl.from_pandas(pandas_series)
     return series
 
 
-@pytest.fixture()
+@pytest.fixture
 def pyarrow_series(pandas_series: pd.Series) -> pa.Array:
     """Create a PyArrow Array from a Pandas Series (without index)."""
     series = pa.Array.from_pandas(pandas_series)
@@ -215,7 +215,7 @@ def pyarrow_series(pandas_series: pd.Series) -> pa.Array:
 ## Stored data
 
 
-@pytest.fixture()
+@pytest.fixture
 def parquet_timeseries(tmp_path: Path, dask_dataframe: dd.DataFrame) -> Path:
     """Create a Parquet file with a dummy time series."""
     filepath = tmp_path / "test.parquet"
@@ -244,7 +244,7 @@ def parquet_timeseries(tmp_path: Path, dask_dataframe: dd.DataFrame) -> Path:
     return filepath
 
 
-@pytest.fixture()
+@pytest.fixture
 def tstore_path(tmp_path: Path, pandas_long_dataframe: pd.DataFrame) -> Path:
     """Store a Pandas long DataFrame as a TStore."""
     # TODO: Rewrite without using tstore to not depend on implementation
@@ -277,7 +277,7 @@ def tstore_path(tmp_path: Path, pandas_long_dataframe: pd.DataFrame) -> Path:
     return dirpath
 
 
-@pytest.fixture()
+@pytest.fixture
 def geo_tstore_path(
     tmp_path: Path,
     pandas_long_dataframe: pd.DataFrame,
@@ -318,14 +318,14 @@ def geo_tstore_path(
 ## Long DataFrames
 
 
-@pytest.fixture()
+@pytest.fixture
 def dask_long_dataframe(pandas_long_dataframe: pd.DataFrame) -> dd.DataFrame:
     """Create a long Dask DataFrame."""
     df_dask = dd.from_pandas(pandas_long_dataframe)
     return df_dask
 
 
-@pytest.fixture()
+@pytest.fixture
 def pandas_long_dataframe(helpers) -> pd.DataFrame:
     """Create a long Pandas DataFrame."""
     store_ids = np.arange(1, 4 + 1)
@@ -343,14 +343,14 @@ def pandas_long_dataframe(helpers) -> pd.DataFrame:
     return df
 
 
-@pytest.fixture()
+@pytest.fixture
 def polars_long_dataframe(pandas_long_dataframe: pd.DataFrame) -> pl.DataFrame:
     """Create a long Polars DataFrame."""
     df_pl = pl.from_pandas(pandas_long_dataframe)
     return df_pl
 
 
-@pytest.fixture()
+@pytest.fixture
 def pyarrow_long_dataframe(pandas_long_dataframe: pd.DataFrame) -> pa.Table:
     """Create a long Pyarrow Table."""
     df_pa = pa.Table.from_pandas(pandas_long_dataframe, preserve_index=False)
@@ -360,7 +360,7 @@ def pyarrow_long_dataframe(pandas_long_dataframe: pd.DataFrame) -> pa.Table:
 ## TSLong
 
 
-@pytest.fixture()
+@pytest.fixture
 def dask_tslong(dask_long_dataframe: pd.DataFrame) -> tstore.tslong.TSLongDask:
     """Create a Dask TSLong object."""
     tslong = tstore.TSLong.wrap(
@@ -373,7 +373,7 @@ def dask_tslong(dask_long_dataframe: pd.DataFrame) -> tstore.tslong.TSLongDask:
     return tslong
 
 
-@pytest.fixture()
+@pytest.fixture
 def pandas_tslong(pandas_long_dataframe: pd.DataFrame) -> tstore.tslong.TSLongPandas:
     """Create a Pandas TSLong object."""
     tslong = tstore.TSLong.wrap(
@@ -386,7 +386,7 @@ def pandas_tslong(pandas_long_dataframe: pd.DataFrame) -> tstore.tslong.TSLongPa
     return tslong
 
 
-@pytest.fixture()
+@pytest.fixture
 def polars_tslong(polars_long_dataframe: pl.DataFrame) -> tstore.tslong.TSLongPolars:
     """Create a Polars TSLong object."""
     tslong = tstore.TSLong.wrap(
@@ -399,7 +399,7 @@ def polars_tslong(polars_long_dataframe: pl.DataFrame) -> tstore.tslong.TSLongPo
     return tslong
 
 
-@pytest.fixture()
+@pytest.fixture
 def pyarrow_tslong(pyarrow_long_dataframe: pa.Table) -> tstore.tslong.TSLongPyArrow:
     """Create a PyArrow TSLong object."""
     tslong = tstore.TSLong.wrap(
@@ -415,7 +415,7 @@ def pyarrow_tslong(pyarrow_long_dataframe: pa.Table) -> tstore.tslong.TSLongPyAr
 ### TSLong with geometry data
 
 
-@pytest.fixture()
+@pytest.fixture
 def dask_geo_tslong(
     dask_long_dataframe: dd.DataFrame,
     geopandas_dataframe: gpd.GeoDataFrame,
@@ -432,7 +432,7 @@ def dask_geo_tslong(
     return tslong
 
 
-@pytest.fixture()
+@pytest.fixture
 def pandas_geo_tslong(
     pandas_long_dataframe: dd.DataFrame,
     geopandas_dataframe: gpd.GeoDataFrame,
@@ -449,7 +449,7 @@ def pandas_geo_tslong(
     return tslong
 
 
-@pytest.fixture()
+@pytest.fixture
 def polars_geo_tslong(
     polars_long_dataframe: dd.DataFrame,
     geopandas_dataframe: gpd.GeoDataFrame,
@@ -466,7 +466,7 @@ def polars_geo_tslong(
     return tslong
 
 
-@pytest.fixture()
+@pytest.fixture
 def pyarrow_geo_tslong(
     pyarrow_long_dataframe: dd.DataFrame,
     geopandas_dataframe: gpd.GeoDataFrame,
@@ -486,7 +486,7 @@ def pyarrow_geo_tslong(
 ## TSArrays
 
 
-@pytest.fixture()
+@pytest.fixture
 def dask_tsarray(helpers) -> tstore.TSArray:
     """Create a TSArray of TS objects."""
     return helpers.create_dask_tsarray(size=4)
@@ -495,7 +495,7 @@ def dask_tsarray(helpers) -> tstore.TSArray:
 ## Pandas Series
 
 
-@pytest.fixture()
+@pytest.fixture
 def pandas_series_of_ts(dask_tsarray: tstore.TSArray) -> pd.Series:
     """Create a Pandas Series of TS objects from a TSArray."""
     df_series = pd.Series(dask_tsarray)
@@ -505,7 +505,7 @@ def pandas_series_of_ts(dask_tsarray: tstore.TSArray) -> pd.Series:
 ## TSDF DataFrames
 
 
-@pytest.fixture()
+@pytest.fixture
 def pandas_tsdf_dataframe(helpers) -> pd.DataFrame:
     """Create a Pandas dataframe with TSArray columns."""
     pd_series_of_ts_1 = pd.Series(helpers.create_dask_tsarray(size=4, columns_slice=slice(0, 2)))
@@ -525,7 +525,7 @@ def pandas_tsdf_dataframe(helpers) -> pd.DataFrame:
     return df
 
 
-@pytest.fixture()
+@pytest.fixture
 def geopandas_tsdf_dataframe(
     helpers,
     pandas_tsdf_dataframe: pd.DataFrame,
@@ -544,7 +544,7 @@ def geopandas_tsdf_dataframe(
 ## TSDF
 
 
-@pytest.fixture()
+@pytest.fixture
 def tsdf_ts_dask(pandas_tsdf_dataframe) -> tstore.tsdf.TSDF:
     """Create a TSDF object with Dask TS objects."""
     tsdf = tstore.TSDF.wrap(
@@ -555,7 +555,7 @@ def tsdf_ts_dask(pandas_tsdf_dataframe) -> tstore.tsdf.TSDF:
     return tsdf
 
 
-@pytest.fixture()
+@pytest.fixture
 def geo_tsdf_ts_dask(geopandas_tsdf_dataframe) -> tstore.tsdf.TSDF:
     """Create a GeoPandas TSDF object with Dask TS objects."""
     tsdf = tstore.TSDF.wrap(
