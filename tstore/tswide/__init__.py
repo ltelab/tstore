@@ -27,6 +27,6 @@ def open_tswide(base_dir: Union[str, Path], *args, backend: Backend = "dask", **
 
 
 __all__ = [
-    "open_tswide",
     "TSWide",
+    "open_tswide",
 ]

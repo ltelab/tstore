@@ -45,7 +45,7 @@ class TSLongPandas(TSLong):
         # Check ts_variables
         ts_variables = self._tstore_ts_vars
         if isinstance(ts_variables, list):
-            ts_variables = {column: None for column in ts_variables}
+            ts_variables = dict.fromkeys(ts_variables)
 
         # Identify all ts columns
         # ts_columns = set(df.columns) - set([self._tstore_time_var]) - set(static_variables)
