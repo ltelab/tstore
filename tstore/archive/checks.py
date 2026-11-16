@@ -84,7 +84,7 @@ def check_time(time):
         (datetime.datetime, datetime.date, np.datetime64, np.ndarray, str),
     ):
         raise TypeError(
-            "Specify time with datetime.datetime objects or a " "string of format 'YYYY-MM-DD hh:mm:ss'.",
+            "Specify time with datetime.datetime objects or a string of format 'YYYY-MM-DD hh:mm:ss'.",
         )
     # If numpy array with datetime64 (and size=1)
     if isinstance(time, np.ndarray):
